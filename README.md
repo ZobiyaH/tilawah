@@ -1,36 +1,64 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Tilawa (تلاوة) — Quran Recitation Checker
 
-## Getting Started
+Tilawa is a production-ready Next.js 14 Web Application that helps users learn and practice Quranic recitation with continuous, zero-interaction microphone tracking and real-time word boundary alignment.
 
-First, run the development server:
+## Key Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+1. **Continuous Speech Recognition**: Binds to the browser's Web Speech API (`SpeechRecognition` in `ar-SA` Arabic locale) with up to 5 alternative matching hypotheses to guarantee high-fidelity speech tracking.
+2. **Deterministic Similarity Engine**: Employs normalized Arabic string distance algorithms (custom Levenshtein edits) to match spoken phonemes.
+   - `Similarity >= 80%` marks the word as correct (green highlights).
+   - `80% > Similarity >= 55%` detects potential Tajweed mistakes (yellow guidelines).
+   - `Similarity < 55%` flags mistakes (red wavy highlight, play oscillator chime, slow-rate TTS guidance).
+3. **Automatic Correction Loop**: In Guided Mode, errors trigger an oscillator audio chime and play standard Hafs Arabic TTS. A modal popup lock holds the user's pointer on the word until corrected (up to 3 automatic retries).
+4. **Three Recitation Modes**:
+   - **Guided Mode**: Active word tracking, automatic corrections, and overlays.
+   - **Free Practice**: Highlight mistakes visually without locking or pausing.
+   - **Hardcopy Mode**: Visual text is blurred so the user can read from a physical Quran copy while the system scores them in the background.
+5. **Detailed Analytics**: Built-in interactive Recharts graphs tracking accuracy history and sub-metric distributions (Accuracy, Tajweed, Fluency).
+
+## Project Structure
+
+```
+tilawa/
+├── app/
+│   ├── layout.tsx               # Root layout, Amiri Quran font, RTL body setup
+│   ├── page.tsx                 # Selector dashboard home
+│   ├── recite/[surahId]/
+│   │   └── page.tsx             # Main interactive recitation layout
+│   ├── progress/
+│   │   └── page.tsx             # Performance tracking dashboard (Recharts)
+│   └── api/
+│       └── session/
+│           └── route.ts         # Receives and stores session metrics
+├── components/
+│   ├── QuranDisplay/            # QuranDisplay, WordToken, AyahLine, TajweedLayer
+│   ├── Listening/               # ContinuousListener, WaveformBar, LiveTranscript
+│   ├── Correction/              # CorrectionCard, PronunciationPlayer, CorrectionOverlay
+│   ├── UI/                      # ScoreRing, TajweedBadge, Toast, SettingsDrawer
+│   └── Layout/                  # Header, ModeBar
+├── data/
+│   └── quran-uthmani.json       # Full tanzil Uthmani database for 8 implemented surahs
+├── lib/
+│   ├── arabic/                  # normalize, levenshtein, similarity, tajweed
+│   ├── speech/                  # tts, useAudioStream, useContinuousASR
+│   └── store/                   # Zustand recitation state store
+└── types/
+    └── index.ts                 # Type definitions
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Setup and Running
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. **Install Dependencies**:
+   ```bash
+   npm install
+   ```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+2. **Run Development Server**:
+   ```bash
+   npm run dev
+   ```
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+3. **Production Build**:
+   ```bash
+   npm run build
+   ```

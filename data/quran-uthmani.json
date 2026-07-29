@@ -1,0 +1,1743 @@
+{
+  "1": {
+    "name": "Al-Fatiha — الفاتحة",
+    "ayat": [
+      {
+        "surahId": 1,
+        "ayahNumber": 1,
+        "arabic": "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
+        "words": [
+          "بِسْمِ",
+          "اللَّهِ",
+          "الرَّحْمَٰنِ",
+          "الرَّحِيمِ"
+        ],
+        "transliteration": "Bismillāhir-raḥmānir-raḥīm",
+        "translation": "In the name of Allah, the Entirely Merciful, the Especially Merciful.",
+        "tajweedMap": {
+          "2": [
+            {
+              "rule": "madd",
+              "description": "Madd Arid Lissukun: Elongate the vowel sound for 2, 4, or 6 counts."
+            }
+          ]
+        }
+      },
+      {
+        "surahId": 1,
+        "ayahNumber": 2,
+        "arabic": "الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ",
+        "words": [
+          "الْحَمْدُ",
+          "لِلَّهِ",
+          "رَبِّ",
+          "الْعَالَمِينَ"
+        ],
+        "transliteration": "Al-ḥamdu lillāhi rabbil-ʿālamīn",
+        "translation": "All praise is due to Allah, Lord of the worlds —",
+        "tajweedMap": {
+          "3": [
+            {
+              "rule": "madd",
+              "description": "Madd Arid Lissukun: Elongate the vowel sound."
+            }
+          ]
+        }
+      },
+      {
+        "surahId": 1,
+        "ayahNumber": 3,
+        "arabic": "الرَّحْمَٰنِ الرَّحِيمِ",
+        "words": [
+          "الرَّحْمَٰنِ",
+          "الرَّحِيمِ"
+        ],
+        "transliteration": "Ar-raḥmānir-raḥīm",
+        "translation": "The Entirely Merciful, the Especially Merciful,",
+        "tajweedMap": {
+          "1": [
+            {
+              "rule": "madd",
+              "description": "Madd Arid Lissukun."
+            }
+          ]
+        }
+      },
+      {
+        "surahId": 1,
+        "ayahNumber": 4,
+        "arabic": "مَالِكِ يَوْمِ الدِّينِ",
+        "words": [
+          "مَالِكِ",
+          "يَوْمِ",
+          "الدِّينِ"
+        ],
+        "transliteration": "Māliki yawmid-dīn",
+        "translation": "Sovereign of the Day of Recompense.",
+        "tajweedMap": {
+          "2": [
+            {
+              "rule": "madd",
+              "description": "Madd Arid Lissukun."
+            }
+          ]
+        }
+      },
+      {
+        "surahId": 1,
+        "ayahNumber": 5,
+        "arabic": "إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ",
+        "words": [
+          "إِيَّاكَ",
+          "نَعْبُدُ",
+          "وَإِيَّاكَ",
+          "نَسْتَعِينُ"
+        ],
+        "transliteration": "Iyyāka naʿbudu wa-iyyāka nastaʿīn",
+        "translation": "It is You we worship and You we ask for help.",
+        "tajweedMap": {
+          "3": [
+            {
+              "rule": "madd",
+              "description": "Madd Arid Lissukun."
+            }
+          ]
+        }
+      },
+      {
+        "surahId": 1,
+        "ayahNumber": 6,
+        "arabic": "اهْدِنَا الصِّرَاطَ الْمُسْتَقِيمَ",
+        "words": [
+          "اهْدِنَا",
+          "الصِّرَاطَ",
+          "الْمُسْتَقِيمَ"
+        ],
+        "transliteration": "Ihdinaṣ-ṣirāṭal-mustaqīm",
+        "translation": "Guide us to the straight path —",
+        "tajweedMap": {
+          "2": [
+            {
+              "rule": "madd",
+              "description": "Madd Arid Lissukun."
+            }
+          ]
+        }
+      },
+      {
+        "surahId": 1,
+        "ayahNumber": 7,
+        "arabic": "صِرَاطَ الَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ الْمَغْضُوبِ عَلَيْهِمْ وَلَا الضَّالِّينَ",
+        "words": [
+          "صِرَاطَ",
+          "الَّذِينَ",
+          "أَنْعَمْتَ",
+          "عَلَيْهِمْ",
+          "غَيْرِ",
+          "الْمَغْضُوبِ",
+          "عَلَيْهِمْ",
+          "وَلَا",
+          "الضَّالِّينَ"
+        ],
+        "transliteration": "Ṣirāṭal-ladhīna anʿamta ʿalayhim ghayril-maghḍūbi ʿalayhim wa-laḍ-ḍāllīn",
+        "translation": "The path of those upon whom You have bestowed favor, not of those who have evoked anger or of those who are astray.",
+        "tajweedMap": {
+          "8": [
+            {
+              "rule": "madd",
+              "description": "Madd Lazim Kalimi Muthaqqal: Obligatory 6-count elongation due to shaddah."
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "2": {
+    "name": "Al-Baqarah — البقرة",
+    "ayat": [
+      {
+        "surahId": 2,
+        "ayahNumber": 1,
+        "arabic": "الٓمٓ",
+        "words": [
+          "الٓمٓ"
+        ],
+        "transliteration": "Alif-Lām-Mīm",
+        "translation": "Alif, Lam, Meem.",
+        "tajweedMap": {
+          "0": [
+            {
+              "rule": "madd",
+              "description": "Madd Lazim Harfi: 6 counts elongation."
+            }
+          ]
+        }
+      },
+      {
+        "surahId": 2,
+        "ayahNumber": 2,
+        "arabic": "ذَٰلِكَ الْكِتَابُ لَا رَيْبَ ۛ فِيهِ ۛ هُدًى لِّلْمُتَّقِينَ",
+        "words": [
+          "ذَٰلِكَ",
+          "الْكِتَابُ",
+          "لَا",
+          "رَيْبَ",
+          "فِيهِ",
+          "هُدًى",
+          "لِّلْمُتَّقِينَ"
+        ],
+        "transliteration": "Dhālikal-kitābu lā rayba fīh, hudal-lil-muttaqīn",
+        "translation": "This is the Book about which there is no doubt, a guidance for those conscious of Allah.",
+        "tajweedMap": {
+          "6": [
+            {
+              "rule": "madd",
+              "description": "Madd Arid Lissukun."
+            }
+          ]
+        }
+      },
+      {
+        "surahId": 2,
+        "ayahNumber": 3,
+        "arabic": "الَّذِينَ يُؤْمِنُونَ بِالْغَيْبِ وَيُقِيمُونَ الصَّلَاةَ وَمِمَّا رَزَقْنَاهُمْ يُنفِقُونَ",
+        "words": [
+          "الَّذِينَ",
+          "يُؤْمِنُونَ",
+          "بِالْغَيْبِ",
+          "وَيُقِيمُونَ",
+          "الصَّلَاةَ",
+          "وَمِمَّا",
+          "رَزَقْنَاهُمْ",
+          "يُنفِقُونَ"
+        ],
+        "transliteration": "Alladhīna yu'minūna bil-ghaybi wa-yuqīmūnaṣ-ṣalāta wa-mimmā razaqnāhum yunfiqūn",
+        "translation": "Who believe in the unseen, establish prayer, and spend out of what We have provided for them,",
+        "tajweedMap": {
+          "5": [
+            {
+              "rule": "ghunna",
+              "description": "Ghunna: Nasalization of 2 counts on Mim Mushaddadah."
+            }
+          ],
+          "7": [
+            {
+              "rule": "ikhfa",
+              "description": "Ikhfa: Hide the sound of Nun Sakinah."
+            }
+          ]
+        }
+      },
+      {
+        "surahId": 2,
+        "ayahNumber": 4,
+        "arabic": "وَالَّذِينَ يُؤْمِنُونَ بِمَا أُنزِلَ إِلَيْكَ وَمَا أُنزِلَ مِن قَبْلِكَ وَبِالْآخِرَةِ هُمْ يُوقِنُونَ",
+        "words": [
+          "وَالَّذِينَ",
+          "يُؤْمِنُونَ",
+          "بِمَا",
+          "أُنزِلَ",
+          "إِلَيْكَ",
+          "وَمَا",
+          "أُنزِلَ",
+          "مِن",
+          "قَبْلِكَ",
+          "وَبِالْآخِرَةِ",
+          "هُمْ",
+          "يُوقِنُونَ"
+        ],
+        "transliteration": "Walladhīna yu'minūna bimā unzila ilayka wa-mā unzila min qablika wa-bil-ākhirati hum yūqinūn",
+        "translation": "And who believe in what has been revealed to you, and what was revealed before you, and of the Hereafter they are certain.",
+        "tajweedMap": {
+          "3": [
+            {
+              "rule": "ikhfa",
+              "description": "Ikhfa."
+            }
+          ],
+          "6": [
+            {
+              "rule": "ikhfa",
+              "description": "Ikhfa."
+            }
+          ],
+          "8": [
+            {
+              "rule": "qalqala",
+              "description": "Qalqala: Echoing sound on Ba Sakinah."
+            }
+          ]
+        }
+      },
+      {
+        "surahId": 2,
+        "ayahNumber": 5,
+        "arabic": "أُولَٰئِكَ عَلَىٰ هُدًى مِّن رَّبِّهِمْ ۖ وَأُولَٰئِكَ هُمُ الْمُفْلِحُونَ",
+        "words": [
+          "أُولَٰئِكَ",
+          "عَلَىٰ",
+          "هُدًى",
+          "مِّن",
+          "رَّبِّهِمْ",
+          "وَأُولَٰئِكَ",
+          "هُمُ",
+          "الْمُفْلِحُونَ"
+        ],
+        "transliteration": "Ulāʾika ʿalā hudam-mir-rabbihim wa-ulāʾika humul-mufliḥūn",
+        "translation": "Those are upon guidance from their Lord, and it is those who are the successful.",
+        "tajweedMap": {
+          "0": [
+            {
+              "rule": "madd",
+              "description": "Madd Muttasil: Required 4-5 counts elongation."
+            }
+          ],
+          "3": [
+            {
+              "rule": "idgham",
+              "description": "Idgham Bilaghunnah: Merge without nasalization."
+            }
+          ]
+        }
+      },
+      {
+        "surahId": 2,
+        "ayahNumber": 6,
+        "arabic": "إِنَّ الَّذِينَ كَفَرُوا سَوَاءٌ عَلَيْهِمْ ءَأَنذَرْتَهُمْ أَمْ لَمْ تُنذِرْهُمْ لَا يُؤْمِنُونَ",
+        "words": [
+          "إِنَّ",
+          "الَّذِينَ",
+          "كَفَرُوا",
+          "سَوَاءٌ",
+          "عَلَيْهِمْ",
+          "ءَأَنذَرْتَهُمْ",
+          "أَمْ",
+          "لَمْ",
+          "تُنذِرْهُمْ",
+          "لَا",
+          "يُؤْمِنُونَ"
+        ],
+        "transliteration": "Inna allazeena kafaroo sawaa'un 'alayhim 'a-anzartahum am lam tunthirhum laa yu'minoon.",
+        "translation": "Indeed, those who disbelieve - it is all the same for them whether you warn them or do not warn them - they will not believe.",
+        "tajweedMap": {
+          "0": [
+            {
+              "rule": "ghunna",
+              "description": "Ghunna on Nun Mushaddadah."
+            }
+          ],
+          "3": [
+            {
+              "rule": "madd",
+              "description": "Madd Muttasil: Elongate for 4-5 counts."
+            }
+          ],
+          "8": [
+            {
+              "rule": "ikhfa",
+              "description": "Ikhfa: Hide the sound of Nun Sakinah."
+            }
+          ]
+        }
+      },
+      {
+        "surahId": 2,
+        "ayahNumber": 7,
+        "arabic": "خَتَمَ اللَّهُ عَلَىٰ قُلُوبِهِمْ وَعَلَىٰ سَمْعِهِمْ ۖ وَعَلَىٰ أَبْصَارِهِمْ غِشَاوَةٌ ۖ وَلَهُمْ عَذَابٌ عَظِيمٌ",
+        "words": [
+          "خَتَمَ",
+          "اللَّهُ",
+          "عَلَىٰ",
+          "قُلُوبِهِمْ",
+          "وَعَلَىٰ",
+          "سَمْعِهِمْ",
+          "وَعَلَىٰ",
+          "أَبْصَارِهِمْ",
+          "غِشَاوَةٌ",
+          "وَلَهُمْ",
+          "عَذَابٌ",
+          "عَظِيمٌ"
+        ],
+        "transliteration": "Khatama Allahu 'ala quloobihim wa 'ala sam'ihim wa 'ala absarihim ghishawatun wa lahum 'adhabun 'azeem.",
+        "translation": "Allah has set a seal upon their hearts and upon their hearing, and over their vision is a veil. And for them is a great punishment.",
+        "tajweedMap": {
+          "11": [
+            {
+              "rule": "madd",
+              "description": "Madd Arid Lissukun."
+            }
+          ]
+        }
+      },
+      {
+        "surahId": 2,
+        "ayahNumber": 8,
+        "arabic": "وَمِنَ النَّاسِ مَن يَقُولُ ءَامَنَّا بِاللَّهِ وَبِالْيَوْمِ الْآخِرِ وَمَا هُم بِمُؤْمِنِينَ",
+        "words": [
+          "وَمِنَ",
+          "النَّاسِ",
+          "مَن",
+          "يَقُولُ",
+          "ءامَنَّا",
+          "بِاللَّهِ",
+          "وَبِالْيَوْمِ",
+          "الْآخِرِ",
+          "وَمَا",
+          "هُم",
+          "بِمُؤْمِنِينَ"
+        ],
+        "transliteration": "Wa mina an-nasi man yaqoolu aamanna billahi wa bil-yawmi al-akhiri wa ma hum bi-mu’mineen.",
+        "translation": "And of the people are some who say, \"We believe in Allah and the Last Day,\" but they are not believers.",
+        "tajweedMap": {
+          "1": [
+            {
+              "rule": "ghunna",
+              "description": "Ghunna on Nun Mushaddadah."
+            }
+          ],
+          "2": [
+            {
+              "rule": "idgham",
+              "description": "Idgham: Merge Nun Sakinah."
+            }
+          ],
+          "4": [
+            {
+              "rule": "ghunna",
+              "description": "Ghunna on Nun Mushaddadah."
+            }
+          ]
+        }
+      },
+      {
+        "surahId": 2,
+        "ayahNumber": 9,
+        "arabic": "يُخَادِعُونَ اللَّهَ وَالَّذِينَ ءَامَنُوا وَمَا يَخْدَعُونَ إِلَّا أَنفُسَهُمْ وَمَا يَشْعُرُونَ",
+        "words": [
+          "يُخَادِعُونَ",
+          "اللَّهَ",
+          "وَالَّذِينَ",
+          "ءامَنُوا",
+          "وَمَا",
+          "يَخْدَعُونَ",
+          "إِلَّا",
+          "أَنفُسَهُمْ",
+          "وَمَا",
+          "يَشْعُرُونَ"
+        ],
+        "transliteration": "Yukhaadi'oona Allaha wallazeena aamanoo wa ma yakhda'oona illa anfusahum wa ma yash'uroon.",
+        "translation": "They [think to] deceive Allah and those who believe, but they deceive not except themselves and perceive [it] not.",
+        "tajweedMap": {
+          "7": [
+            {
+              "rule": "ikhfa",
+              "description": "Ikhfa: Hide the sound of Nun Sakinah."
+            }
+          ]
+        }
+      },
+      {
+        "surahId": 2,
+        "ayahNumber": 10,
+        "arabic": "فِي قُلُوبِهِم مَّرَضٌ فَزَادَهُمُ اللَّهُ مَرَضًا ۖ وَلَهُمْ عَذَابٌ أَلِيمٌ بِمَا كَانُوا يَكْذِبُونَ",
+        "words": [
+          "فِي",
+          "قُلُوبِهِم",
+          "مَّرَضٌ",
+          "فَزَادَهُمُ",
+          "اللَّهُ",
+          "مَرَضًا",
+          "وَلَهُمْ",
+          "عَذَابٌ",
+          "أَلِيمٌ",
+          "بِمَا",
+          "كَانُوا",
+          "يَكْذِبُونَ"
+        ],
+        "transliteration": "Fee quloobihim maradun fazadahumu Allahu maradan wa lahum 'adhabun aleemun bima kanoo yakziboon.",
+        "translation": "In their hearts is disease, so Allah has increased their disease; and for them is a painful punishment because they [habitually] used to lie.",
+        "tajweedMap": {
+          "2": [
+            {
+              "rule": "idgham",
+              "description": "Idgham: Merge Tanween with Meem Mushaddadah."
+            }
+          ],
+          "8": [
+            {
+              "rule": "izhar",
+              "description": "Izhar: Pronounce clearly since next letter is Ba."
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "36": {
+    "name": "Ya-Sin — يس",
+    "ayat": [
+      {
+        "surahId": 36,
+        "ayahNumber": 1,
+        "arabic": "يٰسٓ",
+        "words": [
+          "يٰسٓ"
+        ],
+        "transliteration": "Yā-Sīn",
+        "translation": "Ya Seen.",
+        "tajweedMap": {
+          "0": [
+            {
+              "rule": "madd",
+              "description": "Madd Lazim Harfi: 6 counts elongation."
+            }
+          ]
+        }
+      },
+      {
+        "surahId": 36,
+        "ayahNumber": 2,
+        "arabic": "وَالْقُرْآنِ الْحَكِيمِ",
+        "words": [
+          "وَالْقُرْآنِ",
+          "الْحَكِيمِ"
+        ],
+        "transliteration": "Wal-qur'ānil-ḥakīm",
+        "translation": "By the wise Quran.",
+        "tajweedMap": {
+          "1": [
+            {
+              "rule": "madd",
+              "description": "Madd Arid Lissukun."
+            }
+          ]
+        }
+      },
+      {
+        "surahId": 36,
+        "ayahNumber": 3,
+        "arabic": "إِنَّكَ لَمِنَ الْمُرْسَلِينَ",
+        "words": [
+          "إِنَّكَ",
+          "لَمِنَ",
+          "الْمُرْسَلِينَ"
+        ],
+        "transliteration": "Innaka laminal-mursalīn",
+        "translation": "Indeed you, are from among the messengers,",
+        "tajweedMap": {
+          "0": [
+            {
+              "rule": "ghunna",
+              "description": "Ghunna on Nun Mushaddadah."
+            }
+          ]
+        }
+      },
+      {
+        "surahId": 36,
+        "ayahNumber": 4,
+        "arabic": "عَلَىٰ صِرَاطٍ مُّسْتَقِيمٍ",
+        "words": [
+          "عَلَىٰ",
+          "صِرَاطٍ",
+          "مُّسْتَقِيمٍ"
+        ],
+        "transliteration": "ʿAlā ṣirāṭim-mustaqīm",
+        "translation": "On a straight path.",
+        "tajweedMap": {
+          "1": [
+            {
+              "rule": "idgham",
+              "description": "Idgham: Merge Tanween with Meem."
+            }
+          ]
+        }
+      },
+      {
+        "surahId": 36,
+        "ayahNumber": 5,
+        "arabic": "تَنزِيلَ الْعَزِيزِ الرَّحِيمِ",
+        "words": [
+          "تَنزِيلَ",
+          "الْعَزِيزِ",
+          "الرَّحِيمِ"
+        ],
+        "transliteration": "Tanzīlal-ʿazīzir-raḥīm",
+        "translation": "A revelation of the Exalted in Might, the Merciful.",
+        "tajweedMap": {
+          "0": [
+            {
+              "rule": "ikhfa",
+              "description": "Ikhfa: Hide the sound of Nun Sakinah."
+            }
+          ]
+        }
+      },
+      {
+        "surahId": 36,
+        "ayahNumber": 6,
+        "arabic": "لِتُنذِرَ قَوْمًا مَّا أُنذِرَ ءَابَاؤُهُمْ فَهُمْ غَافِلُونَ",
+        "words": [
+          "لِتُنذِرَ",
+          "قَوْمًا",
+          "مَّا",
+          "أُنذِرَ",
+          "ءَابَاؤُهُمْ",
+          "فَهُمْ",
+          "غَافِلُونَ"
+        ],
+        "transliteration": "Litunzira qawman maaa unzira aabaaa'uhum fahum ghaafiloon.",
+        "translation": "[It is] so that you may warn a people whose forefathers were not warned, so they are unaware.",
+        "tajweedMap": {
+          "0": [
+            {
+              "rule": "ikhfa",
+              "description": "Ikhfa."
+            }
+          ],
+          "1": [
+            {
+              "rule": "idgham",
+              "description": "Idgham: Merge Tanween."
+            }
+          ],
+          "3": [
+            {
+              "rule": "ikhfa",
+              "description": "Ikhfa."
+            }
+          ]
+        }
+      },
+      {
+        "surahId": 36,
+        "ayahNumber": 7,
+        "arabic": "لَقَدْ حَقَّ الْقَوْلُ عَلَىٰ أَكْثَرِهِمْ فَهُمْ لَا يُؤْمِنُونَ",
+        "words": [
+          "لَقَدْ",
+          "حَقَّ",
+          "الْقَوْلُ",
+          "عَلَىٰ",
+          "أَكْثَرِهِمْ",
+          "فَهُمْ",
+          "لَا",
+          "يُؤْمِنُونَ"
+        ],
+        "transliteration": "Laqad haqqal qawlu 'alaaa aksarihim fahum laa yu'minoon.",
+        "translation": "Indeed, the decree has come into effect upon most of them, so they do not believe.",
+        "tajweedMap": {
+          "0": [
+            {
+              "rule": "qalqala",
+              "description": "Qalqala on Dal Sakinah."
+            }
+          ]
+        }
+      },
+      {
+        "surahId": 36,
+        "ayahNumber": 8,
+        "arabic": "إِنَّا جَعَلْنَا فِي أَعْنَاقِهِمْ أَغْلَالًا فَهِيَ إِلَى الْأَذْقَانِ فَهُم مُّقْمَحُونَ",
+        "words": [
+          "إِنَّا",
+          "جَعَلْنَا",
+          "فِي",
+          "أَعْنَاقِهِمْ",
+          "أَغْلَالًا",
+          "فَهِيَ",
+          "إِلَى",
+          "الْأَذْقَانِ",
+          "فَهُم",
+          "مُّقْمَحُونَ"
+        ],
+        "transliteration": "Innaa ja'alnaaa feee a'naaqihim aghlaalan fahiya ilal azqaani fahum muqmahoon.",
+        "translation": "Indeed, We have put shackles on their necks, and they are to the chins, so they are with heads raised.",
+        "tajweedMap": {
+          "0": [
+            {
+              "rule": "ghunna",
+              "description": "Ghunna on Nun Mushaddadah."
+            }
+          ]
+        }
+      },
+      {
+        "surahId": 36,
+        "ayahNumber": 9,
+        "arabic": "وَجَعَلْنَا مِن بَيْنِ أَيْدِيهِمْ سَدًّا وَمِنْ خَلْفِهِمْ سَدًّا فَأَغْشَيْنَاهُمْ فَهُمْ لَا يُبْصِرُونَ",
+        "words": [
+          "وَجَعَلْنَا",
+          "مِن",
+          "بَيْنِ",
+          "أَيْدِيهِمْ",
+          "سَدًّا",
+          "وَمِنْ",
+          "خَلْفِهِمْ",
+          "سَدًّا",
+          "فَأَغْشَيْنَاهُمْ",
+          "فَهُمْ",
+          "لَا",
+          "يُبْصِرُونَ"
+        ],
+        "transliteration": "Wa ja'alnaa mim baini aydeehim saddan wa min khalfihim saddan fa aghshainaahum fahum laa yubsiroon.",
+        "translation": "And We have put before them a barrier and behind them a barrier and covered them, so they do not see.",
+        "tajweedMap": {
+          "1": [
+            {
+              "rule": "iqlab",
+              "description": "Iqlab: Convert Nun Sakinah to Meem."
+            }
+          ]
+        }
+      },
+      {
+        "surahId": 36,
+        "ayahNumber": 10,
+        "arabic": "وَسَوَاءٌ عَلَيْهِمْ ءَأَنذَرْتَهُمْ أَمْ لَمْ تُنذِرْهُمْ لَا يُؤْمِنُونَ",
+        "words": [
+          "وَسَوَاءٌ",
+          "عَلَيْهِمْ",
+          "ءَأَنذَرْتَهُمْ",
+          "أَمْ",
+          "لَمْ",
+          "تُنذِرْهُمْ",
+          "لَا",
+          "يُؤْمِنُونَ"
+        ],
+        "transliteration": "Wa sawaaa'un 'alaihim a-anzartahum am lam tunzirhum laa yu'minoon.",
+        "translation": "And it is all the same for them whether you warn them or do not warn them - they will not believe.",
+        "tajweedMap": {
+          "0": [
+            {
+              "rule": "madd",
+              "description": "Madd Muttasil."
+            }
+          ],
+          "5": [
+            {
+              "rule": "ikhfa",
+              "description": "Ikhfa."
+            }
+          ]
+        }
+      },
+      {
+        "surahId": 36,
+        "ayahNumber": 11,
+        "arabic": "إِنَّمَا تُنذِرُ مَنِ اتَّبَعَ الذِّكْرَ وَخَشِيَ الرَّحْمَٰنَ بِالْغَيْبِ ۖ فَبَشِّرْهُ بِمَغْفِرَةٍ وَأَجْرٍ كَرِيمٍ",
+        "words": [
+          "إِنَّمَا",
+          "تُنذِرُ",
+          "مَنِ",
+          "اتَّبَعَ",
+          "الذِّكْرَ",
+          "وَخَشِيَ",
+          "الرَّحْمَٰنَ",
+          "بِالْغَيْبِ",
+          "فَبَشِّرْهُ",
+          "بِمَغْفِرَةٍ",
+          "وَأَجْرٍ",
+          "كَرِيمٍ"
+        ],
+        "transliteration": "Innamaa tunziru manittaba'az zikra wa khashiyar rahmaana bil-ghaib; fabash-shirhu bimaghfiratinw wa ajrin kareem.",
+        "translation": "You can only warn one who follows the message and fears the Most Merciful unseen. So give him good tidings of forgiveness and a noble reward.",
+        "tajweedMap": {
+          "1": [
+            {
+              "rule": "ikhfa",
+              "description": "Ikhfa."
+            }
+          ]
+        }
+      },
+      {
+        "surahId": 36,
+        "ayahNumber": 12,
+        "arabic": "إِنَّا نَحْنُ نُحْيِي الْمَوْتَىٰ وَنَكْتُبُ مَا قَدَّمُوا وَءَاثَارَهُمْ ۚ وَكُلَّ شَيْءٍ أَحْصَيْنَاهُ فِي إِمَامٍ مُّبِينٍ",
+        "words": [
+          "إِنَّا",
+          "نَحْنُ",
+          "نُحْيِي",
+          "الْمَوْتَىٰ",
+          "وَنَكْتُبُ",
+          "مَا",
+          "قَدَّمُوا",
+          "وَءَاثَارَهُمْ",
+          "وَكُلَّ",
+          "شَيْءٍ",
+          "أَحْصَيْنَاهُ",
+          "فِي",
+          "إِمَامٍ",
+          "مُّبِينٍ"
+        ],
+        "transliteration": "Innaa nahnu nuhyil mawtaa wa naktubu maa qaddamoo wa aasaarahum; wa kulla shai'in ahsainaahu feee imaamim mubeen.",
+        "translation": "Indeed, it is We who bring the dead to life and record what they have put forth and what they left behind, and all things We have enumerated in a clear register.",
+        "tajweedMap": {
+          "0": [
+            {
+              "rule": "ghunna",
+              "description": "Ghunna on Nun Mushaddadah."
+            }
+          ],
+          "9": [
+            {
+              "rule": "izhar",
+              "description": "Izhar."
+            }
+          ],
+          "12": [
+            {
+              "rule": "idgham",
+              "description": "Idgham."
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "55": {
+    "name": "Ar-Rahman — الرحمن",
+    "ayat": [
+      {
+        "surahId": 55,
+        "ayahNumber": 1,
+        "arabic": "الرَّحْمَٰنُ",
+        "words": [
+          "الرَّحْمَٰنُ"
+        ],
+        "transliteration": "Ar-raḥmān",
+        "translation": "The Most Merciful",
+        "tajweedMap": {}
+      },
+      {
+        "surahId": 55,
+        "ayahNumber": 2,
+        "arabic": "عَلَّمَ الْقُرْآنَ",
+        "words": [
+          "عَلَّمَ",
+          "الْقُرْآنَ"
+        ],
+        "transliteration": "ʿAllamal-qur'ān",
+        "translation": "Taught the Quran,",
+        "tajweedMap": {}
+      },
+      {
+        "surahId": 55,
+        "ayahNumber": 3,
+        "arabic": "خَلَقَ الْإِنسَانَ",
+        "words": [
+          "خَلَقَ",
+          "الْإِنسَانَ"
+        ],
+        "transliteration": "Khalaqal-insān",
+        "translation": "Created man,",
+        "tajweedMap": {
+          "1": [
+            {
+              "rule": "ikhfa",
+              "description": "Ikhfa: Hide Nun Sakinah."
+            }
+          ]
+        }
+      },
+      {
+        "surahId": 55,
+        "ayahNumber": 4,
+        "arabic": "عَلَّمَهُ الْبَيَانَ",
+        "words": [
+          "عَلَّمَهُ",
+          "الْبَيَانَ"
+        ],
+        "transliteration": "ʿAllamahul-bayān",
+        "translation": "And taught him eloquence.",
+        "tajweedMap": {}
+      },
+      {
+        "surahId": 55,
+        "ayahNumber": 5,
+        "arabic": "الشَّمْسُ وَالْقَمَرُ بِحُسْبَانٍ",
+        "words": [
+          "الشَّمْسُ",
+          "وَالْقَمَرُ",
+          "بِحُسْبَانٍ"
+        ],
+        "transliteration": "Ash-shamsu wal-qamaru biḥusbān",
+        "translation": "The sun and the moon move by precise calculation,",
+        "tajweedMap": {}
+      },
+      {
+        "surahId": 55,
+        "ayahNumber": 6,
+        "arabic": "وَالنَّجْمُ وَالشَّجَرُ يَسْجُدَانِ",
+        "words": [
+          "وَالنَّجْمُ",
+          "وَالشَّجَرُ",
+          "يَسْجُدَانِ"
+        ],
+        "transliteration": "Wan-najmu wash-shajaru yasjudān",
+        "translation": "And the stars and trees prostrate.",
+        "tajweedMap": {}
+      },
+      {
+        "surahId": 55,
+        "ayahNumber": 7,
+        "arabic": "وَالسَّمَاءَ رَفَعَهَا وَوَضَعَ الْمِيزَانَ",
+        "words": [
+          "وَالسَّمَاءَ",
+          "رَفَعَهَا",
+          "وَوَضَعَ",
+          "الْمِيزَانَ"
+        ],
+        "transliteration": "Was-samāʾa rafaʿahā wa-waḍaʿal-mīzān",
+        "translation": "And the heaven He raised and imposed the balance",
+        "tajweedMap": {
+          "0": [
+            {
+              "rule": "madd",
+              "description": "Madd Muttasil."
+            }
+          ]
+        }
+      },
+      {
+        "surahId": 55,
+        "ayahNumber": 8,
+        "arabic": "أَلَّا تَطْغَوْا فِي الْمِيزَانِ",
+        "words": [
+          "أَلَّا",
+          "تَطْغَوْا",
+          "فِي",
+          "الْمِيزَانَ"
+        ],
+        "transliteration": "Allā taṭghaw fil-mīzān",
+        "translation": "That you not transgress within the balance.",
+        "tajweedMap": {}
+      },
+      {
+        "surahId": 55,
+        "ayahNumber": 9,
+        "arabic": "وَأَقِيمُوا الْوَزْنَ بِالْقِسْطِ وَلَا تُخْسِرُوا الْمِيزَانَ",
+        "words": [
+          "وَأَقِيمُوا",
+          "الْوَزْنَ",
+          "بِالْقِسْطِ",
+          "وَلَا",
+          "تُخْسِرُوا",
+          "الْمِيزَانَ"
+        ],
+        "transliteration": "Wa-aqīmul-wazna bil-qisṭi wa-lā tukhsirul-mīzān",
+        "translation": "And establish weight in justice and do not make deficient the balance.",
+        "tajweedMap": {}
+      },
+      {
+        "surahId": 55,
+        "ayahNumber": 10,
+        "arabic": "وَالْأَرْضَ وَضَعَهَا لِلْأَنَامِ",
+        "words": [
+          "وَالْأَرْضَ",
+          "وَضَعَهَا",
+          "لِلْأَنَامِ"
+        ],
+        "transliteration": "Wal-arda wada'ahaa lil-anaam",
+        "translation": "And the earth He laid [out] for the creatures.",
+        "tajweedMap": {}
+      },
+      {
+        "surahId": 55,
+        "ayahNumber": 11,
+        "arabic": "فِيهَا فَاكِهَةٌ وَالنَّخْلُ ذَاتُ الْأَكْمَامِ",
+        "words": [
+          "فِيهَا",
+          "فَاكِهَةٌ",
+          "وَالنَّخْلُ",
+          "ذَاتُ",
+          "الْأَكْمَامِ"
+        ],
+        "transliteration": "Feehaa faakihatun wan-nakhlu zaatul-akmaam",
+        "translation": "Therein is fruit and palm trees having sheathed fruit-stalks,",
+        "tajweedMap": {}
+      },
+      {
+        "surahId": 55,
+        "ayahNumber": 12,
+        "arabic": "وَالْحَبُّ ذُو الْعَصْفِ وَالرَّيْحَانُ",
+        "words": [
+          "وَالْحَبُّ",
+          "ذُو",
+          "الْعَصْفِ",
+          "وَالرَّيْحَانُ"
+        ],
+        "transliteration": "Wal-habbu zul-'asfi war-rayhaan",
+        "translation": "And grain having husks and scented plants.",
+        "tajweedMap": {}
+      },
+      {
+        "surahId": 55,
+        "ayahNumber": 13,
+        "arabic": "فَبِأَيِّ آلَاءِ رَبِّكُمَا تُكَذِّبَانِ",
+        "words": [
+          "فَبِأَيِّ",
+          "آلَاءِ",
+          "رَبِّكُمَا",
+          "تُكَذِّبَانِ"
+        ],
+        "transliteration": "Fabi-ayyi aalaaa'i Rabbikumaa tukazzibaan",
+        "translation": "So which of the favors of your Lord would you deny?",
+        "tajweedMap": {
+          "1": [
+            {
+              "rule": "madd",
+              "description": "Madd Munfasil."
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "67": {
+    "name": "Al-Mulk — الملك",
+    "ayat": [
+      {
+        "surahId": 67,
+        "ayahNumber": 1,
+        "arabic": "تَبَارَكَ الَّذِي بِيَدِهِ الْمُلْكُ وَهُوَ عَلَىٰ كُلِّ شَيْءٍ قَدِيرٌ",
+        "words": [
+          "تَبَارَكَ",
+          "الَّذِي",
+          "بِيَدِهِ",
+          "الْمُلْكُ",
+          "وَهُوَ",
+          "عَلَىٰ",
+          "كُلِّ",
+          "شَيْءٍ",
+          "قَدِيرٌ"
+        ],
+        "transliteration": "Tabārakal-ladhī bi-yadihil-mulku wa-huwa ʿalā kulli shay'in qadīr",
+        "translation": "Blessed is He in whose hand is dominion, and He is over all things competent",
+        "tajweedMap": {
+          "8": [
+            {
+              "rule": "madd",
+              "description": "Madd Arid Lissukun."
+            }
+          ]
+        }
+      },
+      {
+        "surahId": 67,
+        "ayahNumber": 2,
+        "arabic": "الَّذِي خَلَقَ الْمَوْتَ وَالْحَيَاةَ لِيَبْلُوَكُمْ أَيُّكُمْ أَحْسَنُ عَمَلًا ۚ وَهُوَ الْعَزِيزُ الْغَفُورُ",
+        "words": [
+          "الَّذِي",
+          "خَلَقَ",
+          "الْمَوْتَ",
+          "وَالْحَيَاةَ",
+          "لِيَبْلُوَكُمْ",
+          "أَيُّكُمْ",
+          "أَحْسَنُ",
+          "عَمَلًا",
+          "وَهُوَ",
+          "الْعَزِيزُ",
+          "الْغَفُورُ"
+        ],
+        "transliteration": "Alladhī khalaqal-mawta wal-ḥayāta li-yabluwakum ayyukum aḥsanu ʿamalā, wa-huwal-ʿazīzul-ghafūr",
+        "translation": "Who created death and life to test you as to which of you is best in deed — and He is the Exalted in Might, the Forgiving.",
+        "tajweedMap": {
+          "10": [
+            {
+              "rule": "madd",
+              "description": "Madd Arid Lissukun."
+            }
+          ]
+        }
+      },
+      {
+        "surahId": 67,
+        "ayahNumber": 3,
+        "arabic": "الَّذِي خَلَقَ سَبْعَ سَمَاوَاتٍ طِبَاقًا ۖ مَّا تَرَىٰ فِي خَلْقِ الرَّحْمَٰنِ مِن تَفَاوُتٍ ۖ فَارْجِعِ الْبَصَرَ هَلْ تَرَىٰ مِن فُطُورٍ",
+        "words": [
+          "الَّذِي",
+          "خَلَقَ",
+          "سَبْعَ",
+          "سَمَاوَاتٍ",
+          "طِبَاقًا",
+          "مَّا",
+          "تَرَىٰ",
+          "فِي",
+          "خَلْقِ",
+          "الرَّحْمَٰنِ",
+          "مِن",
+          "تَفَاوُتٍ",
+          "فَارْجِعِ",
+          "الْبَصَرَ",
+          "هَلْ",
+          "تَرَىٰ",
+          "مِن",
+          "فُطُورٍ"
+        ],
+        "transliteration": "Alladhī khalaqa sabʿa samāwātin ṭibāqā, mā tarā fī khalqir-raḥmāni min tafāwut, farjiʿil-baṣara hal tarā min fuṭūr",
+        "translation": "Who created seven heavens in layers. You do not see in the creation of the Most Merciful any inconsistency. Return your vision; do you see any breaks?",
+        "tajweedMap": {
+          "2": [
+            {
+              "rule": "qalqala",
+              "description": "Qalqala on Ba Sakinah."
+            }
+          ],
+          "17": [
+            {
+              "rule": "madd",
+              "description": "Madd Arid Lissukun."
+            }
+          ]
+        }
+      },
+      {
+        "surahId": 67,
+        "ayahNumber": 4,
+        "arabic": "ثُمَّ ارْجِعِ الْبَصَرَ كَرَّتَيْنِ يَنقَلِبْ إِلَيْكَ الْبَصَرُ خَاسِئًا وَهُوَ حَسِيرٌ",
+        "words": [
+          "ثُمَّ",
+          "ارْجِعِ",
+          "الْبَصَرَ",
+          "كَرَّتَيْنِ",
+          "يَنقَلِبْ",
+          "إِلَيْكَ",
+          "الْبَصَرُ",
+          "خَاسِئًا",
+          "وَهُوَ",
+          "حَسِيرٌ"
+        ],
+        "transliteration": "Thummarjiʿil-baṣara karratayn yanqalib ilaykal-baṣaru khāsi'an wa-huwa ḥasīr",
+        "translation": "Then return your vision twice again. Your vision will return humbled while it is fatigued.",
+        "tajweedMap": {
+          "0": [
+            {
+              "rule": "ghunna",
+              "description": "Ghunna on Mim Mushaddadah."
+            }
+          ],
+          "4": [
+            {
+              "rule": "qalqala",
+              "description": "Qalqala on Ba Sakinah."
+            }
+          ],
+          "9": [
+            {
+              "rule": "madd",
+              "description": "Madd Arid Lissukun."
+            }
+          ]
+        }
+      },
+      {
+        "surahId": 67,
+        "ayahNumber": 5,
+        "arabic": "وَلَقَدْ زَيَّنَّا السَّمَاءَ الدُّنْيَا بِمَصَابِيحَ وَجَعَلْنَاهَا رُجُومًا لِّلشَّيَاطِينِ ۖ وَأَعْتَدْنَا لَهُمْ عَذَابَ السَّعِيرِ",
+        "words": [
+          "وَلَقَدْ",
+          "زَيَّنَّا",
+          "السَّمَاءَ",
+          "الدُّنْيَا",
+          "بِمَصَابِيحَ",
+          "وَجَعَلْنَاهَا",
+          "رُجُومًا",
+          "لِّلشَّيَاطِينِ",
+          "وَأَعْتَدْنَا",
+          "لَهُمْ",
+          "عَذَابَ",
+          "السَّعِيرِ"
+        ],
+        "transliteration": "Wa-laqad zayyannās-samāʾad-dunyā bi-maṣābīḥa wa-jaʿalnāhā rujūmal-lishshayāṭīni wa-aʿtadnā lahum ʿadhābas-saʿīr",
+        "translation": "And We have certainly beautified the nearest heaven with stars and have made them what is thrown at the devils and have prepared for them the punishment of the Blaze.",
+        "tajweedMap": {
+          "0": [
+            {
+              "rule": "qalqala",
+              "description": "Qalqala on Dal Sakinah."
+            }
+          ],
+          "1": [
+            {
+              "rule": "ghunna",
+              "description": "Ghunna on Nun Mushaddadah."
+            }
+          ],
+          "2": [
+            {
+              "rule": "madd",
+              "description": "Madd Muttasil."
+            }
+          ],
+          "11": [
+            {
+              "rule": "madd",
+              "description": "Madd Arid Lissukun."
+            }
+          ]
+        }
+      },
+      {
+        "surahId": 67,
+        "ayahNumber": 6,
+        "arabic": "وَلِلَّذِينَ كَفَرُوا بِرَبِّهِمْ عَذَابُ جَهَنَّمَ ۖ وَبِئْسَ الْمَصِيرُ",
+        "words": [
+          "وَلِلَّذِينَ",
+          "كَفَرُوا",
+          "بِرَبِّهِمْ",
+          "عَذَابُ",
+          "جَهَنَّمَ",
+          "وَبِئْسَ",
+          "الْمَصِيرُ"
+        ],
+        "transliteration": "Wa lillazeena kafaroo bi Rabbihim 'azaabu Jahannam; wa bi'sal maseer.",
+        "translation": "And for those who disbelieved in their Lord is the punishment of Hell, and wretched is the destination.",
+        "tajweedMap": {
+          "4": [
+            {
+              "rule": "ghunna",
+              "description": "Ghunna on Nun Mushaddadah."
+            }
+          ],
+          "6": [
+            {
+              "rule": "madd",
+              "description": "Madd Arid Lissukun."
+            }
+          ]
+        }
+      },
+      {
+        "surahId": 67,
+        "ayahNumber": 7,
+        "arabic": "إِذَا أُلْقُوا فِيهَا سَمِعُوا لَهَا شَهِيقًا وَهِيَ تَفُورُ",
+        "words": [
+          "إِذَا",
+          "أُلْقُوا",
+          "فِيهَا",
+          "سَمِعُوا",
+          "لَهَا",
+          "شَهِيقًا",
+          "وَهِيَ",
+          "تَفُورُ"
+        ],
+        "transliteration": "Izaaa ulqoo feeha sami'oo laha shaheeqanw-wa hiya tafoor.",
+        "translation": "When they are thrown into it, they hear from it a [dreadful] inhaling while it boils up.",
+        "tajweedMap": {
+          "5": [
+            {
+              "rule": "idgham",
+              "description": "Idgham: Merge Tanween with Waw."
+            }
+          ]
+        }
+      },
+      {
+        "surahId": 67,
+        "ayahNumber": 8,
+        "arabic": "تَكَادُ تَمَيَّزُ مِنَ الْغَيْظِ ۖ كُلَّمَا أُلْقِيَ فِيهَا فَوْجٌ سَأَلَهُمْ خَزَنَتُهَا أَلَمْ يَأْتِكُمْ نَذِيرٌ",
+        "words": [
+          "تَكَادُ",
+          "تَمَيَّزُ",
+          "مِنَ",
+          "الْغَيْظِ",
+          "كُلَّمَا",
+          "أُلْقِيَ",
+          "فِيهَا",
+          "فَوْجٌ",
+          "سَأَلَهُمْ",
+          "خَزَنَتُهَا",
+          "أَلَمْ",
+          "يَأْتِكُمْ",
+          "نَذِيرٌ"
+        ],
+        "transliteration": "Takaadu tamayyazu minal ghaiz; kullamaaa ulqiya feeha fawjun sa'alahum khazanatuha alam ya'tikum nazeer?",
+        "translation": "It almost bursts with rage. Every time a company is thrown into it, its keepers ask them, \"Did there not come to you a warner?\"",
+        "tajweedMap": {
+          "7": [
+            {
+              "rule": "izhar",
+              "description": "Izhar: Pronounce Tanween clearly."
+            }
+          ]
+        }
+      },
+      {
+        "surahId": 67,
+        "ayahNumber": 9,
+        "arabic": "قَالُوا بَلَىٰ قَدْ جَاءَنَا نَذِيرٌ فَكَذَّبْنَا وَقُلْنَا مَا نَزَّلَ اللَّهُ مِن شَيْءٍ إِنْ أَنتُمْ إِلَّا فِي ضَلَالٍ كَبِيرٍ",
+        "words": [
+          "قَالُوا",
+          "بَلَىٰ",
+          "قَدْ",
+          "جَاءَنَا",
+          "نَذِيرٌ",
+          "فَكَذَّبْنَا",
+          "وَقُلْنَا",
+          "مَا",
+          "نَزَّلَ",
+          "اللَّهُ",
+          "مِن",
+          "شَيْءٍ",
+          "إِنْ",
+          "أَنتُمْ",
+          "إِلَّا",
+          "فِي",
+          "ضَلَالٍ",
+          "كَبِيرٍ"
+        ],
+        "transliteration": "Qaloo balaa qad jaaa'ana nazeerun-fa kazzabnaa wa qulnaa maa nazzalallaahu min shai'in in antum illaa fee dalaalin kabeer.",
+        "translation": "They will say, \"Yes, a warner had come to us, but we denied and said, 'Allah has not sent down anything. You are not but in great error.'\"",
+        "tajweedMap": {
+          "2": [
+            {
+              "rule": "qalqala",
+              "description": "Qalqala on Dal Sakinah."
+            }
+          ],
+          "4": [
+            {
+              "rule": "ikhfa",
+              "description": "Ikhfa: Hide the sound of Tanween."
+            }
+          ],
+          "11": [
+            {
+              "rule": "izhar",
+              "description": "Izhar: Pronounce Tanween clearly before Hamzah."
+            }
+          ]
+        }
+      },
+      {
+        "surahId": 67,
+        "ayahNumber": 10,
+        "arabic": "وَقَالُوا لَوْ كُنَّا نَسْمَعُ أَوْ نَعْقِلُ مَا كُنَّا فِي أَصْحَابِ السَّعِيرِ",
+        "words": [
+          "وَقَالُوا",
+          "لَوْ",
+          "كُنَّا",
+          "نَسْمَعُ",
+          "أَوْ",
+          "نَعْقِلُ",
+          "مَا",
+          "كُنَّا",
+          "فِي",
+          "أَصْحَابِ",
+          "السَّعِيرِ"
+        ],
+        "transliteration": "Wa qaloo law kunnaa nasma'u aw na'qilu maa kunnaa feee ashaabis sa'eer.",
+        "translation": "And they will say, \"If only we had been listening or reasoning, we would not be among the companions of the Blaze.\"",
+        "tajweedMap": {
+          "2": [
+            {
+              "rule": "ghunna",
+              "description": "Ghunna on Nun Mushaddadah."
+            }
+          ],
+          "7": [
+            {
+              "rule": "ghunna",
+              "description": "Ghunna on Nun Mushaddadah."
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "112": {
+    "name": "Al-Ikhlas — الإخلاص",
+    "ayat": [
+      {
+        "surahId": 112,
+        "ayahNumber": 1,
+        "arabic": "قُلْ هُوَ اللَّهُ أَحَدٌ",
+        "words": [
+          "قُلْ",
+          "هُوَ",
+          "اللَّهُ",
+          "أَحَدٌ"
+        ],
+        "transliteration": "Qul huwal-lāhu aḥad",
+        "translation": "Say: He is Allah, the One.",
+        "tajweedMap": {
+          "3": [
+            {
+              "rule": "qalqala",
+              "description": "Qalqala on Dal when stopping."
+            }
+          ]
+        }
+      },
+      {
+        "surahId": 112,
+        "ayahNumber": 2,
+        "arabic": "اللَّهُ الصَّمَدُ",
+        "words": [
+          "اللَّهُ",
+          "الصَّمَدُ"
+        ],
+        "transliteration": "Allāhuṣ-ṣamad",
+        "translation": "Allah, the Eternal Refuge.",
+        "tajweedMap": {
+          "1": [
+            {
+              "rule": "qalqala",
+              "description": "Qalqala on Dal when stopping."
+            }
+          ]
+        }
+      },
+      {
+        "surahId": 112,
+        "ayahNumber": 3,
+        "arabic": "لَمْ يَلِدْ وَلَمْ يُولَدْ",
+        "words": [
+          "لَمْ",
+          "يَلِدْ",
+          "وَلَمْ",
+          "يُولَدْ"
+        ],
+        "transliteration": "Lam yalid wa-lam yūlad",
+        "translation": "He neither begets nor was He begotten.",
+        "tajweedMap": {
+          "1": [
+            {
+              "rule": "qalqala",
+              "description": "Qalqala on Dal Sakinah."
+            }
+          ],
+          "3": [
+            {
+              "rule": "qalqala",
+              "description": "Qalqala on Dal Sakinah when stopping."
+            }
+          ]
+        }
+      },
+      {
+        "surahId": 112,
+        "ayahNumber": 4,
+        "arabic": "وَلَمْ يَكُن لَّهُ كُفُوًا أَحَدٌ",
+        "words": [
+          "وَلَمْ",
+          "يَكُن",
+          "لَّهُ",
+          "كُفُوًا",
+          "أَحَدٌ"
+        ],
+        "transliteration": "Wa-lam yakun lahū kufuwan aḥad",
+        "translation": "Nor is there to Him any equivalent.",
+        "tajweedMap": {
+          "1": [
+            {
+              "rule": "idgham",
+              "description": "Idgham Bilaghunnah: Merge Nun Sakinah into Lam."
+            }
+          ],
+          "4": [
+            {
+              "rule": "qalqala",
+              "description": "Qalqala on Dal when stopping."
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "113": {
+    "name": "Al-Falaq — الفلق",
+    "ayat": [
+      {
+        "surahId": 113,
+        "ayahNumber": 1,
+        "arabic": "قُلْ أَعُوذُ بِرَبِّ الْفَلَقِ",
+        "words": [
+          "قُلْ",
+          "أَعُوذُ",
+          "بِرَبِّ",
+          "الْفَلَقِ"
+        ],
+        "transliteration": "Qul aʿūdhu bi-rabbil-falaq",
+        "translation": "Say: I seek refuge in the Lord of daybreak",
+        "tajweedMap": {
+          "3": [
+            {
+              "rule": "qalqala",
+              "description": "Qalqala on Qaf when stopping."
+            }
+          ]
+        }
+      },
+      {
+        "surahId": 113,
+        "ayahNumber": 2,
+        "arabic": "مِن شَرِّ مَا خَلَقَ",
+        "words": [
+          "مِن",
+          "شَرِّ",
+          "مَا",
+          "خَلَقَ"
+        ],
+        "transliteration": "Min sharri mā khalaq",
+        "translation": "From the evil of that which He created",
+        "tajweedMap": {
+          "0": [
+            {
+              "rule": "ikhfa",
+              "description": "Ikhfa: Hide Nun Sakinah before Sheen."
+            }
+          ],
+          "3": [
+            {
+              "rule": "qalqala",
+              "description": "Qalqala on Qaf when stopping."
+            }
+          ]
+        }
+      },
+      {
+        "surahId": 113,
+        "ayahNumber": 3,
+        "arabic": "وَمِن شَرِّ غَاسِقٍ إِذَا وَقَبَ",
+        "words": [
+          "وَمِن",
+          "شَرِّ",
+          "غَاسِقٍ",
+          "إِذَا",
+          "وَقَبَ"
+        ],
+        "transliteration": "Wa-min sharri ghāsiqin idhā waqab",
+        "translation": "And from the evil of darkness when it settles",
+        "tajweedMap": {
+          "0": [
+            {
+              "rule": "ikhfa",
+              "description": "Ikhfa."
+            }
+          ],
+          "2": [
+            {
+              "rule": "izhar",
+              "description": "Izhar: Pronounce Tanween clearly before Hamzah."
+            }
+          ],
+          "4": [
+            {
+              "rule": "qalqala",
+              "description": "Qalqala on Ba when stopping."
+            }
+          ]
+        }
+      },
+      {
+        "surahId": 113,
+        "ayahNumber": 4,
+        "arabic": "وَمِن شَرِّ النَّفَّاثَاتِ فِي الْعُقَدِ",
+        "words": [
+          "وَمِن",
+          "شَرِّ",
+          "النَّفَّاثَاتِ",
+          "فِي",
+          "الْعُقَدِ"
+        ],
+        "transliteration": "Wa-min sharrin-naffāthāti fil-ʿuqad",
+        "translation": "And from the evil of the blowers in knots",
+        "tajweedMap": {
+          "0": [
+            {
+              "rule": "ikhfa",
+              "description": "Ikhfa."
+            }
+          ],
+          "2": [
+            {
+              "rule": "ghunna",
+              "description": "Ghunna on Nun Mushaddadah."
+            }
+          ],
+          "4": [
+            {
+              "rule": "qalqala",
+              "description": "Qalqala on Dal when stopping."
+            }
+          ]
+        }
+      },
+      {
+        "surahId": 113,
+        "ayahNumber": 5,
+        "arabic": "وَمِن شَرِّ حَاسِدٍ إِذَا حَسَدَ",
+        "words": [
+          "وَمِن",
+          "شَرِّ",
+          "حَاسِدٍ",
+          "إِذَا",
+          "حَسَدَ"
+        ],
+        "transliteration": "Wa-min sharri ḥāsidin idhā ḥasad",
+        "translation": "And from the evil of an envier when he envies.",
+        "tajweedMap": {
+          "0": [
+            {
+              "rule": "ikhfa",
+              "description": "Ikhfa."
+            }
+          ],
+          "2": [
+            {
+              "rule": "izhar",
+              "description": "Izhar."
+            }
+          ],
+          "4": [
+            {
+              "rule": "qalqala",
+              "description": "Qalqala on Dal when stopping."
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "114": {
+    "name": "An-Nas — الناس",
+    "ayat": [
+      {
+        "surahId": 114,
+        "ayahNumber": 1,
+        "arabic": "قُلْ أَعُوذُ بِرَبِّ النَّاسِ",
+        "words": [
+          "قُلْ",
+          "أَعُوذُ",
+          "بِرَبِّ",
+          "النَّاسِ"
+        ],
+        "transliteration": "Qul aʿūdhu bi-rabbin-nās",
+        "translation": "Say: I seek refuge in the Lord of mankind",
+        "tajweedMap": {
+          "3": [
+            {
+              "rule": "ghunna",
+              "description": "Ghunna on Nun Mushaddadah."
+            }
+          ]
+        }
+      },
+      {
+        "surahId": 114,
+        "ayahNumber": 2,
+        "arabic": "مَلِكِ النَّاسِ",
+        "words": [
+          "مَلِكِ",
+          "النَّاسِ"
+        ],
+        "transliteration": "Malikin-nās",
+        "translation": "The Sovereign of mankind.",
+        "tajweedMap": {
+          "1": [
+            {
+              "rule": "ghunna",
+              "description": "Ghunna on Nun Mushaddadah."
+            }
+          ]
+        }
+      },
+      {
+        "surahId": 114,
+        "ayahNumber": 3,
+        "arabic": "إِلَٰهِ النَّاسِ",
+        "words": [
+          "إِلَٰهِ",
+          "النَّاسِ"
+        ],
+        "transliteration": "Ilāhin-nās",
+        "translation": "The God of mankind,",
+        "tajweedMap": {
+          "1": [
+            {
+              "rule": "ghunna",
+              "description": "Ghunna on Nun Mushaddadah."
+            }
+          ]
+        }
+      },
+      {
+        "surahId": 114,
+        "ayahNumber": 4,
+        "arabic": "مِن شَرِّ الْوَسْوَاسِ الْخَنَّاسِ",
+        "words": [
+          "مِن",
+          "شَرِّ",
+          "الْوَسْوَاسِ",
+          "الْخَنَّاسِ"
+        ],
+        "transliteration": "Min sharril-waswāsil-khannās",
+        "translation": "From the evil of the retreating whisperer",
+        "tajweedMap": {
+          "0": [
+            {
+              "rule": "ikhfa",
+              "description": "Ikhfa."
+            }
+          ],
+          "3": [
+            {
+              "rule": "ghunna",
+              "description": "Ghunna on Nun Mushaddadah."
+            }
+          ]
+        }
+      },
+      {
+        "surahId": 114,
+        "ayahNumber": 5,
+        "arabic": "الَّذِي يُوَسْوِسُ فِي صُدُورِ النَّاسِ",
+        "words": [
+          "الَّذِي",
+          "يُوَسْوِسُ",
+          "فِي",
+          "صُدُورِ",
+          "النَّاسِ"
+        ],
+        "transliteration": "Alladhī yuwaswisu fī ṣudūrin-nās",
+        "translation": "Who whispers in the breasts of mankind",
+        "tajweedMap": {
+          "4": [
+            {
+              "rule": "ghunna",
+              "description": "Ghunna on Nun Mushaddadah."
+            }
+          ]
+        }
+      },
+      {
+        "surahId": 114,
+        "ayahNumber": 6,
+        "arabic": "مِنَ الْجِنَّةِ وَالنَّاسِ",
+        "words": [
+          "مِنَ",
+          "الْجِنَّةِ",
+          "وَالنَّاسِ"
+        ],
+        "transliteration": "Minal-jinnati wan-nās",
+        "translation": "From among the jinn and mankind.",
+        "tajweedMap": {
+          "1": [
+            {
+              "rule": "ghunna",
+              "description": "Ghunna on Nun Mushaddadah."
+            }
+          ],
+          "2": [
+            {
+              "rule": "ghunna",
+              "description": "Ghunna on Nun Mushaddadah."
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

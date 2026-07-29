@@ -1,0 +1,750 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+"use client";
+
+import React, { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
+import Header from "@/components/Layout/Header";
+import BottomNav from "@/components/Layout/BottomNav";
+import SettingsDrawer from "@/components/UI/SettingsDrawer";
+import MakhrajDiagram, { MakhrajPoint } from "@/components/Learning/MakhrajDiagram";
+import { QariAudioManager } from "@/lib/qariAudio";
+import { saveLearningProgress, getLearningProgress } from "@/lib/progress";
+import { arabicSimilarity } from "@/lib/arabic/similarity";
+
+interface QuranExample {
+  word: string;
+  highlighted: string; // word where target letter is gold highlighted
+  transliteration: string;
+  meaning: string;
+}
+
+interface LetterLesson {
+  char: string;
+  name: string;
+  arName: string;
+  forms: { isolated: string; initial: string; medial: string; final: string };
+  makhraj: MakhrajPoint;
+  examples: QuranExample[];
+  expectedTranscripts: string[];
+}
+
+const LETTER_LESSONS: LetterLesson[] = [
+  {
+    char: "ا",
+    name: "Alif",
+    arName: "أَلِف",
+    forms: { isolated: "ا", initial: "ا", medial: "ـا", final: "ـا" },
+    makhraj: "jawf",
+    expectedTranscripts: ["الف", "ألف", "ا", "أ"],
+    examples: [
+      { word: "الْحَمْدُ", highlighted: "الْحَمْدُ", transliteration: "Al-Hamd", meaning: "The Praise" },
+      { word: "أَنْعَمْتَ", highlighted: "أَنْعَمْتَ", transliteration: "An'amta", meaning: "You Bestowed Favor" },
+      { word: "اهْدِنَا", highlighted: "اهْدِنَا", transliteration: "Ihdina", meaning: "Guide Us" },
+    ],
+  },
+  {
+    char: "ب",
+    name: "Ba",
+    arName: "بَاء",
+    forms: { isolated: "ب", initial: "بـ", medial: "ـبـ", final: "ـب" },
+    makhraj: "lips",
+    expectedTranscripts: ["باء", "با", "ب"],
+    examples: [
+      { word: "بِسْمِ", highlighted: "بِسْمِ", transliteration: "Bismi", meaning: "In the name of" },
+      { word: "رَبِّ", highlighted: "رَبِّ", transliteration: "Rabbi", meaning: "Lord" },
+      { word: "نَعْبُدُ", highlighted: "نَعْبُدُ", transliteration: "Na'budu", meaning: "We worship" },
+    ],
+  },
+  {
+    char: "ت",
+    name: "Ta",
+    arName: "تَاء",
+    forms: { isolated: "ت", initial: "تـ", medial: "ـتـ", final: "ـت" },
+    makhraj: "lisan_tip",
+    expectedTranscripts: ["تاء", "تا", "ت"],
+    examples: [
+      { word: "أَنْعَمْتَ", highlighted: "أَنْعَمْتَ", transliteration: "An'amta", meaning: "You Bestowed Favor" },
+      { word: "نَسْتَعِينُ", highlighted: "نَسْتَعِينُ", transliteration: "Nasta'een", meaning: "We seek help" },
+      { word: "الصِّرَاطَ", highlighted: "الصِّرَاطَ", transliteration: "As-Siraat", meaning: "The Path" },
+    ],
+  },
+  {
+    char: "ث",
+    name: "Tha",
+    arName: "ثَاء",
+    forms: { isolated: "ث", initial: "ثـ", medial: "ـثـ", final: "ـث" },
+    makhraj: "lisan_tip",
+    expectedTranscripts: ["ثاء", "ثا", "ث"],
+    examples: [
+      { word: "ثَبَّتَ", highlighted: "ثَبَّتَ", transliteration: "Thabbata", meaning: "He established" },
+      { word: "كَثِيرٌ", highlighted: "كَثِيرٌ", transliteration: "Katheerun", meaning: "Abundant" },
+      { word: "حَدِيثُ", highlighted: "حَدِيثُ", transliteration: "Hadeethu", meaning: "Narration" },
+    ],
+  },
+  {
+    char: "ج",
+    name: "Jeem",
+    arName: "جِيم",
+    forms: { isolated: "ج", initial: "جـ", medial: "ـجـ", final: "ـج" },
+    makhraj: "lisan_mid",
+    expectedTranscripts: ["جيم", "جي", "ج"],
+    examples: [
+      { word: "جَعَلَ", highlighted: "جَعَلَ", transliteration: "Ja'ala", meaning: "He made" },
+      { word: "مَسْجِدِ", highlighted: "مَسْجِدِ", transliteration: "Masjidi", meaning: "Mosque" },
+      { word: "حَاجٌّ", highlighted: "حَاجٌّ", transliteration: "Haajjun", meaning: "Pilgrim" },
+    ],
+  },
+  {
+    char: "ح",
+    name: "Haa",
+    arName: "حَاء",
+    forms: { isolated: "ح", initial: "حـ", medial: "ـحـ", final: "ـح" },
+    makhraj: "halq_mid",
+    expectedTranscripts: ["حاء", "حا", "ح"],
+    examples: [
+      { word: "الْحَمْدُ", highlighted: "الْحَمْدُ", transliteration: "Al-Hamd", meaning: "The Praise" },
+      { word: "الرَّحْمَٰنِ", highlighted: "الرَّحْمَٰنِ", transliteration: "Ar-Rahmaan", meaning: "The Beneficent" },
+      { word: "الرَّحِيمِ", highlighted: "الرَّحِيمِ", transliteration: "Ar-Raheem", meaning: "The Merciful" },
+    ],
+  },
+  {
+    char: "خ",
+    name: "Khaa",
+    arName: "خَاء",
+    forms: { isolated: "خ", initial: "خـ", medial: "ـخـ", final: "ـخ" },
+    makhraj: "halq_top",
+    expectedTranscripts: ["خاء", "خا", "خ"],
+    examples: [
+      { word: "خَلَقَ", highlighted: "خَلَقَ", transliteration: "Khalaqa", meaning: "He created" },
+      { word: "خَالِدِينَ", highlighted: "خَالِدِينَ", transliteration: "Khaalideena", meaning: "Abiding eternally" },
+      { word: "يَخْرُجُ", highlighted: "يَخْرُجُ", transliteration: "Yakhruju", meaning: "It emerges" },
+    ],
+  },
+  {
+    char: "د",
+    name: "Daal",
+    arName: "دَال",
+    forms: { isolated: "د", initial: "د", medial: "ـد", final: "ـد" },
+    makhraj: "lisan_tip",
+    expectedTranscripts: ["دال", "دا", "د"],
+    examples: [
+      { word: "الْحَمْدُ", highlighted: "الْحَمْدُ", transliteration: "Al-Hamd", meaning: "The Praise" },
+      { word: "نَعْبُدُ", highlighted: "نَعْبُدُ", transliteration: "Na'budu", meaning: "We worship" },
+      { word: "اهْدِنَا", highlighted: "اهْدِنَا", transliteration: "Ihdina", meaning: "Guide Us" },
+    ],
+  },
+  {
+    char: "ذ",
+    name: "Thaal",
+    arName: "ذَال",
+    forms: { isolated: "ذ", initial: "ذ", medial: "ـذ", final: "ـذ" },
+    makhraj: "lisan_tip",
+    expectedTranscripts: ["ذال", "ذا", "ذ"],
+    examples: [
+      { word: "الَّذِينَ", highlighted: "الَّذِينَ", transliteration: "Al-Ladhina", meaning: "Those who" },
+      { word: "ذِكْرُ", highlighted: "ذِكْرُ", transliteration: "Dhikru", meaning: "Remembrance" },
+      { word: "أُذُنٌ", highlighted: "أُذُنٌ", transliteration: "Udhunun", meaning: "Ear" },
+    ],
+  },
+  {
+    char: "ر",
+    name: "Raa",
+    arName: "رَاء",
+    forms: { isolated: "ر", initial: "ر", medial: "ـر", final: "ـر" },
+    makhraj: "lisan_tip",
+    expectedTranscripts: ["راء", "را", "ر"],
+    examples: [
+      { word: "رَبِّ", highlighted: "رَبِّ", transliteration: "Rabbi", meaning: "Lord" },
+      { word: "الرَّحْمَٰنِ", highlighted: "الرَّحْمَٰنِ", transliteration: "Ar-Rahmaan", meaning: "The Beneficent" },
+      { word: "الرَّحِيمِ", highlighted: "الرَّحِيمِ", transliteration: "Ar-Raheem", meaning: "The Merciful" },
+    ],
+  },
+  {
+    char: "ز",
+    name: "Zay",
+    arName: "زَاي",
+    forms: { isolated: "ز", initial: "ز", medial: "ـز", final: "ـز" },
+    makhraj: "lisan_tip",
+    expectedTranscripts: ["زاي", "زا", "ز"],
+    examples: [
+      { word: "زَلْزَلَةَ", highlighted: "زَلْزَلَةَ", transliteration: "Zalzalata", meaning: "Earthquake" },
+      { word: "تَنْزِيلٌ", highlighted: "تَنْزِيلٌ", transliteration: "Tanzeelun", meaning: "Revelation" },
+      { word: "رِزْقٌ", highlighted: "رِزْقٌ", transliteration: "Rizqun", meaning: "Provision" },
+    ],
+  },
+  {
+    char: "س",
+    name: "Seen",
+    arName: "سِين",
+    forms: { isolated: "س", initial: "سـ", medial: "ـسـ", final: "ـس" },
+    makhraj: "lisan_tip",
+    expectedTranscripts: ["سين", "سي", "س"],
+    examples: [
+      { word: "نَسْتَعِينُ", highlighted: "نَسْتَعِينُ", transliteration: "Nasta'een", meaning: "We seek help" },
+      { word: "بِسْمِ", highlighted: "بِسْمِ", transliteration: "Bismi", meaning: "In the name of" },
+      { word: "الْمُسْتَقِيمَ", highlighted: "الْمُسْتَقِيمَ", transliteration: "Al-Mustaqeem", meaning: "The Straight" },
+    ],
+  },
+  {
+    char: "ش",
+    name: "Sheen",
+    arName: "شِين",
+    forms: { isolated: "ش", initial: "شـ", medial: "ـشـ", final: "ـش" },
+    makhraj: "lisan_mid",
+    expectedTranscripts: ["شين", "شي", "ش"],
+    examples: [
+      { word: "شَاءَ", highlighted: "شَاءَ", transliteration: "Shaa'a", meaning: "He willed" },
+      { word: "يَشْرَبُ", highlighted: "يَشْرَبُ", transliteration: "Yashrabu", meaning: "He drinks" },
+      { word: "عَرْشٌ", highlighted: "عَرْشٌ", transliteration: "'Arshun", meaning: "Throne" },
+    ],
+  },
+  {
+    char: "ص",
+    name: "Saad",
+    arName: "صَاد",
+    forms: { isolated: "ص", initial: "صـ", medial: "ـصـ", final: "ـص" },
+    makhraj: "lisan_tip",
+    expectedTranscripts: ["صاد", "صا", "ص"],
+    examples: [
+      { word: "الصِّرَاطَ", highlighted: "الصِّرَاطَ", transliteration: "As-Siraat", meaning: "The Path" },
+      { word: "صِرَاطَ", highlighted: "صِرَاطَ", transliteration: "Siraata", meaning: "Path of" },
+      { word: "أَصْحَابُ", highlighted: "أَصْحَابُ", transliteration: "Ashaabu", meaning: "Companions" },
+    ],
+  },
+  {
+    char: "ض",
+    name: "Daad",
+    arName: "ضَاد",
+    forms: { isolated: "ض", initial: "ضـ", medial: "ـضـ", final: "ـض" },
+    makhraj: "lisan_side",
+    expectedTranscripts: ["ضاد", "ضا", "ض"],
+    examples: [
+      { word: "الضَّالِّينَ", highlighted: "الضَّالِّينَ", transliteration: "Ad-Daalleen", meaning: "Those astray" },
+      { word: "مَغْضُوبِ", highlighted: "مَغْضُوبِ", transliteration: "Maghdoobi", meaning: "Earned anger" },
+      { word: "فَضْلٌ", highlighted: "فَضْلٌ", transliteration: "Fadlun", meaning: "Grace/Bounty" },
+    ],
+  },
+  {
+    char: "ط",
+    name: "Taa",
+    arName: "طَاء",
+    forms: { isolated: "ط", initial: "طـ", medial: "ـطـ", final: "ـط" },
+    makhraj: "lisan_tip",
+    expectedTranscripts: ["طاء", "طا", "ط"],
+    examples: [
+      { word: "الصِّرَاطَ", highlighted: "الصِّرَاطَ", transliteration: "As-Siraat", meaning: "The Path" },
+      { word: "صِرَاطَ", highlighted: "صِرَاطَ", transliteration: "Siraata", meaning: "Path of" },
+      { word: "طَيِّبٌ", highlighted: "طَيِّبٌ", transliteration: "Tayyibun", meaning: "Good/Pure" },
+    ],
+  },
+  {
+    char: "ظ",
+    name: "Thaa",
+    arName: "ظَاء",
+    forms: { isolated: "ظ", initial: "ظـ", medial: "ـظـ", final: "ـظ" },
+    makhraj: "lisan_tip",
+    expectedTranscripts: ["ظاء", "ظا", "ظ"],
+    examples: [
+      { word: "ظَلَمَ", highlighted: "ظَلَمَ", transliteration: "Zalama", meaning: "He wronged" },
+      { word: "عَظِيمٌ", highlighted: "عَظِيمٌ", transliteration: "'Azeemun", meaning: "Great/Grand" },
+      { word: "حَفِظَ", highlighted: "حَفِظَ", transliteration: "Hafiza", meaning: "He guarded" },
+    ],
+  },
+  {
+    char: "ع",
+    name: "Ayn",
+    arName: "عَيْن",
+    forms: { isolated: "ع", initial: "عـ", medial: "ـعـ", final: "ـع" },
+    makhraj: "halq_mid",
+    expectedTranscripts: ["عين", "عي", "ع"],
+    examples: [
+      { word: "الْعَالَمِينَ", highlighted: "الْعَالَمِينَ", transliteration: "Al-'Aalameen", meaning: "The Worlds" },
+      { word: "نَعْبُدُ", highlighted: "نَعْبُدُ", transliteration: "Na'budu", meaning: "We worship" },
+      { word: "أَنْعَمْتَ", highlighted: "أَنْعَمْتَ", transliteration: "An'amta", meaning: "You Bestowed Favor" },
+    ],
+  },
+  {
+    char: "غ",
+    name: "Ghayn",
+    arName: "غَيْن",
+    forms: { isolated: "غ", initial: "غـ", medial: "ـغـ", final: "ـغ" },
+    makhraj: "halq_top",
+    expectedTranscripts: ["غين", "غي", "غ"],
+    examples: [
+      { word: "غَيْرِ", highlighted: "غَيْرِ", transliteration: "Ghayri", meaning: "Not/Other than" },
+      { word: "الْمَغْضُوبِ", highlighted: "الْمَغْضُوبِ", transliteration: "Al-Maghdoobi", meaning: "Earned anger" },
+      { word: "غَفُورٌ", highlighted: "غَفُورٌ", transliteration: "Ghafoorun", meaning: "Oft-forgiving" },
+    ],
+  },
+  {
+    char: "ف",
+    name: "Faa",
+    arName: "فَاء",
+    forms: { isolated: "ف", initial: "فـ", medial: "ـفـ", final: "ـف" },
+    makhraj: "lips",
+    expectedTranscripts: ["فاء", "فا", "ف"],
+    examples: [
+      { word: "فِي", highlighted: "فِي", transliteration: "Fee", meaning: "In/Within" },
+      { word: "أَفْوَاهِ", highlighted: "أَفْوَاهِ", transliteration: "Afwaahi", meaning: "Mouths" },
+      { word: "يَعْرِفُ", highlighted: "يَعْرِفُ", transliteration: "Ya'rifu", meaning: "He recognizes" },
+    ],
+  },
+  {
+    char: "ق",
+    name: "Qaf",
+    arName: "قَاف",
+    forms: { isolated: "ق", initial: "قـ", medial: "ـقـ", final: "ـق" },
+    makhraj: "lisan_back",
+    expectedTranscripts: ["قاف", "قا", "ق"],
+    examples: [
+      { word: "الْمُسْتَقِيمَ", highlighted: "الْمُسْتَقِيمَ", transliteration: "Al-Mustaqeem", meaning: "The Straight" },
+      { word: "قَوْلُ", highlighted: "قَوْلُ", transliteration: "Qawlu", meaning: "Word/Statement" },
+      { word: "خَلَقَ", highlighted: "خَلَقَ", transliteration: "Khalaqa", meaning: "He created" },
+    ],
+  },
+  {
+    char: "ك",
+    name: "Kaf",
+    arName: "كَاف",
+    forms: { isolated: "ك", initial: "كـ", medial: "ـكـ", final: "ـك" },
+    makhraj: "lisan_back",
+    expectedTranscripts: ["كاف", "كا", "ك"],
+    examples: [
+      { word: "مَالِكِ", highlighted: "مَالِكِ", transliteration: "Maaliki", meaning: "Owner/Master" },
+      { word: "إِيَّاكُ", highlighted: "إِيَّاكُ", transliteration: "Iyyaaka", meaning: "You Alone" },
+      { word: "كُفُوًا", highlighted: "كُفُوًا", transliteration: "Kufuwan", meaning: "Equal" },
+    ],
+  },
+  {
+    char: "ل",
+    name: "Laam",
+    arName: "لَام",
+    forms: { isolated: "ل", initial: "لـ", medial: "ـلـ", final: "ـل" },
+    makhraj: "lisan_tip",
+    expectedTranscripts: ["لام", "لا", "ل"],
+    examples: [
+      { word: "اللَّهِ", highlighted: "اللَّهِ", transliteration: "Lillahi", meaning: "For Allah" },
+      { word: "الْعَالَمِينَ", highlighted: "الْعَالَمِينَ", transliteration: "Al-'Aalameen", meaning: "The Worlds" },
+      { word: "الضَّالِّينَ", highlighted: "الضَّالِّينَ", transliteration: "Ad-Daalleen", meaning: "Those astray" },
+    ],
+  },
+  {
+    char: "م",
+    name: "Meem",
+    arName: "مِيم",
+    forms: { isolated: "م", initial: "مـ", medial: "ـمـ", final: "ـم" },
+    makhraj: "lips",
+    expectedTranscripts: ["ميم", "مي", "م"],
+    examples: [
+      { word: "بِسْمِ", highlighted: "بِسْمِ", transliteration: "Bismi", meaning: "In the name of" },
+      { word: "الْحَمْدُ", highlighted: "الْحَمْدُ", transliteration: "Al-Hamd", meaning: "The Praise" },
+      { word: "الْمُسْتَقِيمَ", highlighted: "الْمُسْتَقِيمَ", transliteration: "Al-Mustaqeem", meaning: "The Straight" },
+    ],
+  },
+  {
+    char: "ن",
+    name: "Noon",
+    arName: "نُون",
+    forms: { isolated: "ن", initial: "نـ", medial: "ـنـ", final: "ـن" },
+    makhraj: "lisan_tip",
+    expectedTranscripts: ["نون", "نو", "ن"],
+    examples: [
+      { word: "الرَّحْمَٰنِ", highlighted: "الرَّحْمَٰنِ", transliteration: "Ar-Rahmaan", meaning: "The Beneficent" },
+      { word: "نَسْتَعِينُ", highlighted: "نَسْتَعِينُ", transliteration: "Nasta'een", meaning: "We seek help" },
+      { word: "أَنْعَمْتَ", highlighted: "أَنْعَمْتَ", transliteration: "An'amta", meaning: "You Bestowed Favor" },
+    ],
+  },
+  {
+    char: "ه",
+    name: "Haa",
+    arName: "هَاء",
+    forms: { isolated: "ه", initial: "هـ", medial: "ـهـ", final: "ـه" },
+    makhraj: "halq_deep",
+    expectedTranscripts: ["هاء", "ها", "ه"],
+    examples: [
+      { word: "عَلَيْهِمْ", highlighted: "عَلَيْهِمْ", transliteration: "Alayhim", meaning: "Upon them" },
+      { word: "اهْدِنَا", highlighted: "اهْدِنَا", transliteration: "Ihdina", meaning: "Guide Us" },
+      { word: "لَّهُ", highlighted: "لَّهُ", transliteration: "Lahoo", meaning: "For Him" },
+    ],
+  },
+  {
+    char: "و",
+    name: "Waw",
+    arName: "وَاو",
+    forms: { isolated: "و", initial: "و", medial: "ـو", final: "ـو" },
+    makhraj: "lips",
+    expectedTranscripts: ["واو", "وا", "و"],
+    examples: [
+      { word: "يَوْمِ", highlighted: "يَوْمِ", transliteration: "Yawm", meaning: "Day" },
+      { word: "وَلَا", highlighted: "وَلَا", transliteration: "Wa-Laa", meaning: "And not" },
+      { word: "يُولَدْ", highlighted: "يُولَدْ", transliteration: "Yoolad", meaning: "Born" },
+    ],
+  },
+  {
+    char: "ي",
+    name: "Yaa",
+    arName: "يَاء",
+    forms: { isolated: "ي", initial: "يـ", medial: "ـيـ", final: "ـي" },
+    makhraj: "lisan_mid",
+    expectedTranscripts: ["ياء", "يا", "ي"],
+    examples: [
+      { word: "إِيَّاكُ", highlighted: "إِيَّاكُ", transliteration: "Iyyaaka", meaning: "You Alone" },
+      { word: "الرَّحِيمِ", highlighted: "الرَّحِيمِ", transliteration: "Ar-Raheem", meaning: "The Merciful" },
+      { word: "نَسْتَعِينُ", highlighted: "نَسْتَعِينُ", transliteration: "Nasta'een", meaning: "We seek help" },
+    ],
+  },
+];
+
+export default function LetterLessonPage() {
+  const params = useParams();
+  const router = useRouter();
+
+  const letterId = Number(params?.letterId);
+  const lesson = LETTER_LESSONS[letterId];
+
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [asrResult, setAsrResult] = useState<"none" | "success" | "retry">("none");
+  const [spokenWord, setSpokenWord] = useState("");
+  const [isCompleted, setIsCompleted] = useState(false);
+  const audioAvailable = true;
+
+  useEffect(() => {
+    if (!lesson) {
+      router.push("/learn/arabic-letters");
+      return;
+    }
+
+    // Load progress
+    const prog = getLearningProgress();
+    const completed = prog.some(
+      (p) => p.track === "letters" && p.lesson_id === `letter_${letterId}` && p.completed
+    );
+    setIsCompleted(completed);
+  }, [letterId, lesson, router]);
+
+  if (!lesson) return null;
+
+  const playLetter = async () => {
+    setIsPlaying(true);
+    try {
+      const audioMgr = QariAudioManager.getInstance();
+      await audioMgr.playLetter(lesson.char);
+    } catch (err) {
+      console.warn("Letter Qari audio is missing:", err);
+    } finally {
+      setIsPlaying(false);
+    }
+  };
+
+  const playExampleWord = async (word: string) => {
+    try {
+      const audioMgr = QariAudioManager.getInstance();
+      // Using Surah 1 (Al-Fatiha) as standard mock surah ID for word pronunciations
+      await audioMgr.playWord(word, 1);
+    } catch (err) {
+      console.warn("Word Qari audio is missing:", err);
+    }
+  };
+
+  const startASR = () => {
+    const win = window as any;
+    const SpeechRecognition = win.SpeechRecognition || win.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Browser Speech Recognition not supported. Please use Chrome/Safari.");
+      return;
+    }
+
+    const rec = new SpeechRecognition();
+    rec.lang = "ar-SA";
+    rec.interimResults = false;
+    rec.maxAlternatives = 5;
+
+    rec.onstart = () => {
+      setIsRecording(true);
+      setAsrResult("none");
+      setSpokenWord("");
+    };
+
+    rec.onresult = (event: any) => {
+      const results = event.results[0];
+      const alternatives: string[] = [];
+      for (let i = 0; i < results.length; i++) {
+        alternatives.push(results[i].transcript.trim());
+      }
+
+      setSpokenWord(alternatives[0]);
+
+      // Check if user spoke the letter correctly using custom expects or arabicSimilarity
+      let isMatch = false;
+      for (const alt of alternatives) {
+        // Direct match with expects
+        if (lesson.expectedTranscripts.includes(alt)) {
+          isMatch = true;
+          break;
+        }
+        // Similarity check
+        const score = arabicSimilarity(alt, lesson.char);
+        if (score >= 0.58) {
+          isMatch = true;
+          break;
+        }
+      }
+
+      if (isMatch) {
+        setAsrResult("success");
+        setIsCompleted(true);
+        saveLearningProgress({
+          track: "letters",
+          lesson_id: `letter_${letterId}`,
+          completed: true,
+          score: 100,
+        });
+      } else {
+        setAsrResult("retry");
+      }
+    };
+
+    rec.onerror = (e: any) => {
+      console.warn("ASR Error:", e.error);
+      setIsRecording(false);
+    };
+
+    rec.onend = () => {
+      setIsRecording(false);
+    };
+
+    rec.start();
+  };
+
+  const nextId = letterId + 1;
+  const hasNext = nextId < LETTER_LESSONS.length;
+
+  return (
+    <div className="min-h-screen flex flex-col pb-16 relative bg-parchment dark:bg-zinc-950 transition-colors duration-200">
+      <Header showSettingsBtn onOpenSettings={() => setSettingsOpen(true)} />
+      <SettingsDrawer isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
+
+      <main className="flex-1 max-w-6xl mx-auto w-full px-4 mt-8 flex flex-col gap-6 relative z-10">
+        
+        {/* Navigation back */}
+        <section className="flex justify-between items-center">
+          <Link href="/learn/arabic-letters" className="text-gold font-bold text-xs uppercase tracking-wider hover:text-gold-light">
+            ← Back to Alphabet Index
+          </Link>
+          <div className="flex gap-2">
+            {isCompleted && (
+              <span className="px-3 py-1 bg-emerald-pale border border-emerald/30 text-emerald font-bold text-[9px] uppercase tracking-wider rounded-full">
+                ✓ Lesson Completed
+              </span>
+            )}
+          </div>
+        </section>
+
+        <section className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          
+          {/* LEFT COLUMN: Large Letter Card and Repeating (7 cols) */}
+          <div className="lg:col-span-8 flex flex-col gap-6">
+            
+            {/* Main Letter Display Card */}
+            <div className="card mushaf-paper-texture border-[3px] border-double border-gold/60 p-8 flex flex-col items-center justify-center gap-6 relative min-h-[350px]">
+              <span className="absolute top-4 left-4 text-[10px] font-bold text-zinc-400 font-lato">
+                LESSON {letterId + 1} OF 28
+              </span>
+
+              {/* Big letter */}
+              <div className="w-36 h-36 rounded-2xl bg-parchment dark:bg-zinc-900 border border-gold/15 flex items-center justify-center shadow-inner">
+                <span className="font-amiri-quran text-[110px] text-ink leading-none mt-2 select-none">
+                  {lesson.char}
+                </span>
+              </div>
+
+              <div className="text-center">
+                <h3 className="font-amiri text-3xl font-bold text-emerald dark:text-emerald-light">
+                  {lesson.name} · <span className="text-gold font-normal">{lesson.arName}</span>
+                </h3>
+              </div>
+
+              {/* Letters Forms side by side */}
+              <div className="border-t border-b border-gold/15 py-4 w-full grid grid-cols-4 text-center mt-2">
+                <div>
+                  <span className="text-[9px] text-zinc-400 font-bold uppercase tracking-wider block mb-1">Isolated</span>
+                  <span className="font-amiri text-2xl text-ink font-bold">{lesson.forms.isolated}</span>
+                </div>
+                <div>
+                  <span className="text-[9px] text-zinc-400 font-bold uppercase tracking-wider block mb-1">Initial</span>
+                  <span className="font-amiri text-2xl text-ink font-bold">{lesson.forms.initial}</span>
+                </div>
+                <div>
+                  <span className="text-[9px] text-zinc-400 font-bold uppercase tracking-wider block mb-1">Medial</span>
+                  <span className="font-amiri text-2xl text-ink font-bold">{lesson.forms.medial}</span>
+                </div>
+                <div>
+                  <span className="text-[9px] text-zinc-400 font-bold uppercase tracking-wider block mb-1">Final</span>
+                  <span className="font-amiri text-2xl text-ink font-bold">{lesson.forms.final}</span>
+                </div>
+              </div>
+
+              {/* Audio Listen Buttons */}
+              <div className="flex gap-4 items-center">
+                {audioAvailable ? (
+                  <button
+                    onClick={playLetter}
+                    disabled={isPlaying}
+                    className="px-6 py-3 bg-gold hover:bg-gold-light text-white font-bold text-xs tracking-wider rounded-xl uppercase transition-all shadow-md shadow-gold/10 flex items-center gap-2"
+                  >
+                    🔊 {isPlaying ? "Playing..." : "Listen to Letter"}
+                  </button>
+                ) : (
+                  <span className="px-4 py-2 border border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-800 text-[10px] font-bold tracking-wider text-zinc-400 dark:text-zinc-500 rounded-xl uppercase select-none">
+                    🔊 Audio coming soon
+                  </span>
+                )}
+              </div>
+
+            </div>
+
+            {/* Quranic Words Examples Section */}
+            <div className="card p-6 border-gold/30 bg-white/70 dark:bg-zinc-900/30 flex flex-col gap-4">
+              <h4 className="font-bold text-[10px] text-zinc-400 dark:text-zinc-500 uppercase tracking-widest block mb-2">
+                Quranic Words Examples · أمثلة من القرآن الكريم
+              </h4>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {lesson.examples.map((ex, idx) => (
+                  <div
+                    key={idx}
+                    className="p-4 border border-gold/15 bg-parchment/60 dark:bg-zinc-800/40 rounded-2xl flex flex-col items-center justify-between text-center min-h-[140px]"
+                  >
+                    <div className="flex flex-col items-center">
+                      <span className="font-amiri-quran text-2xl text-ink font-bold leading-relaxed">
+                        {ex.word}
+                      </span>
+                      <span className="text-[10px] text-zinc-500 font-semibold tracking-wider italic mt-2">
+                        {ex.transliteration}
+                      </span>
+                      <span className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-0.5">
+                        {ex.meaning}
+                      </span>
+                    </div>
+
+                    <button
+                      onClick={() => playExampleWord(ex.word)}
+                      className="mt-3 text-[10px] font-bold text-gold hover:text-gold-light uppercase tracking-wider flex items-center gap-1.5"
+                    >
+                      Listen 🔊
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+          </div>
+
+          {/* RIGHT COLUMN: Makhraj Point Profile and Micro Recitation (4 cols) */}
+          <div className="lg:col-span-4 flex flex-col gap-6">
+            
+            {/* Makhraj organ diagram */}
+            <MakhrajDiagram activePoint={lesson.makhraj} className="w-full" />
+
+            {/* Repeat Section Card */}
+            <div className="card p-6 border-gold/30 bg-white/70 dark:bg-zinc-900/30 flex flex-col gap-5 text-center items-center">
+              <div>
+                <h4 className="font-bold text-[10px] text-gold uppercase tracking-[2px] block mb-1">
+                  Repeat After Me · تدريب النطق
+                </h4>
+                <p className="text-[11px] text-zinc-500 max-w-xs mx-auto leading-relaxed">
+                  Listen to the pronunciation above, then click the mic button to practice speaking the letter.
+                </p>
+              </div>
+
+              {/* Mic action buttons */}
+              <button
+                onClick={startASR}
+                disabled={isRecording}
+                className={`w-16 h-16 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 ${
+                  isRecording
+                    ? "bg-ruby text-white animate-pulse shadow-ruby/20 scale-105"
+                    : "bg-emerald hover:bg-emerald-light text-white shadow-emerald/20 hover:scale-102"
+                }`}
+              >
+                {isRecording ? (
+                  <span className="text-xl">🎙️</span>
+                ) : (
+                  <span className="text-xl">🎤</span>
+                )}
+              </button>
+
+              {/* ASR Feedback Display */}
+              <AnimatePresence mode="wait">
+                {isRecording && (
+                  <motion.span
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="text-xs text-zinc-500 font-bold animate-pulse tracking-wide"
+                  >
+                    Listening... Speak now
+                  </motion.span>
+                )}
+
+                {spokenWord && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex flex-col gap-1 items-center"
+                  >
+                    <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">You said:</span>
+                    <span className="font-amiri text-lg font-bold text-ink">{spokenWord}</span>
+                  </motion.div>
+                )}
+
+                {asrResult === "success" && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="bg-emerald-pale/35 border border-emerald/20 px-4 py-2 rounded-xl text-center flex flex-col gap-0.5"
+                  >
+                    <span className="text-emerald font-bold text-xs">✓ Perfect! Correct Pronunciation</span>
+                    <span className="text-[9px] text-zinc-500 leading-none">Press Next to proceed.</span>
+                  </motion.div>
+                )}
+
+                {asrResult === "retry" && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="bg-ruby-pale/35 border border-ruby/20 px-4 py-2 rounded-xl text-center flex flex-col gap-0.5"
+                  >
+                    <span className="text-ruby font-bold text-xs">❌ Mismatch. Let&apos;s try again</span>
+                    <span className="text-[9px] text-zinc-500 leading-none">Listen to Qari above and repeat.</span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Next/Back Navigation Buttons */}
+              <div className="flex gap-2 w-full mt-2 border-t border-gold/15 pt-4">
+                {hasNext && (
+                  <button
+                    onClick={() => router.push(`/learn/arabic-letters/${nextId}`)}
+                    className="flex-1 py-3 bg-emerald hover:bg-emerald-light text-white font-bold text-xs tracking-wider uppercase rounded-xl transition-all shadow-md shadow-emerald/10"
+                  >
+                    Next Letter →
+                  </button>
+                )}
+              </div>
+
+            </div>
+
+          </div>
+        </section>
+
+      </main>
+
+      <BottomNav onOpenSettings={() => setSettingsOpen(true)} />
+    </div>
+  );
+}
