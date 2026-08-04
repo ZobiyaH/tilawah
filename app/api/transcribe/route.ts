@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import Groq from 'groq-sdk';
+import Groq, { toFile } from 'groq-sdk';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET() {
@@ -48,9 +48,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const buffer = Buffer.from(await audioFile.arrayBuffer());
+    const fileToUpload = await toFile(buffer, 'audio.webm', { type: 'audio/webm' });
+
     // Send to Groq Whisper large-v3
     const transcription = await groq.audio.transcriptions.create({
-      file: audioFile,
+      file: fileToUpload,
       model: 'whisper-large-v3',
       language: 'ar',
       prompt: 'بسم الله الرحمن الرحيم',
