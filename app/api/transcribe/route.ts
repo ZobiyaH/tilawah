@@ -51,15 +51,17 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(await audioFile.arrayBuffer());
     const fileToUpload = await toFile(buffer, 'audio.webm', { type: 'audio/webm' });
 
-    // Send to Groq Whisper large-v3
+    // Send to Groq Whisper large-v3-turbo
     const transcription = await groq.audio.transcriptions.create({
       file: fileToUpload,
-      model: 'whisper-large-v3',
+      model: 'whisper-large-v3-turbo',
       language: 'ar',
       prompt: 'بسم الله الرحمن الرحيم',
       response_format: 'json',
       temperature: 0.0,
     });
+
+    console.log("Groq transcription successful. Text:", transcription.text);
 
     return NextResponse.json({
       transcript: transcription.text.trim(),
