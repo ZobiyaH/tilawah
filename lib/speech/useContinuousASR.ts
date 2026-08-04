@@ -141,34 +141,37 @@ export function useContinuousASR(isListening: boolean) {
           globalRecorder = recorder;
           setRecognitionRunning(true);
 
-          // Voice Activity Detection (VAD): Only send audio to Groq when user is speaking
-          // Attach an AnalyserNode to the mic stream to measure real-time volume
+          // VAD: Track peak RMS during the recording window by polling every 100ms
+          // This correctly detects speech that happened anywhere in the 2.5s window
           let vadAnalyser: AnalyserNode | null = null;
           let vadDataArray: Uint8Array<ArrayBuffer> | null = null;
+          let vadPeakRMS = 0;
+          let vadPollInterval: ReturnType<typeof setInterval> | null = null;
           try {
             const AudioCtxClass = window.AudioContext || (window as any).webkitAudioContext;
             const vadCtx = new AudioCtxClass();
             vadAnalyser = vadCtx.createAnalyser();
             vadAnalyser.fftSize = 256;
-            vadDataArray = new Uint8Array(vadAnalyser.frequencyBinCount);
+            vadDataArray = new Uint8Array(vadAnalyser.frequencyBinCount) as Uint8Array<ArrayBuffer>;
             const vadSource = vadCtx.createMediaStreamSource(localStream);
             vadSource.connect(vadAnalyser);
             if (vadCtx.state === "suspended") {
               await vadCtx.resume();
             }
+            // Poll RMS every 100ms, track the peak across the full recording window
+            vadPollInterval = setInterval(() => {
+              if (!vadAnalyser || !vadDataArray) return;
+              vadAnalyser.getByteTimeDomainData(vadDataArray);
+              let sum = 0;
+              for (let i = 0; i < vadDataArray.length; i++) {
+                const val = (vadDataArray[i] - 128) / 128;
+                sum += val * val;
+              }
+              const rms = Math.sqrt(sum / vadDataArray.length);
+              if (rms > vadPeakRMS) vadPeakRMS = rms;
+            }, 100);
           } catch (e) {
             console.warn("VAD analyser init failed:", e);
-          }
-
-          const getVoiceRMS = (): number => {
-            if (!vadAnalyser || !vadDataArray) return 1.0; // if no analyser, allow sending
-            vadAnalyser.getByteTimeDomainData(vadDataArray);
-            let sum = 0;
-            for (let i = 0; i < vadDataArray.length; i++) {
-              const val = (vadDataArray[i] - 128) / 128;
-              sum += val * val;
-            }
-            return Math.sqrt(sum / vadDataArray.length);
           }
 
           let chunks: Blob[] = [];
@@ -180,16 +183,31 @@ export function useContinuousASR(isListening: boolean) {
           };
 
           recorder.onstop = async () => {
+            // Stop polling and snapshot the peak RMS for this window
+            if (vadPollInterval) { clearInterval(vadPollInterval); vadPollInterval = null; }
+            const peakRMS = vadPeakRMS;
+            vadPeakRMS = 0; // reset for next window
+
             const audioBlob = new Blob(chunks, { type: "audio/webm" });
             chunks = [];
 
-            // VAD: skip if audio appears silent (RMS below threshold)
-            const rms = getVoiceRMS();
-            const isSilent = rms < 0.015;
-            if (isSilent) {
-              console.log("VAD: skipping silent audio chunk (RMS:", rms.toFixed(4), ")");
-              // Restart chunk recording immediately
+            // VAD: skip if no speech was detected during the entire recording window
+            const VAD_THRESHOLD = 0.008;
+            if (peakRMS < VAD_THRESHOLD) {
+              console.log("VAD: skipping silent chunk (peak RMS:", peakRMS.toFixed(4), ")");
               if (activeRef.current && localRecorder && localRecorder.state === "inactive" && globalUseWhisper) {
+                // Restart VAD polling for the next window
+                vadPollInterval = vadAnalyser ? setInterval(() => {
+                  if (!vadAnalyser || !vadDataArray) return;
+                  vadAnalyser.getByteTimeDomainData(vadDataArray as Uint8Array<ArrayBuffer>);
+                  let sum = 0;
+                  for (let i = 0; i < (vadDataArray as Uint8Array<ArrayBuffer>).length; i++) {
+                    const val = ((vadDataArray as Uint8Array<ArrayBuffer>)[i] - 128) / 128;
+                    sum += val * val;
+                  }
+                  const rms = Math.sqrt(sum / (vadDataArray as Uint8Array<ArrayBuffer>).length);
+                  if (rms > vadPeakRMS) vadPeakRMS = rms;
+                }, 100) : null;
                 try { localRecorder.start(); } catch {}
               }
               return;
