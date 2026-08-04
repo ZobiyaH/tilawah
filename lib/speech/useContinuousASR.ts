@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any */
 import { useEffect, useRef, useState } from "react";
 import { useRecitationStore } from "../store/recitationStore";
 import { registerRecognition, unregisterRecognition, getRecognitionRunning, setRecognitionRunning } from "./audioRegistry";
@@ -30,50 +30,15 @@ let globalUseWhisper = true; // Auto-fallback toggler on connection failures
 export function pauseASRForAudio(durationMs: number) {
   const finalDuration = !isNaN(durationMs) && durationMs > 0 ? durationMs : 2500;
 
-  if (globalUseWhisper) {
-    if (globalRecorder && globalRecorder.state === "recording") {
-      try {
-        globalRecorder.pause();
-        setRecognitionRunning(false);
-        console.log(`ASR MediaRecorder paused for audio playback of ${finalDuration}ms`);
-      } catch (e) {
-        console.warn("Failed to pause MediaRecorder in pauseASRForAudio:", e);
-      }
-    }
-    setTimeout(() => {
-      if (globalIsListening && globalRecorder && globalRecorder.state === "paused") {
-        try {
-          globalRecorder.resume();
-          setRecognitionRunning(true);
-          console.log("ASR MediaRecorder resumed after audio playback and echo settling");
-        } catch (e) {
-          console.warn("Failed to resume MediaRecorder in pauseASRForAudio:", e);
-        }
-      }
-    }, finalDuration + 600);
-  } else {
-    // Native SpeechRecognition pause routine
-    if (globalRecognition && getRecognitionRunning()) {
-      try {
-        globalRecognition.stop();
-        setRecognitionRunning(false);
-        console.log(`ASR native engine stopped for audio playback of ${finalDuration}ms`);
-      } catch (e) {
-        console.warn("Failed to stop native SpeechRecognition in pauseASRForAudio:", e);
-      }
-    }
-    setTimeout(() => {
-      if (globalIsListening && globalRecognition && !getRecognitionRunning()) {
-        try {
-          globalRecognition.start();
-          setRecognitionRunning(true);
-          console.log("ASR native engine restarted after audio playback and echo settling");
-        } catch (e) {
-          console.warn("Failed to restart native SpeechRecognition in pauseASRForAudio:", e);
-        }
-      }
-    }, finalDuration + 600);
-  }
+  useRecitationStore.getState().setAudioPlaying(true);
+  setRecognitionRunning(false);
+  console.log(`ASR suspended for audio playback of ${finalDuration}ms`);
+
+  setTimeout(() => {
+    useRecitationStore.getState().setAudioPlaying(false);
+    setRecognitionRunning(true);
+    console.log("ASR resumed after audio playback and echo settling");
+  }, finalDuration + 600);
 }
 
 /**
