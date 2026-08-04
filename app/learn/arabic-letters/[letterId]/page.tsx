@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -12,6 +12,7 @@ import MakhrajDiagram, { MakhrajPoint } from "@/components/Learning/MakhrajDiagr
 import { QariAudioManager } from "@/lib/qariAudio";
 import { saveLearningProgress, getLearningProgress } from "@/lib/progress";
 import { arabicSimilarity } from "@/lib/arabic/similarity";
+import { transcribeAudio } from "@/lib/speech/transcribe";
 
 interface QuranExample {
   word: string;
@@ -410,6 +411,7 @@ export default function LetterLessonPage() {
   const [asrResult, setAsrResult] = useState<"none" | "success" | "retry">("none");
   const [spokenWord, setSpokenWord] = useState("");
   const [isCompleted, setIsCompleted] = useState(false);
+  const recorderRef = useRef<any>(null);
   const audioAvailable = true;
 
   useEffect(() => {
@@ -450,74 +452,82 @@ export default function LetterLessonPage() {
     }
   };
 
-  const startASR = () => {
-    const win = window as any;
-    const SpeechRecognition = win.SpeechRecognition || win.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      alert("Browser Speech Recognition not supported. Please use Chrome/Safari.");
-      return;
+
+
+  const checkPronunciation = (spoken: string) => {
+    setSpokenWord(spoken);
+    const cleanSpoken = spoken.trim();
+    
+    let isMatch = false;
+    if (lesson.expectedTranscripts.includes(cleanSpoken)) {
+      isMatch = true;
+    } else {
+      const score = arabicSimilarity(cleanSpoken, lesson.char);
+      if (score >= 0.58) {
+        isMatch = true;
+      }
     }
 
-    const rec = new SpeechRecognition();
-    rec.lang = "ar-SA";
-    rec.interimResults = false;
-    rec.maxAlternatives = 5;
+    if (isMatch) {
+      setAsrResult("success");
+      setIsCompleted(true);
+      saveLearningProgress({
+        track: "letters",
+        lesson_id: `letter_${letterId}`,
+        completed: true,
+        score: 100,
+      });
+    } else {
+      setAsrResult("retry");
+    }
+  };
 
-    rec.onstart = () => {
-      setIsRecording(true);
+  const handleMicTap = async () => {
+    if (isRecording) {
+      setIsRecording(false);
+      setSpokenWord("Processing...");
       setAsrResult("none");
-      setSpokenWord("");
-    };
-
-    rec.onresult = (event: any) => {
-      const results = event.results[0];
-      const alternatives: string[] = [];
-      for (let i = 0; i < results.length; i++) {
-        alternatives.push(results[i].transcript.trim());
-      }
-
-      setSpokenWord(alternatives[0]);
-
-      // Check if user spoke the letter correctly using custom expects or arabicSimilarity
-      let isMatch = false;
-      for (const alt of alternatives) {
-        // Direct match with expects
-        if (lesson.expectedTranscripts.includes(alt)) {
-          isMatch = true;
-          break;
+      
+      try {
+        if (recorderRef.current) {
+          const audioBlob = await recorderRef.current.stop();
+          const result = await transcribeAudio(audioBlob);
+          
+          if (!result.success || !result.transcript) {
+            setAsrResult("retry");
+            setSpokenWord("Could not hear you. Try again.");
+            return;
+          }
+          
+          checkPronunciation(result.transcript);
         }
-        // Similarity check
-        const score = arabicSimilarity(alt, lesson.char);
-        if (score >= 0.58) {
-          isMatch = true;
-          break;
-        }
-      }
-
-      if (isMatch) {
-        setAsrResult("success");
-        setIsCompleted(true);
-        saveLearningProgress({
-          track: "letters",
-          lesson_id: `letter_${letterId}`,
-          completed: true,
-          score: 100,
-        });
-      } else {
+      } catch (err) {
+        console.error("Recording stop/transcription failed:", err);
         setAsrResult("retry");
+        setSpokenWord("Something went wrong. Try again.");
       }
-    };
+    } else {
+      try {
+        if (!recorderRef.current) {
+          const { AudioRecorder } = await import("@/lib/speech/recorder");
+          recorderRef.current = new AudioRecorder();
+        }
+        await recorderRef.current.start();
+        setIsRecording(true);
+        setAsrResult("none");
+        setSpokenWord("");
 
-    rec.onerror = (e: any) => {
-      console.warn("ASR Error:", e.error);
-      setIsRecording(false);
-    };
-
-    rec.onend = () => {
-      setIsRecording(false);
-    };
-
-    rec.start();
+        setTimeout(() => {
+          if (recorderRef.current && recorderRef.current.isRecording()) {
+            handleMicTap();
+          }
+        }, 8000);
+      } catch (err: any) {
+        console.error("Microphone start failed:", err);
+        setAsrResult("retry");
+        setSpokenWord(err.message || "Microphone access denied.");
+      }
+    }
   };
 
   const nextId = letterId + 1;
@@ -663,8 +673,7 @@ export default function LetterLessonPage() {
 
               {/* Mic action buttons */}
               <button
-                onClick={startASR}
-                disabled={isRecording}
+                onClick={handleMicTap}
                 className={`w-16 h-16 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 ${
                   isRecording
                     ? "bg-ruby text-white animate-pulse shadow-ruby/20 scale-105"

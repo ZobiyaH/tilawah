@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef, useMemo } from "react";
 import Link from "next/link";
 import Header from "@/components/Layout/Header";
 import BottomNav from "@/components/Layout/BottomNav";
@@ -17,6 +17,8 @@ import { QariAudioManager } from "@/lib/qariAudio";
 import { saveLearningProgress } from "@/lib/progress";
 import { arabicSimilarity } from "@/lib/arabic/similarity";
 import { normalizeArabic } from "@/lib/arabic/normalize";
+import { transcribeAudio } from "@/lib/speech/transcribe";
+import { preloadAudio, getWordAudio } from "@/lib/audio/qariCDN";
 
 const SHORT_SURAHS = [
   { id: "1", name: "Al-Fatiha", arName: "الفاتحة", totalAyat: 7, isAvailable: true },
@@ -58,9 +60,18 @@ export default function ShortSurahsPage() {
   const [isPlayingFull, setIsPlayingFull] = useState(false);
 
   // Flat array of all words for Phase 2
-  const flatWords = surahData
-    ? surahData.ayat.flatMap((a) => a.words.map((w) => ({ word: w, surahId: a.surahId, ayahNumber: a.ayahNumber })))
-    : [];
+  const flatWords = useMemo(() => {
+    return surahData
+      ? surahData.ayat.flatMap((a) =>
+          a.words.map((w, idx) => ({
+            word: w,
+            surahId: a.surahId,
+            ayahNumber: a.ayahNumber,
+            wordPosition: idx + 1
+          }))
+        )
+      : [];
+  }, [surahData]);
 
   useEffect(() => {
     setPlayingAyahIdx(null);
@@ -78,6 +89,25 @@ export default function ShortSurahsPage() {
       resetSession();
     }
   }, [selectedSurahIdx, activePhase, surahMeta.id, surahData, loadSurah, resetSession]);
+
+  // Preload first 3 words silently on page load/surah load
+  useEffect(() => {
+    if (flatWords.length > 0) {
+      flatWords.slice(0, 3).forEach((fw) => {
+        const url = getWordAudio(fw.surahId, fw.ayahNumber, fw.wordPosition);
+        preloadAudio(url);
+      });
+    }
+  }, [surahData, flatWords.length]);
+
+  // Preload next word silently in background when active word index changes
+  useEffect(() => {
+    const nextFw = flatWords[activeWordIdx + 1];
+    if (nextFw) {
+      const url = getWordAudio(nextFw.surahId, nextFw.ayahNumber, nextFw.wordPosition);
+      preloadAudio(url);
+    }
+  }, [activeWordIdx, flatWords]);
 
   // --- Phase 1: Play Full Surah sequentially ---
   const playFullSurah = async () => {
@@ -128,91 +158,112 @@ export default function ShortSurahsPage() {
     }
   };
 
-  const startWordASR = () => {
-    if (typeof window === "undefined") return;
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) return;
+  const recorderRef = useRef<any>(null);
 
-    const rec = new SpeechRecognition();
-    rec.lang = "ar-SA";
-    rec.interimResults = false;
+  const checkWordPronunciation = (spoken: string) => {
+    setSpokenText(spoken);
+    const cleanSpoken = spoken.trim();
+    const targetWord = flatWords[activeWordIdx]?.word || "";
+    const similarity = arabicSimilarity(normalizeArabic(cleanSpoken), normalizeArabic(targetWord));
 
-    rec.onstart = () => {
-      setIsRecording(true);
-      setAsrResult("none");
-      setSpokenText("");
-    };
-
-    rec.onresult = (event: any) => {
-      const result = event.results[0][0].transcript.trim();
-      setSpokenText(result);
-
-      const targetWord = flatWords[activeWordIdx]?.word || "";
-      const similarity = arabicSimilarity(normalizeArabic(result), normalizeArabic(targetWord));
-
-      if (similarity >= 0.58 || normalizeArabic(result).includes(normalizeArabic(targetWord))) {
-        setAsrResult("success");
-        setTimeout(() => {
-          if (activeWordIdx < flatWords.length - 1) {
-            setActiveWordIdx(activeWordIdx + 1);
-            setAsrResult("none");
-            setSpokenText("");
-          } else {
-            alert("MashaAllah! You completed all words. Proceed to Phase 3!");
-          }
-        }, 1500);
-      } else {
-        setAsrResult("retry");
-        playWordAudio(targetWord);
-      }
-    };
-
-    rec.onend = () => setIsRecording(false);
-    rec.start();
+    if (similarity >= 0.58 || normalizeArabic(cleanSpoken).includes(normalizeArabic(targetWord))) {
+      setAsrResult("success");
+      setTimeout(() => {
+        if (activeWordIdx < flatWords.length - 1) {
+          setActiveWordIdx(activeWordIdx + 1);
+          setAsrResult("none");
+          setSpokenText("");
+        } else {
+          alert("MashaAllah! You completed all words. Proceed to Phase 3!");
+        }
+      }, 1500);
+    } else {
+      setAsrResult("retry");
+      playWordAudio(targetWord);
+    }
   };
 
-  // --- Phase 3: Ayah By Ayah ---
-  const startAyahASR = () => {
-    if (!surahData || typeof window === "undefined") return;
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) return;
+  const checkAyahPronunciation = (spoken: string) => {
+    setSpokenText(spoken);
+    const cleanSpoken = spoken.trim();
+    const currentAyah = surahData!.ayat[activeAyahIdx];
+    const targetAyahText = currentAyah.words.join(" ");
+    const similarity = arabicSimilarity(normalizeArabic(cleanSpoken), normalizeArabic(targetAyahText));
 
-    const rec = new SpeechRecognition();
-    rec.lang = "ar-SA";
-    rec.interimResults = false;
+    if (similarity >= 0.55 || normalizeArabic(cleanSpoken).includes(normalizeArabic(currentAyah.words[0]))) {
+      setAsrResult("success");
+      setTimeout(() => {
+        if (activeAyahIdx < surahData!.ayat.length - 1) {
+          setActiveAyahIdx(activeAyahIdx + 1);
+          setAsrResult("none");
+          setSpokenText("");
+        } else {
+          alert("MashaAllah! You completed all Ayahs. Move to Phase 4 for full recitation.");
+        }
+      }, 1500);
+    } else {
+      setAsrResult("retry");
+    }
+  };
 
-    rec.onstart = () => {
-      setIsRecording(true);
+  const handleMicTap = async (type: "word" | "ayah") => {
+    if (isRecording) {
+      setIsRecording(false);
+      setSpokenText("Processing...");
       setAsrResult("none");
-      setSpokenText("");
-    };
-
-    rec.onresult = (event: any) => {
-      const result = event.results[0][0].transcript.trim();
-      setSpokenText(result);
-
-      const currentAyah = surahData.ayat[activeAyahIdx];
-      const targetAyahText = currentAyah.words.join(" ");
-      const similarity = arabicSimilarity(normalizeArabic(result), normalizeArabic(targetAyahText));
-
-      if (similarity >= 0.55 || normalizeArabic(result).includes(normalizeArabic(currentAyah.words[0]))) {
-        setAsrResult("success");
-        setTimeout(() => {
-          if (activeAyahIdx < surahData.ayat.length - 1) {
-            setActiveAyahIdx(activeAyahIdx + 1);
-            setAsrResult("none");
-            setSpokenText("");
-          } else {
-            alert("MashaAllah! You completed all Ayahs. Move to Phase 4 for full recitation.");
+      
+      try {
+        if (recorderRef.current) {
+          const audioBlob = await recorderRef.current.stop();
+          const result = await transcribeAudio(audioBlob);
+          
+          if (!result.success || !result.transcript) {
+            setAsrResult("retry");
+            setSpokenText("Could not hear you. Try again.");
+            return;
           }
-        }, 1500);
-      } else {
+          
+          if (type === "word") {
+            checkWordPronunciation(result.transcript);
+          } else {
+            checkAyahPronunciation(result.transcript);
+          }
+        }
+      } catch (err) {
+        console.error("Recording stop/transcription failed:", err);
         setAsrResult("retry");
+        setSpokenText("Something went wrong. Try again.");
       }
-    };
+    } else {
+      try {
+        if (!recorderRef.current) {
+          const { AudioRecorder } = await import("@/lib/speech/recorder");
+          recorderRef.current = new AudioRecorder();
+        }
+        await recorderRef.current.start();
+        setIsRecording(true);
+        setAsrResult("none");
+        setSpokenText("");
 
-    rec.onend = () => setIsRecording(false);
-    rec.start();
+        setTimeout(() => {
+          if (recorderRef.current && recorderRef.current.isRecording()) {
+            handleMicTap(type);
+          }
+        }, 8000);
+      } catch (err: any) {
+        console.error("Microphone start failed:", err);
+        setAsrResult("retry");
+        setSpokenText(err.message || "Microphone access denied.");
+      }
+    }
+  };
+
+  const startWordASR = () => {
+    handleMicTap("word");
+  };
+
+  const startAyahASR = () => {
+    handleMicTap("ayah");
   };
 
   // --- Phase 4 Finish ---
@@ -372,7 +423,6 @@ export default function ShortSurahsPage() {
                       
                       <button
                         onClick={startWordASR}
-                        disabled={isRecording}
                         className={`h-10 px-4 rounded-lg text-white font-bold text-xs uppercase tracking-wider ${
                           isRecording ? "bg-red-600 animate-pulse" : "bg-[#1e5e4a]"
                         }`}
@@ -417,7 +467,6 @@ export default function ShortSurahsPage() {
                       
                       <button
                         onClick={startAyahASR}
-                        disabled={isRecording}
                         className={`h-10 px-4 rounded-lg text-white font-bold text-xs uppercase tracking-wider ${
                           isRecording ? "bg-red-600 animate-pulse" : "bg-[#1e5e4a]"
                         }`}

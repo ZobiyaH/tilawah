@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Layout/Header";
@@ -9,6 +9,8 @@ import BottomNav from "@/components/Layout/BottomNav";
 import { QariPlayer } from "@/components/audio/QariPlayer";
 import { normalizeArabic } from "@/lib/arabic/normalize";
 import { arabicSimilarity } from "@/lib/arabic/similarity";
+import { transcribeAudio } from "@/lib/speech/transcribe";
+import { preloadAudio, getWordAudio } from "@/lib/audio/qariCDN";
 
 interface CommonWord {
   id: number;
@@ -247,6 +249,26 @@ export default function CommonWordsPage() {
     });
   }, []);
 
+  // Preload first 3 words silently on page load
+  useEffect(() => {
+    [0, 1, 2].forEach(index => {
+      const w = COMMON_WORDS[index];
+      if (w) {
+        const url = getWordAudio(w.example.surah, w.example.ayah, w.example.wordPosition);
+        preloadAudio(url);
+      }
+    });
+  }, []);
+
+  // Preload next word silently in background when active index changes
+  useEffect(() => {
+    const nextWord = COMMON_WORDS[activeIdx + 1];
+    if (nextWord) {
+      const url = getWordAudio(nextWord.example.surah, nextWord.example.ayah, nextWord.example.wordPosition);
+      preloadAudio(url);
+    }
+  }, [activeIdx]);
+
   const currentWord = COMMON_WORDS[activeIdx];
 
   const playWordAudio = async () => {
@@ -266,70 +288,83 @@ export default function CommonWordsPage() {
     await QariPlayer.playLetter(clean);
   };
 
-  const startSpeechRecording = () => {
-    if (typeof window === "undefined") return;
-    const SpeechRecognition =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+  const recorderRef = useRef<any>(null);
 
-    if (!SpeechRecognition) {
-      alert("Browser Speech Recognition not supported. Please use Chrome/Safari.");
-      return;
+  const checkPronunciation = (spoken: string) => {
+    setSpokenText(spoken);
+    const cleanSpoken = spoken.trim();
+    
+    let isMatch = false;
+    const cleanTarget = normalizeArabic(currentWord.word.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?؟]/g, "").trim());
+    const cleanAlt = normalizeArabic(cleanSpoken.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?؟]/g, "").trim());
+
+    if (cleanAlt === cleanTarget || cleanAlt.includes(cleanTarget) || cleanTarget.includes(cleanAlt)) {
+      isMatch = true;
+    } else {
+      const score = arabicSimilarity(cleanAlt, cleanTarget);
+      if (score >= 0.4) {
+        isMatch = true;
+      }
     }
 
-    const rec = new SpeechRecognition();
-    rec.lang = "ar-SA";
-    rec.interimResults = false;
-    rec.maxAlternatives = 3;
+    if (isMatch) {
+      setAsrResult("success");
+    } else {
+      setAsrResult("retry");
+      playWordAudio();
+    }
+  };
 
-    rec.onstart = () => {
-      setIsRecording(true);
+  const handleMicTap = async () => {
+    if (isRecording) {
+      setIsRecording(false);
+      setSpokenText("Processing...");
       setAsrResult("none");
-      setSpokenText("");
-    };
-
-    rec.onresult = (event: any) => {
-      const results = event.results[0];
-      const alternatives: string[] = [];
-      for (let i = 0; i < results.length; i++) {
-        alternatives.push(results[i].transcript.trim());
-      }
-
-      let isMatch = false;
-      const cleanTarget = normalizeArabic(currentWord.word.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?؟]/g, "").trim());
-
-      for (const alt of alternatives) {
-        const cleanAlt = normalizeArabic(alt.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?؟]/g, "").trim());
-        if (cleanAlt === cleanTarget || cleanAlt.includes(cleanTarget) || cleanTarget.includes(cleanAlt)) {
-          isMatch = true;
-          break;
+      
+      try {
+        if (recorderRef.current) {
+          const audioBlob = await recorderRef.current.stop();
+          const result = await transcribeAudio(audioBlob);
+          
+          if (!result.success || !result.transcript) {
+            setAsrResult("retry");
+            setSpokenText("Could not hear you. Try again.");
+            return;
+          }
+          
+          checkPronunciation(result.transcript);
         }
-        const score = arabicSimilarity(cleanAlt, cleanTarget);
-        if (score >= 0.4) {
-          isMatch = true;
-          break;
-        }
-      }
-
-      setSpokenText(alternatives[0]);
-
-      if (isMatch) {
-        setAsrResult("success");
-      } else {
+      } catch (err) {
+        console.error("Recording stop/transcription failed:", err);
         setAsrResult("retry");
-        playWordAudio();
+        setSpokenText("Something went wrong. Try again.");
       }
-    };
+    } else {
+      try {
+        if (!recorderRef.current) {
+          const { AudioRecorder } = await import("@/lib/speech/recorder");
+          recorderRef.current = new AudioRecorder();
+        }
+        await recorderRef.current.start();
+        setIsRecording(true);
+        setAsrResult("none");
+        setSpokenText("");
 
-    rec.onerror = (e: any) => {
-      console.warn("ASR Error:", e.error);
-      setIsRecording(false);
-    };
+        setTimeout(() => {
+          if (recorderRef.current && recorderRef.current.isRecording()) {
+            handleMicTap();
+          }
+        }, 8000);
+      } catch (err: any) {
+        console.error("Microphone start failed:", err);
+        setAsrResult("retry");
+        setSpokenText(err.message || "Microphone access denied.");
+      }
+    }
+  };
 
-    rec.onend = () => {
-      setIsRecording(false);
-    };
-
-    rec.start();
+  const startSpeechRecording = () => {
+    handleMicTap();
   };
 
   return (
@@ -460,7 +495,6 @@ export default function CommonWordsPage() {
 
             <button
               onClick={startSpeechRecording}
-              disabled={isRecording}
               className={`w-20 h-20 rounded-full flex items-center justify-center text-white shadow-md transition-all active:scale-95 ${
                 isRecording
                   ? "bg-[#8b1a1a] shadow-[0_6px_24px_rgba(139,26,26,0.3)] animate-pulse"

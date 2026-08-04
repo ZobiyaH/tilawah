@@ -7,6 +7,7 @@ import { getSurahData } from "../../../lib/quran/quranData";
 import { motion, AnimatePresence } from "framer-motion";
 import { speakArabicWord } from "../../../lib/speech/tts";
 import { stripDiacritics } from "../../../lib/arabic/normalize";
+import { preloadAudio, getWordAudio } from "../../../lib/audio/qariCDN";
 
 import Header from "../../../components/Layout/Header";
 import SettingsDrawer from "../../../components/UI/SettingsDrawer";
@@ -124,6 +125,25 @@ export default function RecitationPage() {
       router.push("/");
     }
   }, [surahId, surahData, loadSurah, router]);
+
+  // Preload first 3 words silently on page load/allWords load
+  useEffect(() => {
+    if (allWords && allWords.length > 0) {
+      allWords.slice(0, 3).forEach((w) => {
+        const url = getWordAudio(w.ayahData.surahId, w.ayahN, w.wordIdxInAyah + 1);
+        preloadAudio(url);
+      });
+    }
+  }, [allWords]);
+
+  // Preload next word silently in background when wordIndex changes
+  useEffect(() => {
+    const nextWord = allWords[wordIndex + 1];
+    if (nextWord) {
+      const url = getWordAudio(nextWord.ayahData.surahId, nextWord.ayahN, nextWord.wordIdxInAyah + 1);
+      preloadAudio(url);
+    }
+  }, [wordIndex, allWords]);
 
   if (!surahData) {
     return null;

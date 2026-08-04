@@ -1,83 +1,77 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { NextRequest, NextResponse } from "next/server";
+import Groq from 'groq-sdk';
+import { NextRequest, NextResponse } from 'next/server';
+
+const groq = new Groq({
+  apiKey: process.env.GROQ_API_KEY || '',
+});
 
 export async function GET() {
-  try {
-    const response = await fetch("http://127.0.0.1:8000/", { signal: AbortSignal.timeout(500) }).catch(() => null);
-    if (response) {
-      return NextResponse.json({ status: "online" });
-    }
-    return NextResponse.json({ status: "offline", fallback: true }, { status: 200 });
-  } catch {
-    return NextResponse.json({ status: "offline", fallback: true }, { status: 200 });
+  if (!process.env.GROQ_API_KEY) {
+    return NextResponse.json(
+      { status: 'offline', fallback: true, error: 'API not configured' },
+      { status: 503 }
+    );
   }
+  return NextResponse.json({ status: 'online' });
 }
 
-/**
- * POST endpoint for /api/transcribe
- * Receives an audio blob (typically audio/webm or audio/wav) representing recitation.
- * 
- * Whisper Integration Blueprint:
- * 1. Read request form data: `const formData = await request.formData();`
- * 2. Retrieve audio payload: `const audioBlob = formData.get("audio") as Blob;`
- * 3. Convert blob to file/buffer: `const buffer = Buffer.from(await audioBlob.arrayBuffer());`
- * 4. Instantiate OpenAI SDK or local model loader.
- * 5. Send to OpenAI Whisper Audio Transcriptions API:
- *    ```
- *    const transcription = await openai.audio.transcriptions.create({
- *      file: fs.createReadStream(tempAudioFilePath),
- *      model: "whisper-1",
- *      language: "ar", // Force Arabic for Quranic transcription
- *      prompt: "تلاوة القرآن الكريم بالتجويد", // prompt helps guide Whisper
- *    });
- *    ```
- * 6. Return response: `return NextResponse.json({ transcript: transcription.text, confidence: 0.99 });`
- */
 export async function POST(request: NextRequest) {
   try {
+    if (!process.env.GROQ_API_KEY) {
+      return NextResponse.json(
+        { error: 'API not configured', fallback: true },
+        { status: 503 }
+      );
+    }
+
+    // Get audio from request
     const formData = await request.formData();
-    const audioBlob = formData.get("audio") as Blob;
-    const prompt = (formData.get("prompt") as string) || "";
+    const audioFile = formData.get('audio') as File;
 
-    if (!audioBlob) {
-      return NextResponse.json({ error: "No audio file provided" }, { status: 400 });
+    if (!audioFile) {
+      return NextResponse.json(
+        { error: 'No audio file provided' },
+        { status: 400 }
+      );
     }
 
-    // Build the request body for the FastAPI server
-    const backendFormData = new FormData();
-    backendFormData.append("audio", audioBlob, "audio.wav");
-    if (prompt) {
-      backendFormData.append("prompt", prompt);
+    // Check file size (Groq limit is 25MB)
+    if (audioFile.size > 25 * 1024 * 1024) {
+      return NextResponse.json(
+        { error: 'File too large. Max 25MB.' },
+        { status: 400 }
+      );
     }
 
-    console.log(`Forwarding audio chunk to FastAPI backend (Prompt length: ${prompt.length})`);
-    
-    // Call the self-hosted Whisper FastAPI server
-    const response = await fetch("http://127.0.0.1:8000/transcribe", {
-      method: "POST",
-      body: backendFormData,
+    // Send to Groq Whisper large-v3
+    const transcription = await groq.audio.transcriptions.create({
+      file: audioFile,
+      model: 'whisper-large-v3',
+      language: 'ar',
+      prompt: 'بسم الله الرحمن الرحيم',
+      response_format: 'json',
+      temperature: 0.0,
     });
 
-    if (!response.ok) {
-      const errText = await response.text();
-      console.error("FastAPI Whisper server error:", errText);
-      return NextResponse.json({ error: "Whisper backend error" }, { status: 502 });
-    }
-
-    const data = await response.json();
     return NextResponse.json({
-      transcript: data.transcript || "",
-      confidence: 0.99
+      transcript: transcription.text.trim(),
+      success: true,
     });
-  } catch (e: any) {
-    if (e.code === "ECONNREFUSED" || (e.cause && e.cause.code === "ECONNREFUSED")) {
-      console.warn("FastAPI Whisper server is offline (ECONNREFUSED). Clients will default to browser Web Speech API.");
-      return NextResponse.json({ error: "Whisper server offline", fallback: true, transcript: "" }, { status: 200 });
-    }
-    console.error("API Error in /api/transcribe proxy router:", e);
+
+  } catch (error: any) {
+    console.error('Groq transcription error:', error);
+    
+    // If Groq fails, tell client to use browser ASR
     return NextResponse.json(
-      { error: "Internal server error during transcription" },
+      { 
+        error: 'Transcription failed',
+        fallback: true,
+        message: error.message,
+      },
       { status: 500 }
     );
   }
 }
+
+

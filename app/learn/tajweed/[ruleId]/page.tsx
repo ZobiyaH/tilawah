@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Header from "@/components/Layout/Header";
@@ -11,6 +11,7 @@ import { QariAudioManager } from "@/lib/qariAudio";
 import { saveLearningProgress, getLearningProgress } from "@/lib/progress";
 import { arabicSimilarity } from "@/lib/arabic/similarity";
 import { normalizeArabic } from "@/lib/arabic/normalize";
+import { transcribeAudio } from "@/lib/speech/transcribe";
 
 interface QuranExample {
   word: string;
@@ -277,6 +278,7 @@ export default function TajweedLessonPage() {
   const [asrSuccess, setAsrSuccess] = useState(false);
   const [spokenPhrase, setSpokenPhrase] = useState("");
   const [isCompleted, setIsCompleted] = useState(false);
+  const recorderRef = useRef<any>(null);
 
   useEffect(() => {
     if (!lesson) {
@@ -338,50 +340,82 @@ export default function TajweedLessonPage() {
     }
   };
 
-  const startRecitationPractice = () => {
-    if (typeof window === "undefined") return;
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      alert("Browser Speech Recognition not supported.");
-      return;
+
+
+  const checkPronunciation = (spoken: string) => {
+    setSpokenPhrase(spoken);
+    const cleanSpoken = spoken.trim();
+    
+    const normalizedResult = normalizeArabic(cleanSpoken.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?؟]/g, ""));
+    const normalizedExpect = normalizeArabic(lesson.expectedRecitation);
+
+    const score = arabicSimilarity(normalizedResult, normalizedExpect);
+    if (score >= 0.58 || normalizedResult.includes(normalizedExpect)) {
+      setAsrSuccess(true);
+      setIsCompleted(true);
+      playChime();
+      saveLearningProgress({
+        track: "tajweed",
+        lesson_id: lesson.id,
+        completed: true,
+        score: 100
+      });
+    } else {
+      setAsrSuccess(false);
+      playClipB(); // auto replay correct Qari sound on fail
     }
+  };
 
-    const rec = new SpeechRecognition();
-    rec.lang = "ar-SA";
-    rec.interimResults = false;
-
-    rec.onstart = () => {
-      setIsRecording(true);
-      setSpokenPhrase("");
-    };
-
-    rec.onresult = (event: any) => {
-      const resultText = event.results[0][0].transcript.trim();
-      setSpokenPhrase(resultText);
-
-      const normalizedResult = normalizeArabic(resultText.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?؟]/g, ""));
-      const normalizedExpect = normalizeArabic(lesson.expectedRecitation);
-
-      const score = arabicSimilarity(normalizedResult, normalizedExpect);
-      if (score >= 0.58 || normalizedResult.includes(normalizedExpect)) {
-        setAsrSuccess(true);
-        setIsCompleted(true);
-        playChime();
-        saveLearningProgress({
-          track: "tajweed",
-          lesson_id: lesson.id,
-          completed: true,
-          score: 100
-        });
-      } else {
+  const handleMicTap = async () => {
+    if (isRecording) {
+      setIsRecording(false);
+      setSpokenPhrase("Processing...");
+      setAsrSuccess(false);
+      
+      try {
+        if (recorderRef.current) {
+          const audioBlob = await recorderRef.current.stop();
+          const result = await transcribeAudio(audioBlob);
+          
+          if (!result.success || !result.transcript) {
+            setAsrSuccess(false);
+            setSpokenPhrase("Could not hear you. Try again.");
+            return;
+          }
+          
+          checkPronunciation(result.transcript);
+        }
+      } catch (err) {
+        console.error("Recording stop/transcription failed:", err);
         setAsrSuccess(false);
-        playClipB(); // auto replay correct Qari sound on fail
+        setSpokenPhrase("Something went wrong. Try again.");
       }
-    };
+    } else {
+      try {
+        if (!recorderRef.current) {
+          const { AudioRecorder } = await import("@/lib/speech/recorder");
+          recorderRef.current = new AudioRecorder();
+        }
+        await recorderRef.current.start();
+        setIsRecording(true);
+        setAsrSuccess(false);
+        setSpokenPhrase("");
 
-    rec.onerror = () => setIsRecording(false);
-    rec.onend = () => setIsRecording(false);
-    rec.start();
+        setTimeout(() => {
+          if (recorderRef.current && recorderRef.current.isRecording()) {
+            handleMicTap();
+          }
+        }, 8000);
+      } catch (err: any) {
+        console.error("Microphone start failed:", err);
+        setAsrSuccess(false);
+        setSpokenPhrase(err.message || "Microphone access denied.");
+      }
+    }
+  };
+
+  const startRecitationPractice = () => {
+    handleMicTap();
   };
 
   const nextId = ruleId + 1;
@@ -580,7 +614,6 @@ export default function TajweedLessonPage() {
 
               <button
                 onClick={startRecitationPractice}
-                disabled={isRecording}
                 className={`w-[72px] h-[72px] rounded-full flex items-center justify-center text-white shadow-lg transition-all active:scale-95 ${
                   isRecording
                     ? "bg-[#8b1a1a] shadow-[0_0_12px_rgba(139,26,26,0.4)] animate-pulse"
