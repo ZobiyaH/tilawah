@@ -18,13 +18,7 @@ export default function ContinuousListener({ micCheckOpen = false }: { micCheckO
     // Auto-request microphone permission on mount to open listening continuously
     if (typeof navigator !== "undefined" && navigator.mediaDevices) {
       navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-          channelCount: 1,
-          sampleRate: 16000
-        }
+        audio: true
       })
         .then(() => {
           setListening(true);

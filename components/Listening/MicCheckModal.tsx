@@ -32,18 +32,7 @@ export default function MicCheckModal({ isOpen, onClose }: MicCheckModalProps) {
 
         // Get microphone stream with optimized constraints
         localStream = await navigator.mediaDevices.getUserMedia({
-          audio: {
-            echoCancellation: true,
-            noiseSuppression: false,
-            autoGainControl: true,
-            channelCount: 1,
-            sampleRate: 16000,
-            sampleSize: 16,
-            googNoiseSuppression: false,
-            googHighpassFilter: false,
-            googAutoGainControl: true,
-            googExperimentalAutoGainControl: true,
-          } as any
+          audio: true
         });
         streamRef.current = localStream;
 

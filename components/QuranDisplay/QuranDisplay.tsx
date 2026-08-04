@@ -172,6 +172,13 @@ export default function QuranDisplay() {
           transition: "filter 0.3s ease"
         }}
       >
+        {/* Beautiful Bismillah Header Banner for starting of Surah/Ayah page */}
+        {currentSurahId !== "9" && (
+          <div className="text-center py-3 my-2 text-2xl md:text-3xl font-amiri-quran text-gold select-none border-b border-gold/15 bg-gold-pale/10 rounded-xl">
+            بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
+          </div>
+        )}
+
         {surahData.ayat.map((ayah, idx) => (
           <AyahLine
             key={idx}
