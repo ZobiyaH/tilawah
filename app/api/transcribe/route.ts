@@ -48,6 +48,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const prompt = (formData.get('prompt') as string) || 'بسم الله الرحمن الرحيم';
+
     const buffer = Buffer.from(await audioFile.arrayBuffer());
     const fileToUpload = await toFile(buffer, 'audio.webm', { type: 'audio/webm' });
 
@@ -56,7 +58,7 @@ export async function POST(request: NextRequest) {
       file: fileToUpload,
       model: 'whisper-large-v3-turbo',
       language: 'ar',
-      prompt: 'بسم الله الرحمن الرحيم',
+      prompt: prompt,
       response_format: 'json',
       temperature: 0.0,
     });

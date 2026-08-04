@@ -6,13 +6,7 @@ export class AudioRecorder {
   async start(): Promise<void> {
     try {
       this.stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: false,
-          autoGainControl: true,
-          channelCount: 1,
-          sampleRate: 16000,
-        }
+        audio: true
       });
 
       // Use webm format — supported everywhere
