@@ -141,6 +141,36 @@ export function useContinuousASR(isListening: boolean) {
           globalRecorder = recorder;
           setRecognitionRunning(true);
 
+          // Voice Activity Detection (VAD): Only send audio to Groq when user is speaking
+          // Attach an AnalyserNode to the mic stream to measure real-time volume
+          let vadAnalyser: AnalyserNode | null = null;
+          let vadDataArray: Uint8Array<ArrayBuffer> | null = null;
+          try {
+            const AudioCtxClass = window.AudioContext || (window as any).webkitAudioContext;
+            const vadCtx = new AudioCtxClass();
+            vadAnalyser = vadCtx.createAnalyser();
+            vadAnalyser.fftSize = 256;
+            vadDataArray = new Uint8Array(vadAnalyser.frequencyBinCount);
+            const vadSource = vadCtx.createMediaStreamSource(localStream);
+            vadSource.connect(vadAnalyser);
+            if (vadCtx.state === "suspended") {
+              await vadCtx.resume();
+            }
+          } catch (e) {
+            console.warn("VAD analyser init failed:", e);
+          }
+
+          const getVoiceRMS = (): number => {
+            if (!vadAnalyser || !vadDataArray) return 1.0; // if no analyser, allow sending
+            vadAnalyser.getByteTimeDomainData(vadDataArray);
+            let sum = 0;
+            for (let i = 0; i < vadDataArray.length; i++) {
+              const val = (vadDataArray[i] - 128) / 128;
+              sum += val * val;
+            }
+            return Math.sqrt(sum / vadDataArray.length);
+          }
+
           let chunks: Blob[] = [];
 
           recorder.ondataavailable = (e) => {
@@ -152,6 +182,18 @@ export function useContinuousASR(isListening: boolean) {
           recorder.onstop = async () => {
             const audioBlob = new Blob(chunks, { type: "audio/webm" });
             chunks = [];
+
+            // VAD: skip if audio appears silent (RMS below threshold)
+            const rms = getVoiceRMS();
+            const isSilent = rms < 0.015;
+            if (isSilent) {
+              console.log("VAD: skipping silent audio chunk (RMS:", rms.toFixed(4), ")");
+              // Restart chunk recording immediately
+              if (activeRef.current && localRecorder && localRecorder.state === "inactive" && globalUseWhisper) {
+                try { localRecorder.start(); } catch {}
+              }
+              return;
+            }
 
             const playing = useRecitationStore.getState().isAudioPlaying;
             if (audioBlob.size > 0 && activeRef.current && !playing && globalUseWhisper) {
