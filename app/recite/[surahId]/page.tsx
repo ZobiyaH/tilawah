@@ -200,6 +200,9 @@ export default function RecitationPage() {
       {/* Mic Check Modal */}
       <MicCheckModal isOpen={micCheckOpen} onClose={() => setMicCheckOpen(false)} />
 
+      {/* Continuous Speech Listener Hook */}
+      <ContinuousListener micCheckOpen={micCheckOpen} />
+
       {/* Recitation Main UI */}
       <main className="flex-1 max-w-6xl mx-auto w-full px-6 mt-6 grid grid-cols-1 lg:grid-cols-12 gap-8 relative z-10">
         
