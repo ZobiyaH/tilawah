@@ -43,19 +43,7 @@ export function useAudioStream(isListening: boolean) {
     async function initStream() {
       try {
         const audioStream = await navigator.mediaDevices.getUserMedia({
-          audio: {
-            echoCancellation: true,       // keep ON - prevents speaker feedback
-            noiseSuppression: false,      // turn OFF - it was killing quiet Arabic speech
-            autoGainControl: true,        // keep ON - automatically boosts quiet voice
-            channelCount: 1,
-            sampleRate: 16000,
-            sampleSize: 16,
-            // These are the key ones most devs miss:
-            googNoiseSuppression: false,
-            googHighpassFilter: false,
-            googAutoGainControl: true,
-            googExperimentalAutoGainControl: true,
-          } as any
+          audio: true
         });
         if (!active) {
           audioStream.getTracks().forEach((track) => track.stop());
