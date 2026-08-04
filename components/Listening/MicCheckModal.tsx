@@ -38,6 +38,9 @@ export default function MicCheckModal({ isOpen, onClose }: MicCheckModalProps) {
 
         const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
         localCtx = new AudioContextClass();
+        if (localCtx.state === "suspended") {
+          await localCtx.resume();
+        }
         audioContextRef.current = localCtx;
 
         const analyserNode = localCtx.createAnalyser();

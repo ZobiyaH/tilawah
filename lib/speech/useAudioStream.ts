@@ -54,6 +54,9 @@ export function useAudioStream(isListening: boolean) {
         if (!AudioContextClass) return;
 
         const ctx = new AudioContextClass();
+        if (ctx.state === "suspended") {
+          await ctx.resume();
+        }
         const analyserNode = ctx.createAnalyser();
         analyserNode.fftSize = 256;
 
