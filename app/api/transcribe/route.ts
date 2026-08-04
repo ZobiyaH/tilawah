@@ -2,12 +2,10 @@
 import Groq from 'groq-sdk';
 import { NextRequest, NextResponse } from 'next/server';
 
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY || '',
-});
-
 export async function GET() {
-  if (!process.env.GROQ_API_KEY) {
+  const key = process.env.GROQ_API_KEY;
+  console.log("Transcribe GET healthcheck. Key configured:", !!key, key ? `(Starts with: ${key.substring(0, 8)})` : "");
+  if (!key) {
     return NextResponse.json(
       { status: 'offline', fallback: true, error: 'API not configured' },
       { status: 503 }
@@ -18,12 +16,18 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    if (!process.env.GROQ_API_KEY) {
+    const key = process.env.GROQ_API_KEY;
+    console.log("Transcribe POST request received. Key configured:", !!key);
+    if (!key) {
       return NextResponse.json(
         { error: 'API not configured', fallback: true },
         { status: 503 }
       );
     }
+
+    const groq = new Groq({
+      apiKey: key,
+    });
 
     // Get audio from request
     const formData = await request.formData();
