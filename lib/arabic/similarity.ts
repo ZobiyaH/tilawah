@@ -79,6 +79,11 @@ export function arabicSimilarity(spoken: string, reference: string): number {
     return 1.0;
   }
 
+  // Handle substring matching in continuous flow (e.g. compound tokens or prefix additions)
+  if (nr.length >= 3 && (ns.includes(nr) || nr.includes(ns))) {
+    return 0.90;
+  }
+
   const maxLen = Math.max(ns.length, nr.length);
   if (maxLen === 0) return 1.0;
 
@@ -110,9 +115,9 @@ export function checkWord(spokenAlternatives: string | string[], expectedWord: s
       }
     }
     
-    if (similarity >= 0.78) {
+    if (similarity >= 0.65) {
       status = 'correct';
-    } else if (similarity >= 0.55) {
+    } else if (similarity >= 0.45) {
       tajweedIssue = detectTajweedIssue(alt, expectedWord);
       status = 'tajweed';
     }

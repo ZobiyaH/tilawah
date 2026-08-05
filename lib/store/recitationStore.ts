@@ -284,13 +284,51 @@ export const useRecitationStore = create<RecitationState>((set, get) => {
                 });
                 tempExpectedIdx++;
               } else {
+                // Try checking if sWord matches tempExpectedIdx + 1 (user skipped a particle or slight ASR gap)
+                if (tempExpectedIdx + 1 < allWords.length) {
+                  const nextExpected = allWords[tempExpectedIdx + 1];
+                  const nextCheck = checkWord(sWord, nextExpected.arabic);
+                  if (nextCheck.status === "correct" || nextCheck.status === "tajweed") {
+                    matchedCount++;
+                    tempResults.push({
+                      status: nextCheck.status,
+                      similarity: nextCheck.similarity,
+                      expectedWordIndex: tempExpectedIdx + 1,
+                      spokenWordText: sWord,
+                    });
+                    tempExpectedIdx += 2;
+                    continue;
+                  }
+                }
+
+                // Or check if sWord + sNext combined matches expected.arabic (ASR split 1 Arabic word into 2 tokens)
+                if (s + 1 < spokenWords.length) {
+                  const combined = sWord + spokenWords[s + 1];
+                  const combCheck = checkWord(combined, expected.arabic);
+                  if (combCheck.status === "correct" || combCheck.status === "tajweed") {
+                    matchedCount++;
+                    tempResults.push({
+                      status: combCheck.status,
+                      similarity: combCheck.similarity,
+                      expectedWordIndex: tempExpectedIdx,
+                      spokenWordText: combined,
+                    });
+                    tempExpectedIdx++;
+                    s++; // skip next spoken word
+                    continue;
+                  }
+                }
+
                 tempResults.push({
                   status: "error",
                   similarity: check.similarity,
                   expectedWordIndex: tempExpectedIdx,
                   spokenWordText: sWord,
                 });
-                break;
+                // If we already matched at least one word in flow, don't break immediately; try next spoken word
+                if (matchedCount === 0) {
+                  break;
+                }
               }
             }
 

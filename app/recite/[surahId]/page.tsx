@@ -104,12 +104,35 @@ export default function RecitationPage() {
   const recitationState = useRecitationStore((state) => state.recitationState);
   const wordIndex = useRecitationStore((state) => state.wordIndex);
   const allWords = useRecitationStore((state) => state.allWords);
-
+  const liveTranscript = useRecitationStore((state) => state.liveTranscript);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [micCheckOpen, setMicCheckOpen] = useState(true);
   const [statsOpen, setStatsOpen] = useState(false);
   const [playingWord, setPlayingWord] = useState(false);
+  const [showSilenceWarning, setShowSilenceWarning] = useState(false);
+  const lastActivityRef = React.useRef(Date.now());
   const quranDisplayRef = React.useRef<HTMLDivElement>(null);
+
+  // Reset silence timer whenever wordIndex or liveTranscript changes
+  useEffect(() => {
+    lastActivityRef.current = Date.now();
+    setShowSilenceWarning(false);
+  }, [wordIndex, liveTranscript]);
+
+  // Check for 4 seconds of silence while isListening is active
+  useEffect(() => {
+    if (!isListening) {
+      setShowSilenceWarning(false);
+      return;
+    }
+    lastActivityRef.current = Date.now();
+    const interval = setInterval(() => {
+      if (Date.now() - lastActivityRef.current >= 4000) {
+        setShowSilenceWarning(true);
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [isListening]);
 
   // Automatically switch/scroll to the Ayah text screen when user begins reciting
   useEffect(() => {
@@ -349,7 +372,7 @@ export default function RecitationPage() {
 
       {/* Floating ASR Microphone Button (Bottom center, always visible) */}
       <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 md:bottom-8 select-none flex flex-col items-center gap-2">
-        {isListening && (
+        {isListening && showSilenceWarning && (
           <div className="bg-[#faf6ee] border border-[#c8993c]/35 text-[#1e5e4a] text-[10px] font-extrabold px-3 py-1 rounded-xl shadow-lg whitespace-nowrap text-center animate-pulse">
             Mic not detecting? Toggle off and on to reset! 🎙️
           </div>
