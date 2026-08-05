@@ -12,6 +12,7 @@ import MakhrajDiagram, { MakhrajPoint } from "@/components/Learning/MakhrajDiagr
 import { QariAudioManager } from "@/lib/qariAudio";
 import { saveLearningProgress, getLearningProgress } from "@/lib/progress";
 import { arabicSimilarity } from "@/lib/arabic/similarity";
+import { stripDiacritics } from "@/lib/arabic/normalize";
 import { transcribeAudio } from "@/lib/speech/transcribe";
 
 interface QuranExample {
@@ -412,6 +413,7 @@ export default function LetterLessonPage() {
   const [spokenWord, setSpokenWord] = useState("");
   const [isCompleted, setIsCompleted] = useState(false);
   const recorderRef = useRef<any>(null);
+  const recognitionRef = useRef<any>(null);
   const audioAvailable = true;
 
   useEffect(() => {
@@ -452,20 +454,25 @@ export default function LetterLessonPage() {
     }
   };
 
-
-
-  const checkPronunciation = (spoken: string) => {
+  const checkPronunciation = (spoken: string): boolean => {
     setSpokenWord(spoken);
-    const cleanSpoken = spoken.trim();
+    const cleanSpoken = stripDiacritics(spoken.trim());
     
     let isMatch = false;
-    if (lesson.expectedTranscripts.includes(cleanSpoken)) {
+    // 1. Direct match with expectedTranscripts
+    if (lesson.expectedTranscripts.some((t) => {
+      const cleanT = stripDiacritics(t);
+      return cleanSpoken === cleanT || cleanSpoken.includes(cleanT) || cleanT.includes(cleanSpoken);
+    })) {
       isMatch = true;
-    } else {
-      const score = arabicSimilarity(cleanSpoken, lesson.char);
-      if (score >= 0.58) {
-        isMatch = true;
-      }
+    } 
+    // 2. Transliteration name match (e.g., Alif, Baa, Taa)
+    else if (lesson.name && cleanSpoken.toLowerCase().includes(lesson.name.toLowerCase())) {
+      isMatch = true;
+    }
+    // 3. Char match or similarity match
+    else if (cleanSpoken.includes(lesson.char) || arabicSimilarity(cleanSpoken, lesson.char) >= 0.45) {
+      isMatch = true;
     }
 
     if (isMatch) {
@@ -477,35 +484,48 @@ export default function LetterLessonPage() {
         completed: true,
         score: 100,
       });
+      return true;
     } else {
       setAsrResult("retry");
+      return false;
+    }
+  };
+
+  const stopRecordingAndProcess = async () => {
+    if (recognitionRef.current) {
+      try { recognitionRef.current.stop(); } catch {}
+      recognitionRef.current = null;
+    }
+    setIsRecording(false);
+
+    try {
+      if (recorderRef.current && recorderRef.current.isRecording()) {
+        setSpokenWord("Processing...");
+        const audioBlob = await recorderRef.current.stop();
+        const result = await transcribeAudio(audioBlob);
+
+        if (!result.success || !result.transcript) {
+          setAsrResult("retry");
+          if (result.error === "NO_AUDIO_DETECTED") {
+            setSpokenWord("We couldn't hear anything. Speak louder and try again.");
+          } else {
+            setSpokenWord("Could not hear you clearly. Please try again.");
+          }
+          return;
+        }
+
+        checkPronunciation(result.transcript);
+      }
+    } catch (err) {
+      console.error("Recording stop/transcription failed:", err);
+      setAsrResult("retry");
+      setSpokenWord("Could not hear you. Please try again.");
     }
   };
 
   const handleMicTap = async () => {
     if (isRecording) {
-      setIsRecording(false);
-      setSpokenWord("Processing...");
-      setAsrResult("none");
-      
-      try {
-        if (recorderRef.current) {
-          const audioBlob = await recorderRef.current.stop();
-          const result = await transcribeAudio(audioBlob);
-          
-          if (!result.success || !result.transcript) {
-            setAsrResult("retry");
-            setSpokenWord("Could not hear you. Try again.");
-            return;
-          }
-          
-          checkPronunciation(result.transcript);
-        }
-      } catch (err) {
-        console.error("Recording stop/transcription failed:", err);
-        setAsrResult("retry");
-        setSpokenWord("Something went wrong. Try again.");
-      }
+      stopRecordingAndProcess();
     } else {
       try {
         if (!recorderRef.current) {
@@ -515,13 +535,50 @@ export default function LetterLessonPage() {
         await recorderRef.current.start();
         setIsRecording(true);
         setAsrResult("none");
-        setSpokenWord("");
+        setSpokenWord("Listening...");
 
+        // Try Web Speech API for instant real-time detection
+        const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+        if (SR) {
+          try {
+            const recognition = new SR();
+            recognition.lang = 'ar-SA';
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognitionRef.current = recognition;
+
+            recognition.onresult = (event: any) => {
+              for (let i = event.resultIndex; i < event.results.length; i++) {
+                const text = event.results[i][0].transcript.trim();
+                if (text) {
+                  setSpokenWord(text);
+                  const matched = checkPronunciation(text);
+                  if (matched) {
+                    try { recognition.stop(); } catch {}
+                    if (recorderRef.current && recorderRef.current.isRecording()) {
+                      recorderRef.current.stop().catch(() => {});
+                    }
+                    setIsRecording(false);
+                    return;
+                  }
+                }
+              }
+            };
+
+            recognition.onerror = () => {};
+            recognition.start();
+          } catch (e) {
+            console.warn("Web Speech API init failed:", e);
+          }
+        }
+
+        // Auto-process after 3.5s if not matched instantly
         setTimeout(() => {
           if (recorderRef.current && recorderRef.current.isRecording()) {
-            handleMicTap();
+            stopRecordingAndProcess();
           }
-        }, 8000);
+        }, 3500);
+
       } catch (err: any) {
         console.error("Microphone start failed:", err);
         setAsrResult("retry");

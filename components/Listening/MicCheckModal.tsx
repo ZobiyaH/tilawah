@@ -11,7 +11,7 @@ interface MicCheckModalProps {
 export default function MicCheckModal({ isOpen, onClose }: MicCheckModalProps) {
   const [status, setStatus] = useState<"testing" | "ready" | "failed">("testing");
   const [rmsLevel, setRmsLevel] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(3);
+  const [timeLeft, setTimeLeft] = useState(5);
   
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
@@ -27,12 +27,16 @@ export default function MicCheckModal({ isOpen, onClose }: MicCheckModalProps) {
     async function startTest() {
       try {
         setStatus("testing");
-        setTimeLeft(3);
+        setTimeLeft(5);
         setRmsLevel(0);
 
-        // Get microphone stream with optimized constraints
+        // Get microphone stream with boosted constraints
         localStream = await navigator.mediaDevices.getUserMedia({
-          audio: true
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: false,
+            autoGainControl: true,
+          }
         });
         streamRef.current = localStream;
 
@@ -48,12 +52,17 @@ export default function MicCheckModal({ isOpen, onClose }: MicCheckModalProps) {
         analyserRef.current = analyserNode;
 
         const source = localCtx.createMediaStreamSource(localStream);
-        source.connect(analyserNode);
+        
+        // 5x Gain boost for visual level meter responsiveness
+        const gainNode = localCtx.createGain();
+        gainNode.gain.setValueAtTime(5.0, localCtx.currentTime);
+        source.connect(gainNode);
+        gainNode.connect(analyserNode);
 
         const dataArray = new Uint8Array(analyserNode.frequencyBinCount);
-        let maxDetectedRms = 0;
+        let detectedSpeech = false;
 
-        // Poll RMS level every 100ms
+        // Poll RMS level every 50ms for smooth 20fps level bar updates
         intervalRef.current = setInterval(() => {
           if (!analyserRef.current) return;
           analyserRef.current.getByteTimeDomainData(dataArray);
@@ -66,15 +75,12 @@ export default function MicCheckModal({ isOpen, onClose }: MicCheckModalProps) {
           const rms = Math.sqrt(sum / dataArray.length);
           setRmsLevel(rms);
 
-          if (rms > maxDetectedRms) {
-            maxDetectedRms = rms;
-          }
-
-          if (rms > 0.01) {
+          // Mark ready if speech volume is detected (rms > 0.003 with gain boost)
+          if (rms > 0.003 && !detectedSpeech) {
+            detectedSpeech = true;
             setStatus("ready");
-            if (intervalRef.current) clearInterval(intervalRef.current);
           }
-        }, 100);
+        }, 50);
 
       } catch (err) {
         console.warn("Failed to capture mic in test modal:", err);
@@ -84,14 +90,13 @@ export default function MicCheckModal({ isOpen, onClose }: MicCheckModalProps) {
 
     startTest();
 
-    // 3-second timeout count down
+    // 5-second countdown timer
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
           setStatus((current) => {
             if (current === "testing") {
-              if (intervalRef.current) clearInterval(intervalRef.current);
               return "failed";
             }
             return current;
@@ -122,22 +127,22 @@ export default function MicCheckModal({ isOpen, onClose }: MicCheckModalProps) {
       <div className="absolute inset-0 bg-black/50 backdrop-blur-md" />
 
       {/* Modal Card */}
-      <div className="bg-parchment dark:bg-zinc-900 border-2 border-gold/40 rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl relative z-10 text-center select-none animate-[slide-up_0.3s_ease-out]">
-        <h3 className="font-amiri text-2xl font-bold text-emerald dark:text-emerald-light mb-2">
+      <div className="bg-[#faf6ee] dark:bg-zinc-900 border-2 border-[#c8993c]/40 rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl relative z-10 text-center select-none animate-[slide-up_0.3s_ease-out]">
+        <h3 className="font-amiri text-2xl font-bold text-[#1e5e4a] dark:text-emerald-light mb-2">
           🎙 اختبار الميكروفون · Mic Check
         </h3>
         
         <p className="text-sm font-semibold text-zinc-600 dark:text-zinc-300 mb-6">
-          Say <span className="font-amiri text-lg text-gold font-bold">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</span> (&quot;Bismillah ir-Rahman ir-Rahim&quot;) to test your microphone
+          Say <span className="font-amiri text-lg text-[#c8993c] font-bold">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</span> (&quot;Bismillah ir-Rahman ir-Rahim&quot;) to test your microphone
         </p>
 
         {/* Visual Level Meter (Progress bar based on real-time RMS) */}
-        <div className="w-full bg-zinc-200 dark:bg-zinc-800 h-6 rounded-full overflow-hidden mb-6 relative">
+        <div className="w-full bg-zinc-200 dark:bg-zinc-800 h-6 rounded-full overflow-hidden mb-6 relative border border-[#c8993c]/20 shadow-inner">
           <div 
-            className="h-full bg-emerald transition-all duration-75"
-            style={{ width: `${Math.min(100, rmsLevel * 300)}%` }}
+            className="h-full bg-[#1e5e4a] transition-all duration-75"
+            style={{ width: `${Math.min(100, Math.max(0, rmsLevel * 1200))}%` }}
           />
-          <span className="absolute inset-0 flex items-center justify-center text-[10px] uppercase tracking-widest text-zinc-600 dark:text-zinc-300 font-bold">
+          <span className="absolute inset-0 flex items-center justify-center text-[10px] uppercase tracking-widest text-zinc-700 dark:text-zinc-200 font-bold drop-shadow-sm">
             Mic Input Level
           </span>
         </div>
@@ -145,22 +150,22 @@ export default function MicCheckModal({ isOpen, onClose }: MicCheckModalProps) {
         {status === "testing" && (
           <div className="flex flex-col items-center gap-2">
             <span className="text-3xl animate-pulse">⏳</span>
-            <p className="text-xs font-semibold text-zinc-400">
-              Listening... ({timeLeft}s remaining)
+            <p className="text-xs font-semibold text-zinc-500">
+              Speak into your mic... ({timeLeft}s remaining)
             </p>
           </div>
         )}
 
         {status === "ready" && (
           <div className="flex flex-col items-center gap-3">
-            <span className="text-3xl text-emerald">✓</span>
-            <p className="text-sm font-bold text-emerald">
-              Mic ready! Correct volume level detected.
+            <span className="text-3xl text-[#1e5e4a]">✓</span>
+            <p className="text-sm font-bold text-[#1e5e4a]">
+              Mic ready! Voice volume detected successfully.
             </p>
             <button
               type="button"
               onClick={onClose}
-              className="mt-4 px-8 py-3 bg-emerald hover:bg-emerald-light text-white font-bold text-xs tracking-wider uppercase rounded-xl transition-all shadow-md shadow-emerald/20"
+              className="mt-4 px-8 py-3 bg-[#1e5e4a] hover:bg-[#154335] text-white font-bold text-xs tracking-wider uppercase rounded-xl transition-all shadow-md shadow-[#1e5e4a]/20 active:scale-95"
             >
               Start Reading
             </button>
@@ -168,38 +173,24 @@ export default function MicCheckModal({ isOpen, onClose }: MicCheckModalProps) {
         )}
 
         {status === "failed" && (
-          <div className="text-left bg-ruby-pale/50 dark:bg-ruby-pale/5 border border-ruby/20 rounded-xl p-5 mb-6">
-            <strong className="block text-xs uppercase tracking-wider text-ruby mb-2 text-center font-bold">
-              ⚠️ Warning: No Voice Detected
+          <div className="text-left bg-red-50 dark:bg-red-950/30 border border-red-200 rounded-xl p-5 mb-6">
+            <strong className="block text-xs uppercase tracking-wider text-red-700 dark:text-red-400 mb-2 text-center font-bold">
+              ⚠️ Warning: Low / No Voice Signal Detected
             </strong>
             <ul className="list-disc pl-4 text-xs text-zinc-600 dark:text-zinc-300 space-y-1.5 leading-relaxed font-semibold">
-              <li>Check your browser has permission to access your microphone.</li>
-              <li>Move closer to your microphone and try speaking louder.</li>
-              <li>Try adjusting the <strong>Mic Sensitivity</strong> slider in Settings.</li>
+              <li>Ensure browser mic permissions are allowed (click lock 🔒 icon in URL bar).</li>
+              <li>Speak clearly and louder into your microphone.</li>
+              <li>You can still proceed by clicking <strong>Start Reading</strong> below.</li>
             </ul>
-            
-            <div className="flex gap-2 mt-5">
-              <button
-                type="button"
-                onClick={() => {
-                  setStatus("testing");
-                  setTimeLeft(3);
-                }}
-                className="flex-1 py-3 border border-gold/30 hover:bg-gold-pale/30 rounded-xl text-xs font-bold text-yellow-800 dark:text-gold-light uppercase transition-all"
-              >
-                🔄 Retry Test
-              </button>
-              <button
-                type="button"
-                onClick={onClose}
-                className="flex-1 py-3 bg-emerald hover:bg-emerald-light rounded-xl text-xs font-bold text-white uppercase transition-all"
-              >
-                Skip Check
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="mt-4 w-full py-3 bg-[#1e5e4a] text-white font-bold text-xs tracking-wider uppercase rounded-xl transition-all shadow-md active:scale-95 text-center"
+            >
+              Start Reading Anyway →
+            </button>
           </div>
         )}
-
       </div>
     </div>
   );

@@ -289,8 +289,9 @@ export default function CommonWordsPage() {
   };
 
   const recorderRef = useRef<any>(null);
+  const recognitionRef = useRef<any>(null);
 
-  const checkPronunciation = (spoken: string) => {
+  const checkPronunciation = (spoken: string): boolean => {
     setSpokenText(spoken);
     const cleanSpoken = spoken.trim();
     
@@ -309,42 +310,49 @@ export default function CommonWordsPage() {
 
     if (isMatch) {
       setAsrResult("success");
+      return true;
     } else {
       setAsrResult("retry");
       playWordAudio();
+      return false;
+    }
+  };
+
+  const stopRecordingAndProcess = async () => {
+    if (recognitionRef.current) {
+      try { recognitionRef.current.stop(); } catch {}
+      recognitionRef.current = null;
+    }
+    setIsRecording(false);
+
+    try {
+      if (recorderRef.current && recorderRef.current.isRecording()) {
+        setSpokenText("Processing...");
+        const audioBlob = await recorderRef.current.stop();
+        const result = await transcribeAudio(audioBlob);
+        
+        if (!result.success || !result.transcript) {
+          setAsrResult("retry");
+          if (result.error === "NO_AUDIO_DETECTED") {
+            setSpokenText("We couldn't hear anything. Speak louder and try again.");
+          } else {
+            setSpokenText("Could not hear you clearly. Please try again.");
+          }
+          return;
+        }
+        
+        checkPronunciation(result.transcript);
+      }
+    } catch (err) {
+      console.error("Recording stop/transcription failed:", err);
+      setAsrResult("retry");
+      setSpokenText("Something went wrong. Try again.");
     }
   };
 
   const handleMicTap = async () => {
     if (isRecording) {
-      setIsRecording(false);
-      setSpokenText("Processing...");
-      setAsrResult("none");
-      
-      try {
-        if (recorderRef.current) {
-          const audioBlob = await recorderRef.current.stop();
-          const result = await transcribeAudio(audioBlob);
-          
-          if (!result.success || !result.transcript) {
-            setAsrResult("retry");
-            if (result.error === "NO_AUDIO_DETECTED") {
-              setSpokenText("We couldn't hear anything. Make sure your mic is not muted and speak louder.");
-            } else if (result.error === "HALLUCINATION_DETECTED") {
-              setSpokenText("Picked up background noise. Please speak in a quieter place.");
-            } else {
-              setSpokenText("Could not hear you clearly. Please try again.");
-            }
-            return;
-          }
-          
-          checkPronunciation(result.transcript);
-        }
-      } catch (err) {
-        console.error("Recording stop/transcription failed:", err);
-        setAsrResult("retry");
-        setSpokenText("Something went wrong. Try again.");
-      }
+      stopRecordingAndProcess();
     } else {
       try {
         if (!recorderRef.current) {
@@ -354,13 +362,50 @@ export default function CommonWordsPage() {
         await recorderRef.current.start();
         setIsRecording(true);
         setAsrResult("none");
-        setSpokenText("");
+        setSpokenText("Listening...");
 
+        // Try Web Speech API for instant real-time detection
+        const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+        if (SR) {
+          try {
+            const recognition = new SR();
+            recognition.lang = 'ar-SA';
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognitionRef.current = recognition;
+
+            recognition.onresult = (event: any) => {
+              for (let i = event.resultIndex; i < event.results.length; i++) {
+                const text = event.results[i][0].transcript.trim();
+                if (text) {
+                  setSpokenText(text);
+                  const matched = checkPronunciation(text);
+                  if (matched) {
+                    try { recognition.stop(); } catch {}
+                    if (recorderRef.current && recorderRef.current.isRecording()) {
+                      recorderRef.current.stop().catch(() => {});
+                    }
+                    setIsRecording(false);
+                    return;
+                  }
+                }
+              }
+            };
+
+            recognition.onerror = () => {};
+            recognition.start();
+          } catch (e) {
+            console.warn("Web Speech API init failed:", e);
+          }
+        }
+
+        // Auto-process after 3.5s if not matched instantly
         setTimeout(() => {
           if (recorderRef.current && recorderRef.current.isRecording()) {
-            handleMicTap();
+            stopRecordingAndProcess();
           }
-        }, 8000);
+        }, 3500);
+
       } catch (err: any) {
         console.error("Microphone start failed:", err);
         setAsrResult("retry");

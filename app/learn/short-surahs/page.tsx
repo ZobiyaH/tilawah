@@ -159,14 +159,17 @@ export default function ShortSurahsPage() {
   };
 
   const recorderRef = useRef<any>(null);
+  const recognitionRef = useRef<any>(null);
 
-  const checkWordPronunciation = (spoken: string) => {
+  const checkWordPronunciation = (spoken: string): boolean => {
     setSpokenText(spoken);
     const cleanSpoken = spoken.trim();
-    const targetWord = flatWords[activeWordIdx]?.word || "";
+    const currentWordItem = flatWords[activeWordIdx];
+    if (!currentWordItem) return false;
+    const targetWord = currentWordItem.word;
     const similarity = arabicSimilarity(normalizeArabic(cleanSpoken), normalizeArabic(targetWord));
 
-    if (similarity >= 0.58 || normalizeArabic(cleanSpoken).includes(normalizeArabic(targetWord))) {
+    if (similarity >= 0.45 || normalizeArabic(cleanSpoken).includes(normalizeArabic(targetWord)) || normalizeArabic(targetWord).includes(normalizeArabic(cleanSpoken))) {
       setAsrResult("success");
       setTimeout(() => {
         if (activeWordIdx < flatWords.length - 1) {
@@ -174,23 +177,25 @@ export default function ShortSurahsPage() {
           setAsrResult("none");
           setSpokenText("");
         } else {
-          alert("MashaAllah! You completed all words. Proceed to Phase 3!");
+          setActivePhase(3); // Move to Phase 3
         }
-      }, 1500);
+      }, 1200);
+      return true;
     } else {
       setAsrResult("retry");
       playWordAudio(targetWord);
+      return false;
     }
   };
 
-  const checkAyahPronunciation = (spoken: string) => {
+  const checkAyahPronunciation = (spoken: string): boolean => {
     setSpokenText(spoken);
     const cleanSpoken = spoken.trim();
     const currentAyah = surahData!.ayat[activeAyahIdx];
     const targetAyahText = currentAyah.words.join(" ");
     const similarity = arabicSimilarity(normalizeArabic(cleanSpoken), normalizeArabic(targetAyahText));
 
-    if (similarity >= 0.55 || normalizeArabic(cleanSpoken).includes(normalizeArabic(currentAyah.words[0]))) {
+    if (similarity >= 0.45 || normalizeArabic(cleanSpoken).includes(normalizeArabic(currentAyah.words[0]))) {
       setAsrResult("success");
       setTimeout(() => {
         if (activeAyahIdx < surahData!.ayat.length - 1) {
@@ -201,39 +206,52 @@ export default function ShortSurahsPage() {
           alert("MashaAllah! You completed all Ayahs. Move to Phase 4 for full recitation.");
         }
       }, 1500);
+      return true;
     } else {
       setAsrResult("retry");
+      return false;
+    }
+  };
+
+  const stopRecordingAndProcess = async (type: "word" | "ayah") => {
+    if (recognitionRef.current) {
+      try { recognitionRef.current.stop(); } catch {}
+      recognitionRef.current = null;
+    }
+    setIsRecording(false);
+
+    try {
+      if (recorderRef.current && recorderRef.current.isRecording()) {
+        setSpokenText("Processing...");
+        const audioBlob = await recorderRef.current.stop();
+        const result = await transcribeAudio(audioBlob);
+        
+        if (!result.success || !result.transcript) {
+          setAsrResult("retry");
+          if (result.error === "NO_AUDIO_DETECTED") {
+            setSpokenText("We couldn't hear anything. Speak louder and try again.");
+          } else {
+            setSpokenText("Could not hear you clearly. Please try again.");
+          }
+          return;
+        }
+        
+        if (type === "word") {
+          checkWordPronunciation(result.transcript);
+        } else {
+          checkAyahPronunciation(result.transcript);
+        }
+      }
+    } catch (err) {
+      console.error("Recording stop/transcription failed:", err);
+      setAsrResult("retry");
+      setSpokenText("Something went wrong. Try again.");
     }
   };
 
   const handleMicTap = async (type: "word" | "ayah") => {
     if (isRecording) {
-      setIsRecording(false);
-      setSpokenText("Processing...");
-      setAsrResult("none");
-      
-      try {
-        if (recorderRef.current) {
-          const audioBlob = await recorderRef.current.stop();
-          const result = await transcribeAudio(audioBlob);
-          
-          if (!result.success || !result.transcript) {
-            setAsrResult("retry");
-            setSpokenText("Could not hear you. Try again.");
-            return;
-          }
-          
-          if (type === "word") {
-            checkWordPronunciation(result.transcript);
-          } else {
-            checkAyahPronunciation(result.transcript);
-          }
-        }
-      } catch (err) {
-        console.error("Recording stop/transcription failed:", err);
-        setAsrResult("retry");
-        setSpokenText("Something went wrong. Try again.");
-      }
+      stopRecordingAndProcess(type);
     } else {
       try {
         if (!recorderRef.current) {
@@ -243,13 +261,50 @@ export default function ShortSurahsPage() {
         await recorderRef.current.start();
         setIsRecording(true);
         setAsrResult("none");
-        setSpokenText("");
+        setSpokenText("Listening...");
 
+        // Try Web Speech API for instant real-time detection
+        const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+        if (SR) {
+          try {
+            const recognition = new SR();
+            recognition.lang = 'ar-SA';
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognitionRef.current = recognition;
+
+            recognition.onresult = (event: any) => {
+              for (let i = event.resultIndex; i < event.results.length; i++) {
+                const text = event.results[i][0].transcript.trim();
+                if (text) {
+                  setSpokenText(text);
+                  const matched = type === "word" ? checkWordPronunciation(text) : checkAyahPronunciation(text);
+                  if (matched) {
+                    try { recognition.stop(); } catch {}
+                    if (recorderRef.current && recorderRef.current.isRecording()) {
+                      recorderRef.current.stop().catch(() => {});
+                    }
+                    setIsRecording(false);
+                    return;
+                  }
+                }
+              }
+            };
+
+            recognition.onerror = () => {};
+            recognition.start();
+          } catch (e) {
+            console.warn("Web Speech API init failed:", e);
+          }
+        }
+
+        // Auto-process after 3.5s if not matched instantly
         setTimeout(() => {
           if (recorderRef.current && recorderRef.current.isRecording()) {
-            handleMicTap(type);
+            stopRecordingAndProcess(type);
           }
-        }, 8000);
+        }, 3500);
+
       } catch (err: any) {
         console.error("Microphone start failed:", err);
         setAsrResult("retry");

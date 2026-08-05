@@ -279,6 +279,7 @@ export default function TajweedLessonPage() {
   const [spokenPhrase, setSpokenPhrase] = useState("");
   const [isCompleted, setIsCompleted] = useState(false);
   const recorderRef = useRef<any>(null);
+  const recognitionRef = useRef<any>(null);
 
   useEffect(() => {
     if (!lesson) {
@@ -309,8 +310,6 @@ export default function TajweedLessonPage() {
     } catch {}
   };
 
-
-
   const playClipB = async () => {
     setIsPlayingB(true);
     try {
@@ -340,17 +339,13 @@ export default function TajweedLessonPage() {
     }
   };
 
-
-
-  const checkPronunciation = (spoken: string) => {
+  const checkPronunciation = (spoken: string): boolean => {
     setSpokenPhrase(spoken);
-    const cleanSpoken = spoken.trim();
-    
-    const normalizedResult = normalizeArabic(cleanSpoken.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?؟]/g, ""));
+    const normalizedResult = normalizeArabic(spoken);
     const normalizedExpect = normalizeArabic(lesson.expectedRecitation);
 
     const score = arabicSimilarity(normalizedResult, normalizedExpect);
-    if (score >= 0.58 || normalizedResult.includes(normalizedExpect)) {
+    if (score >= 0.5 || normalizedResult.includes(normalizedExpect) || normalizedExpect.includes(normalizedResult)) {
       setAsrSuccess(true);
       setIsCompleted(true);
       playChime();
@@ -360,36 +355,49 @@ export default function TajweedLessonPage() {
         completed: true,
         score: 100
       });
+      return true;
     } else {
       setAsrSuccess(false);
       playClipB(); // auto replay correct Qari sound on fail
+      return false;
+    }
+  };
+
+  const stopRecordingAndProcess = async () => {
+    if (recognitionRef.current) {
+      try { recognitionRef.current.stop(); } catch {}
+      recognitionRef.current = null;
+    }
+    setIsRecording(false);
+
+    try {
+      if (recorderRef.current && recorderRef.current.isRecording()) {
+        setSpokenPhrase("Processing...");
+        const audioBlob = await recorderRef.current.stop();
+        const result = await transcribeAudio(audioBlob);
+        
+        if (!result.success || !result.transcript) {
+          setAsrSuccess(false);
+          if (result.error === "NO_AUDIO_DETECTED") {
+            setSpokenPhrase("We couldn't hear anything. Speak louder and try again.");
+          } else {
+            setSpokenPhrase("Could not hear you clearly. Please try again.");
+          }
+          return;
+        }
+        
+        checkPronunciation(result.transcript);
+      }
+    } catch (err) {
+      console.error("Recording stop/transcription failed:", err);
+      setAsrSuccess(false);
+      setSpokenPhrase("Something went wrong. Try again.");
     }
   };
 
   const handleMicTap = async () => {
     if (isRecording) {
-      setIsRecording(false);
-      setSpokenPhrase("Processing...");
-      setAsrSuccess(false);
-      
-      try {
-        if (recorderRef.current) {
-          const audioBlob = await recorderRef.current.stop();
-          const result = await transcribeAudio(audioBlob);
-          
-          if (!result.success || !result.transcript) {
-            setAsrSuccess(false);
-            setSpokenPhrase("Could not hear you. Try again.");
-            return;
-          }
-          
-          checkPronunciation(result.transcript);
-        }
-      } catch (err) {
-        console.error("Recording stop/transcription failed:", err);
-        setAsrSuccess(false);
-        setSpokenPhrase("Something went wrong. Try again.");
-      }
+      stopRecordingAndProcess();
     } else {
       try {
         if (!recorderRef.current) {
@@ -399,13 +407,50 @@ export default function TajweedLessonPage() {
         await recorderRef.current.start();
         setIsRecording(true);
         setAsrSuccess(false);
-        setSpokenPhrase("");
+        setSpokenPhrase("Listening...");
 
+        // Try Web Speech API for instant real-time detection
+        const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+        if (SR) {
+          try {
+            const recognition = new SR();
+            recognition.lang = 'ar-SA';
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognitionRef.current = recognition;
+
+            recognition.onresult = (event: any) => {
+              for (let i = event.resultIndex; i < event.results.length; i++) {
+                const text = event.results[i][0].transcript.trim();
+                if (text) {
+                  setSpokenPhrase(text);
+                  const matched = checkPronunciation(text);
+                  if (matched) {
+                    try { recognition.stop(); } catch {}
+                    if (recorderRef.current && recorderRef.current.isRecording()) {
+                      recorderRef.current.stop().catch(() => {});
+                    }
+                    setIsRecording(false);
+                    return;
+                  }
+                }
+              }
+            };
+
+            recognition.onerror = () => {};
+            recognition.start();
+          } catch (e) {
+            console.warn("Web Speech API init failed:", e);
+          }
+        }
+
+        // Auto-process after 3.5s if not matched instantly
         setTimeout(() => {
           if (recorderRef.current && recorderRef.current.isRecording()) {
-            handleMicTap();
+            stopRecordingAndProcess();
           }
-        }, 8000);
+        }, 3500);
+
       } catch (err: any) {
         console.error("Microphone start failed:", err);
         setAsrSuccess(false);
