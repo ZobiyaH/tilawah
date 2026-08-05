@@ -154,7 +154,13 @@ export function useContinuousASR(isListening: boolean) {
             vadAnalyser.fftSize = 256;
             vadDataArray = new Uint8Array(vadAnalyser.frequencyBinCount) as Uint8Array<ArrayBuffer>;
             const vadSource = vadCtx.createMediaStreamSource(localStream);
-            vadSource.connect(vadAnalyser);
+            
+            // Add a 3x gain boost to VAD analyzer so quiet voices are reliably detected
+            const gainNode = vadCtx.createGain();
+            gainNode.gain.setValueAtTime(3.0, vadCtx.currentTime);
+            vadSource.connect(gainNode);
+            gainNode.connect(vadAnalyser);
+
             if (vadCtx.state === "suspended") {
               await vadCtx.resume();
             }
@@ -192,7 +198,8 @@ export function useContinuousASR(isListening: boolean) {
             chunks = [];
 
             // VAD: skip if no speech was detected during the entire recording window
-            const VAD_THRESHOLD = 0.008;
+            // Threshold set to 0.003 (with 3x gain boost) to catch quiet mic signals
+            const VAD_THRESHOLD = 0.003;
             if (peakRMS < VAD_THRESHOLD) {
               console.log("VAD: skipping silent chunk (peak RMS:", peakRMS.toFixed(4), ")");
               if (activeRef.current && localRecorder && localRecorder.state === "inactive" && globalUseWhisper) {
