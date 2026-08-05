@@ -328,7 +328,13 @@ export default function CommonWordsPage() {
           
           if (!result.success || !result.transcript) {
             setAsrResult("retry");
-            setSpokenText("Could not hear you. Try again.");
+            if (result.error === "NO_AUDIO_DETECTED") {
+              setSpokenText("We couldn't hear anything. Make sure your mic is not muted and speak louder.");
+            } else if (result.error === "HALLUCINATION_DETECTED") {
+              setSpokenText("Picked up background noise. Please speak in a quieter place.");
+            } else {
+              setSpokenText("Could not hear you clearly. Please try again.");
+            }
             return;
           }
           

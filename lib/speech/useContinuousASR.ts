@@ -214,8 +214,9 @@ export function useContinuousASR(isListening: boolean) {
             }
 
             const playing = useRecitationStore.getState().isAudioPlaying;
-            if (audioBlob.size > 0 && activeRef.current && !playing && globalUseWhisper) {
+            if (audioBlob.size >= 3000 && activeRef.current && !playing && globalUseWhisper) {
               try {
+                console.log("[ContinuousASR] Sending chunk size:", audioBlob.size, "bytes to Groq");
                 const currentWordIndex = useRecitationStore.getState().wordIndex;
                 const wordsList = useRecitationStore.getState().allWords;
                 const promptText = wordsList[currentWordIndex]?.ayahData.arabic || "";
@@ -240,9 +241,13 @@ export function useContinuousASR(isListening: boolean) {
                   }
                   if (data.transcript) {
                     const transcriptText = data.transcript.trim();
-                    setLiveTranscriptRef.current(transcriptText);
-                    const words = transcriptText.split(/\s+/).filter(Boolean);
-                    processSpeechRef.current(words);
+                    const hasArabic = /[\u0600-\u06FF]/.test(transcriptText);
+                    console.log("[ContinuousASR] Groq returned:", transcriptText, "| Has Arabic:", hasArabic);
+                    if (hasArabic) {
+                      setLiveTranscriptRef.current(transcriptText);
+                      const words = transcriptText.split(/\s+/).filter(Boolean);
+                      processSpeechRef.current(words);
+                    }
                   }
                 }
               } catch (err) {

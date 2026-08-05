@@ -1,15 +1,35 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-type TranscriptResult = {
+export type TranscriptResult = {
   transcript: string;
   method: 'groq' | 'browser';
   success: boolean;
+  error?: string;
 };
 
 export async function transcribeAudio(
   audioBlob: Blob
 ): Promise<TranscriptResult> {
-  
-  // METHOD 1: Try Groq first (best accuracy)
+
+  console.log('[Transcribe] Blob size:', audioBlob.size, 'bytes');
+
+  // CRITICAL: Reject silence before sending to Groq
+  // Blob under 3000 bytes = silence = do not send
+  if (audioBlob.size < 3000) {
+    console.warn(
+      '[Transcribe] Audio blob too small:', 
+      audioBlob.size, 
+      'bytes — likely silence'
+    );
+    return {
+      transcript: '',
+      method: 'groq',
+      success: false,
+      error: 'NO_AUDIO_DETECTED',
+    };
+  }
+
+  console.log('[Transcribe] Sending to Groq:', audioBlob.size, 'bytes');
+
   try {
     const formData = new FormData();
     formData.append(
@@ -25,9 +45,34 @@ export async function transcribeAudio(
     });
 
     const data = await response.json();
+    console.log('[Transcribe] Groq response:', data);
 
     if (response.ok && data.transcript) {
-      console.log('✅ Groq transcript:', data.transcript);
+      // CRITICAL: Validate transcript is real Arabic
+      // Groq hallucinates when audio is silent
+      // Real speech will have Arabic characters
+      const hasArabic = /[\u0600-\u06FF]/.test(
+        data.transcript
+      );
+      
+      console.log('[Transcribe] Has Arabic:', hasArabic);
+
+      if (!hasArabic) {
+        console.warn(
+          '[Transcribe] Groq returned non-Arabic text:', 
+          data.transcript,
+          '— likely hallucination from silence'
+        );
+        return {
+          transcript: '',
+          method: 'groq',
+          success: false,
+          error: 'HALLUCINATION_DETECTED',
+        };
+      }
+
+      console.log('[Transcribe] Final transcript:', data.transcript);
+
       return {
         transcript: data.transcript,
         method: 'groq',
@@ -35,26 +80,30 @@ export async function transcribeAudio(
       };
     }
   } catch (err) {
-    console.warn('Groq failed, trying browser ASR:', err);
+    console.warn('[Transcribe] Groq failed:', err);
   }
 
-  // METHOD 2: Browser Speech API fallback
+  // Fallback to browser ASR
   try {
     const transcript = await browserSpeechRecognition();
-    console.log('✅ Browser ASR transcript:', transcript);
-    return {
-      transcript,
-      method: 'browser',
-      success: true,
-    };
+    if (transcript) {
+      console.log('[Transcribe] Browser ASR transcript:', transcript);
+      return {
+        transcript,
+        method: 'browser',
+        success: true,
+      };
+    }
   } catch (err) {
-    console.error('Both methods failed:', err);
-    return {
-      transcript: '',
-      method: 'browser',
-      success: false,
-    };
+    console.warn('[Transcribe] Browser ASR failed:', err);
   }
+
+  return {
+    transcript: '',
+    method: 'browser',
+    success: false,
+    error: 'BOTH_METHODS_FAILED',
+  };
 }
 
 function browserSpeechRecognition(): Promise<string> {
@@ -80,8 +129,6 @@ function browserSpeechRecognition(): Promise<string> {
       if (resolved) return;
       resolved = true;
 
-      // Check all alternatives
-      // Pick the one most similar to any Arabic
       const results: string[] = [];
       for (let i = 0; i < event.results[0].length; i++) {
         results.push(
@@ -89,7 +136,7 @@ function browserSpeechRecognition(): Promise<string> {
         );
       }
       
-      console.log('Browser ASR alternatives:', results);
+      console.log('[Transcribe] Browser ASR alternatives:', results);
       resolve(results[0]);
     };
 

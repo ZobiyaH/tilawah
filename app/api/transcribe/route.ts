@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET() {
   const key = process.env.GROQ_API_KEY;
-  console.log("Transcribe GET healthcheck. Key configured:", !!key, key ? `(Starts with: ${key.substring(0, 8)})` : "");
+  console.log('[API] Transcribe GET healthcheck. Key configured:', !!key, key ? `(Starts with: ${key.substring(0, 8)})` : '');
   if (!key) {
     return NextResponse.json(
       { status: 'offline', fallback: true, error: 'API not configured' },
@@ -17,10 +17,9 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const key = process.env.GROQ_API_KEY;
-    console.log("Transcribe POST request received. Key configured:", !!key);
     if (!key) {
       return NextResponse.json(
-        { error: 'API not configured', fallback: true },
+        { error: 'Groq not configured', fallback: true },
         { status: 503 }
       );
     }
@@ -29,60 +28,77 @@ export async function POST(request: NextRequest) {
       apiKey: key,
     });
 
-    // Get audio from request
     const formData = await request.formData();
     const audioFile = formData.get('audio') as File;
 
     if (!audioFile) {
       return NextResponse.json(
-        { error: 'No audio file provided' },
+        { error: 'No audio file', fallback: true },
         { status: 400 }
       );
     }
 
-    // Check file size (Groq limit is 25MB)
-    if (audioFile.size > 25 * 1024 * 1024) {
+    // Log for debugging
+    console.log('[API] Received audio:', {
+      size: audioFile.size,
+      type: audioFile.type,
+      name: audioFile.name,
+    });
+
+    // Reject if too small — definitely silence
+    if (audioFile.size < 3000) {
+      console.warn('[API] Audio too short — size:', audioFile.size);
       return NextResponse.json(
-        { error: 'File too large. Max 25MB.' },
+        { 
+          error: 'Audio too short — no speech detected',
+          fallback: true,
+        },
         { status: 400 }
       );
     }
-
-    const prompt = (formData.get('prompt') as string) || 'بسم الله الرحمن الرحيم';
 
     const buffer = Buffer.from(await audioFile.arrayBuffer());
-    const fileToUpload = await toFile(buffer, 'audio.webm', { type: 'audio/webm' });
+    const fileToUpload = await toFile(buffer, 'recording.webm', { type: 'audio/webm' });
 
-    // Send to Groq Whisper large-v3-turbo
+    console.log('[API] Sending to Groq...');
     const transcription = await groq.audio.transcriptions.create({
       file: fileToUpload,
-      model: 'whisper-large-v3-turbo',
+      model: 'whisper-large-v3',
       language: 'ar',
-      prompt: prompt,
+      prompt: 'بسم الله الرحمن الرحيم الحمد لله',
       response_format: 'json',
       temperature: 0.0,
     });
 
-    console.log("Groq transcription successful. Text:", transcription.text);
+    const transcript = transcription.text.trim();
+    console.log('[API] Groq returned:', transcript);
+
+    // Check if transcript has Arabic
+    const hasArabic = /[\u0600-\u06FF]/.test(transcript);
+    if (!hasArabic || transcript.length < 2) {
+      console.warn('[API] Non-Arabic or empty transcript returned:', transcript);
+      return NextResponse.json(
+        { 
+          error: 'No Arabic speech detected',
+          transcript: '',
+          success: false,
+        }
+      );
+    }
 
     return NextResponse.json({
-      transcript: transcription.text.trim(),
+      transcript,
       success: true,
     });
 
   } catch (error: any) {
-    console.error('Groq transcription error:', error);
-    
-    // If Groq fails, tell client to use browser ASR
+    console.error('[API] Transcription error:', error);
     return NextResponse.json(
       { 
-        error: 'Transcription failed',
+        error: error.message,
         fallback: true,
-        message: error.message,
       },
       { status: 500 }
     );
   }
 }
-
-
