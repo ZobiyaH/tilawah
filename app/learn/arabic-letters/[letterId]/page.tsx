@@ -655,21 +655,82 @@ export default function LetterLessonPage() {
                 </div>
               </div>
 
-              {/* Audio Listen Buttons */}
-              <div className="flex gap-4 items-center justify-center">
-                {audioAvailable ? (
+              {/* Top Recitation Mic Checker (Easy Mobile Access) */}
+              <div className="flex flex-col items-center justify-center gap-3 w-full bg-white/80 dark:bg-zinc-900/80 border border-gold/25 p-4 rounded-2xl shadow-xs text-center mt-2">
+                <div className="flex items-center gap-3 justify-center flex-wrap">
+                  {/* Qari Audio Listen button */}
+                  {audioAvailable ? (
+                    <button
+                      onClick={playLetter}
+                      disabled={isPlaying}
+                      className="px-4 py-2.5 bg-gold hover:bg-gold-light text-white font-bold text-xs tracking-wider rounded-xl uppercase transition-all shadow-sm flex items-center justify-center gap-1.5 text-center cursor-pointer"
+                    >
+                      <span>🔊</span>
+                      <span>{isPlaying ? "Playing..." : "Listen"}</span>
+                    </button>
+                  ) : (
+                    <span className="px-3 py-2 border border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-800 text-[10px] font-bold tracking-wider text-zinc-400 dark:text-zinc-500 rounded-xl uppercase select-none text-center">
+                      🔊 Audio coming soon
+                    </span>
+                  )}
+
+                  {/* Recitation Mic Checker Button */}
                   <button
-                    onClick={playLetter}
-                    disabled={isPlaying}
-                    className="px-6 py-3 bg-gold hover:bg-gold-light text-white font-bold text-xs tracking-wider rounded-xl uppercase transition-all shadow-md shadow-gold/10 flex items-center justify-center gap-2 text-center"
+                    onClick={handleMicTap}
+                    className={`px-4 py-2.5 rounded-xl font-extrabold text-xs tracking-wider uppercase flex items-center justify-center gap-1.5 text-center transition-all shadow-md active:scale-95 cursor-pointer ${
+                      isRecording
+                        ? "bg-ruby text-white animate-pulse shadow-ruby/20"
+                        : asrResult === "success"
+                        ? "bg-emerald text-white shadow-emerald/20"
+                        : "bg-emerald hover:bg-emerald-light text-white shadow-emerald/20"
+                    }`}
                   >
-                    🔊 {isPlaying ? "Playing..." : "Listen to Letter"}
+                    <span>{isRecording ? "🎙️" : "🎤"}</span>
+                    <span>{isRecording ? "Listening..." : "Check Recitation"}</span>
                   </button>
-                ) : (
-                  <span className="px-4 py-2 border border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-800 text-[10px] font-bold tracking-wider text-zinc-400 dark:text-zinc-500 rounded-xl uppercase select-none text-center">
-                    🔊 Audio coming soon
-                  </span>
-                )}
+                </div>
+
+                {/* Real-Time Pronunciation Feedback Result */}
+                <AnimatePresence mode="wait">
+                  {isRecording && (
+                    <motion.span
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="text-xs text-zinc-600 dark:text-zinc-300 font-bold animate-pulse tracking-wide text-center"
+                    >
+                      🎙️ Speak letter &ldquo;{lesson.char}&rdquo; ({lesson.name}) now...
+                    </motion.span>
+                  )}
+
+                  {spokenWord && !isRecording && (
+                    <span className="text-xs text-zinc-500 font-semibold text-center">
+                      You said: <strong className="font-amiri text-base text-ink dark:text-zinc-100">{spokenWord}</strong>
+                    </span>
+                  )}
+
+                  {asrResult === "success" && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="bg-emerald-pale/60 dark:bg-emerald-950/40 border border-emerald/30 px-3.5 py-1.5 rounded-xl text-center flex items-center justify-center gap-1"
+                    >
+                      <span className="text-emerald dark:text-emerald-light font-extrabold text-xs text-center">✓ Perfect! Correct Pronunciation</span>
+                    </motion.div>
+                  )}
+
+                  {asrResult === "retry" && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="bg-ruby-pale/60 dark:bg-ruby-pale/30 border border-ruby/30 px-3.5 py-1.5 rounded-xl text-center flex items-center justify-center gap-1"
+                    >
+                      <span className="text-ruby dark:text-red-400 font-extrabold text-xs text-center">❌ Mismatch. Tap mic & try again</span>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
             </div>
