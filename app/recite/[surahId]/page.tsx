@@ -342,7 +342,7 @@ export default function RecitationPage() {
                     <span className="text-[9px] font-extrabold uppercase tracking-wider text-zinc-500">
                       {item.title}
                     </span>
-                    <p className="text-xs font-semibold text-zinc-700 leading-normal mt-0.5">
+                    <p className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 leading-normal mt-0.5">
                       {item.message}
                     </p>
                   </div>
@@ -355,13 +355,13 @@ export default function RecitationPage() {
           <div className="flex flex-col gap-3">
             <button
               onClick={resetSession}
-              className="btn-secondary w-full"
+              className="btn-secondary w-full text-center"
             >
               🔄 Restart Session
             </button>
             <button
               onClick={handleSave}
-              className="btn-primary w-full"
+              className="btn-primary w-full text-center"
             >
               💾 Save Recitation
             </button>
@@ -370,16 +370,16 @@ export default function RecitationPage() {
 
       </main>
 
-      {/* Floating ASR Microphone Button (Bottom center, always visible) */}
-      <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 md:bottom-8 select-none flex flex-col items-center gap-2">
+      {/* Floating ASR Microphone Button (Positioned above mobile BottomNav) */}
+      <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 z-50 md:bottom-8 select-none flex flex-col items-center gap-2">
         {isListening && showSilenceWarning && (
-          <div className="bg-[#faf6ee] border border-[#c8993c]/35 text-[#1e5e4a] text-[10px] font-extrabold px-3 py-1 rounded-xl shadow-lg whitespace-nowrap text-center animate-pulse">
+          <div className="bg-[#faf6ee] dark:bg-zinc-900 border border-[#c8993c]/35 text-[#1e5e4a] dark:text-emerald-light text-[10px] font-extrabold px-3 py-1 rounded-xl shadow-lg whitespace-nowrap text-center animate-pulse">
             Mic not detecting? Toggle off and on to reset! 🎙️
           </div>
         )}
         <button
           onClick={() => setListening(!isListening)}
-          className={`w-[80px] h-[80px] rounded-full flex items-center justify-center text-white shadow-2xl transition-all duration-300 transform hover:scale-105 active:scale-95 ${
+          className={`w-[72px] h-[72px] md:w-[80px] md:h-[80px] rounded-full flex items-center justify-center text-white shadow-2xl transition-all duration-300 transform hover:scale-105 active:scale-95 ${
             !isListening
               ? "bg-[#6b7280] shadow-[0_4px_12px_rgba(107,114,128,0.3)]"
               : recitationState === "error" || recitationState === "correction"
@@ -389,15 +389,15 @@ export default function RecitationPage() {
               : "bg-[#c8993c] animate-pulse"
           }`}
         >
-          <span className="text-3xl">{isListening ? "🎙️" : "🔇"}</span>
+          <span className="text-2xl md:text-3xl">{isListening ? "🎙️" : "🔇"}</span>
         </button>
       </div>
 
       {/* Stats Trigger overlay button on mobile view */}
-      <div className="fixed bottom-6 right-6 z-40 lg:hidden select-none">
+      <div className="fixed bottom-20 right-6 z-40 lg:hidden select-none">
         <button
           onClick={() => setStatsOpen(true)}
-          className="w-12 h-12 bg-white border border-[#c8993c]/30 rounded-full flex items-center justify-center shadow-lg text-lg hover:scale-105 active:scale-95"
+          className="w-12 h-12 bg-white dark:bg-zinc-800 border border-[#c8993c]/30 rounded-full flex items-center justify-center shadow-lg text-lg hover:scale-105 active:scale-95"
         >
           📊
         </button>
@@ -412,13 +412,13 @@ export default function RecitationPage() {
               animate={{ y: "0%" }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 220 }}
-              className="w-full bg-white rounded-t-3xl max-h-[85vh] overflow-y-auto px-6 py-8 flex flex-col gap-6 border-t border-gold/30 shadow-2xl"
+              className="w-full bg-white dark:bg-zinc-950 rounded-t-3xl max-h-[85vh] overflow-y-auto px-6 py-8 flex flex-col gap-6 border-t border-gold/30 shadow-2xl"
             >
               <div className="flex justify-between items-center">
-                <h3 className="font-bold text-lg text-[#1e5e4a]">Session Stats</h3>
+                <h3 className="font-bold text-lg text-[#1e5e4a] dark:text-emerald-400">Session Stats</h3>
                 <button
                   onClick={() => setStatsOpen(false)}
-                  className="w-8 h-8 rounded-full bg-[#faf6ee] border border-gold/15 flex items-center justify-center font-bold text-sm"
+                  className="w-8 h-8 rounded-full bg-[#faf6ee] dark:bg-zinc-800 border border-gold/15 flex items-center justify-center font-bold text-sm"
                 >
                   ✕
                 </button>
@@ -430,15 +430,15 @@ export default function RecitationPage() {
 
                 <div className="grid grid-cols-3 gap-6 text-center w-full max-w-xs border-t border-[#c8993c]/10 pt-4 mt-2">
                   <div>
-                    <span className="text-[#6b7280] font-bold uppercase block text-[10px]">Correct</span>
-                    <span className="text-base font-bold text-[#1e5e4a]">{correctCount}</span>
+                    <span className="text-[#6b7280] dark:text-zinc-500 font-bold uppercase block text-[10px]">Correct</span>
+                    <span className="text-base font-bold text-[#1e5e4a] dark:text-emerald-400">{correctCount}</span>
                   </div>
                   <div>
-                    <span className="text-[#6b7280] font-bold uppercase block text-[10px]">Errors</span>
-                    <span className="text-base font-bold text-[#8b1a1a]">{errorCount}</span>
+                    <span className="text-[#6b7280] dark:text-zinc-500 font-bold uppercase block text-[10px]">Errors</span>
+                    <span className="text-base font-bold text-[#8b1a1a] dark:text-red-400">{errorCount}</span>
                   </div>
                   <div>
-                    <span className="text-[#6b7280] font-bold uppercase block text-[10px]">Practice</span>
+                    <span className="text-[#6b7280] dark:text-zinc-500 font-bold uppercase block text-[10px]">Practice</span>
                     <span className="text-base font-bold text-amber-600">{practiceWords.length}</span>
                   </div>
                 </div>

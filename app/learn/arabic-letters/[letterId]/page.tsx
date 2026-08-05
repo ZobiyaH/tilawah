@@ -591,14 +591,14 @@ export default function LetterLessonPage() {
   const hasNext = nextId < LETTER_LESSONS.length;
 
   return (
-    <div className="min-h-screen flex flex-col pb-16 relative bg-parchment dark:bg-zinc-950 transition-colors duration-200">
+    <div className="min-h-screen flex flex-col pb-28 md:pb-16 relative bg-[#faf6ee] dark:bg-zinc-950 text-[#1a1208] dark:text-zinc-100 transition-colors duration-200">
       <Header showSettingsBtn onOpenSettings={() => setSettingsOpen(true)} />
       <SettingsDrawer isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
 
-      <main className="flex-1 max-w-6xl mx-auto w-full px-4 mt-8 flex flex-col gap-6 relative z-10">
+      <main className="flex-1 max-w-6xl mx-auto w-full px-4 mt-6 flex flex-col gap-6 relative z-10">
         
         {/* Navigation back */}
-        <section className="flex justify-between items-center">
+        <section className="flex justify-between items-center text-center">
           <Link href="/learn/arabic-letters" className="text-gold font-bold text-xs uppercase tracking-wider hover:text-gold-light">
             ← Back to Alphabet Index
           </Link>
@@ -611,62 +611,62 @@ export default function LetterLessonPage() {
           </div>
         </section>
 
-        <section className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <section className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8 items-start">
           
           {/* LEFT COLUMN: Large Letter Card and Repeating (7 cols) */}
           <div className="lg:col-span-8 flex flex-col gap-6">
             
             {/* Main Letter Display Card */}
-            <div className="card mushaf-paper-texture border-[3px] border-double border-gold/60 p-8 flex flex-col items-center justify-center gap-6 relative min-h-[350px]">
+            <div className="card mushaf-paper-texture border-[3px] border-double border-gold/60 p-6 md:p-8 flex flex-col items-center justify-center text-center gap-6 relative min-h-[340px]">
               <span className="absolute top-4 left-4 text-[10px] font-bold text-zinc-400 font-lato">
                 LESSON {letterId + 1} OF 28
               </span>
 
               {/* Big letter */}
-              <div className="w-36 h-36 rounded-2xl bg-parchment dark:bg-zinc-900 border border-gold/15 flex items-center justify-center shadow-inner">
-                <span className="font-amiri-quran text-[110px] text-ink leading-none mt-2 select-none">
+              <div className="w-32 h-32 md:w-36 md:h-36 rounded-2xl bg-[#faf6ee] dark:bg-zinc-900 border border-gold/15 flex items-center justify-center shadow-inner mt-4">
+                <span className="font-amiri-quran text-[90px] md:text-[110px] text-ink dark:text-zinc-100 leading-none mt-2 select-none text-center">
                   {lesson.char}
                 </span>
               </div>
 
-              <div className="text-center">
-                <h3 className="font-amiri text-3xl font-bold text-emerald dark:text-emerald-light">
+              <div className="text-center w-full">
+                <h3 className="font-amiri text-2xl md:text-3xl font-bold text-emerald dark:text-emerald-light text-center">
                   {lesson.name} · <span className="text-gold font-normal">{lesson.arName}</span>
                 </h3>
               </div>
 
               {/* Letters Forms side by side */}
-              <div className="border-t border-b border-gold/15 py-4 w-full grid grid-cols-4 text-center mt-2">
-                <div>
-                  <span className="text-[9px] text-zinc-400 font-bold uppercase tracking-wider block mb-1">Isolated</span>
-                  <span className="font-amiri text-2xl text-ink font-bold">{lesson.forms.isolated}</span>
+              <div className="border-t border-b border-gold/15 py-4 w-full grid grid-cols-4 text-center mt-1">
+                <div className="text-center">
+                  <span className="text-[9px] text-zinc-400 font-bold uppercase tracking-wider block mb-1 text-center">Isolated</span>
+                  <span className="font-amiri text-2xl text-ink dark:text-zinc-100 font-bold text-center block">{lesson.forms.isolated}</span>
                 </div>
-                <div>
-                  <span className="text-[9px] text-zinc-400 font-bold uppercase tracking-wider block mb-1">Initial</span>
-                  <span className="font-amiri text-2xl text-ink font-bold">{lesson.forms.initial}</span>
+                <div className="text-center">
+                  <span className="text-[9px] text-zinc-400 font-bold uppercase tracking-wider block mb-1 text-center">Initial</span>
+                  <span className="font-amiri text-2xl text-ink dark:text-zinc-100 font-bold text-center block">{lesson.forms.initial}</span>
                 </div>
-                <div>
-                  <span className="text-[9px] text-zinc-400 font-bold uppercase tracking-wider block mb-1">Medial</span>
-                  <span className="font-amiri text-2xl text-ink font-bold">{lesson.forms.medial}</span>
+                <div className="text-center">
+                  <span className="text-[9px] text-zinc-400 font-bold uppercase tracking-wider block mb-1 text-center">Medial</span>
+                  <span className="font-amiri text-2xl text-ink dark:text-zinc-100 font-bold text-center block">{lesson.forms.medial}</span>
                 </div>
-                <div>
-                  <span className="text-[9px] text-zinc-400 font-bold uppercase tracking-wider block mb-1">Final</span>
-                  <span className="font-amiri text-2xl text-ink font-bold">{lesson.forms.final}</span>
+                <div className="text-center">
+                  <span className="text-[9px] text-zinc-400 font-bold uppercase tracking-wider block mb-1 text-center">Final</span>
+                  <span className="font-amiri text-2xl text-ink dark:text-zinc-100 font-bold text-center block">{lesson.forms.final}</span>
                 </div>
               </div>
 
               {/* Audio Listen Buttons */}
-              <div className="flex gap-4 items-center">
+              <div className="flex gap-4 items-center justify-center">
                 {audioAvailable ? (
                   <button
                     onClick={playLetter}
                     disabled={isPlaying}
-                    className="px-6 py-3 bg-gold hover:bg-gold-light text-white font-bold text-xs tracking-wider rounded-xl uppercase transition-all shadow-md shadow-gold/10 flex items-center gap-2"
+                    className="px-6 py-3 bg-gold hover:bg-gold-light text-white font-bold text-xs tracking-wider rounded-xl uppercase transition-all shadow-md shadow-gold/10 flex items-center justify-center gap-2 text-center"
                   >
                     🔊 {isPlaying ? "Playing..." : "Listen to Letter"}
                   </button>
                 ) : (
-                  <span className="px-4 py-2 border border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-800 text-[10px] font-bold tracking-wider text-zinc-400 dark:text-zinc-500 rounded-xl uppercase select-none">
+                  <span className="px-4 py-2 border border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-800 text-[10px] font-bold tracking-wider text-zinc-400 dark:text-zinc-500 rounded-xl uppercase select-none text-center">
                     🔊 Audio coming soon
                   </span>
                 )}
@@ -675,32 +675,32 @@ export default function LetterLessonPage() {
             </div>
 
             {/* Quranic Words Examples Section */}
-            <div className="card p-6 border-gold/30 bg-white/70 dark:bg-zinc-900/30 flex flex-col gap-4">
-              <h4 className="font-bold text-[10px] text-zinc-400 dark:text-zinc-500 uppercase tracking-widest block mb-2">
+            <div className="card p-6 border-gold/30 bg-white/70 dark:bg-zinc-900/30 flex flex-col gap-4 items-center text-center">
+              <h4 className="font-bold text-[10px] text-zinc-400 dark:text-zinc-500 uppercase tracking-widest text-center block mb-1">
                 Quranic Words Examples · أمثلة من القرآن الكريم
               </h4>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
                 {lesson.examples.map((ex, idx) => (
                   <div
                     key={idx}
-                    className="p-4 border border-gold/15 bg-parchment/60 dark:bg-zinc-800/40 rounded-2xl flex flex-col items-center justify-between text-center min-h-[140px]"
+                    className="p-4 border border-gold/15 bg-[#faf6ee]/60 dark:bg-zinc-800/40 rounded-2xl flex flex-col items-center justify-between text-center min-h-[140px]"
                   >
-                    <div className="flex flex-col items-center">
-                      <span className="font-amiri-quran text-2xl text-ink font-bold leading-relaxed">
+                    <div className="flex flex-col items-center text-center">
+                      <span className="font-amiri-quran text-2xl text-ink dark:text-zinc-100 font-bold leading-relaxed text-center">
                         {ex.word}
                       </span>
-                      <span className="text-[10px] text-zinc-500 font-semibold tracking-wider italic mt-2">
+                      <span className="text-[10px] text-zinc-500 dark:text-zinc-400 font-semibold tracking-wider italic mt-2 text-center">
                         {ex.transliteration}
                       </span>
-                      <span className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-0.5">
+                      <span className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-0.5 text-center">
                         {ex.meaning}
                       </span>
                     </div>
 
                     <button
                       onClick={() => playExampleWord(ex.word)}
-                      className="mt-3 text-[10px] font-bold text-gold hover:text-gold-light uppercase tracking-wider flex items-center gap-1.5"
+                      className="mt-3 text-[10px] font-bold text-gold hover:text-gold-light uppercase tracking-wider flex items-center justify-center gap-1.5 text-center"
                     >
                       Listen 🔊
                     </button>
@@ -718,12 +718,12 @@ export default function LetterLessonPage() {
             <MakhrajDiagram activePoint={lesson.makhraj} className="w-full" />
 
             {/* Repeat Section Card */}
-            <div className="card p-6 border-gold/30 bg-white/70 dark:bg-zinc-900/30 flex flex-col gap-5 text-center items-center">
-              <div>
-                <h4 className="font-bold text-[10px] text-gold uppercase tracking-[2px] block mb-1">
+            <div className="card p-6 border-gold/30 bg-white/70 dark:bg-zinc-900/30 flex flex-col gap-5 text-center items-center justify-center">
+              <div className="text-center">
+                <h4 className="font-bold text-[10px] text-gold uppercase tracking-[2px] block mb-1 text-center">
                   Repeat After Me · تدريب النطق
                 </h4>
-                <p className="text-[11px] text-zinc-500 max-w-xs mx-auto leading-relaxed">
+                <p className="text-[11px] text-zinc-500 dark:text-zinc-400 max-w-xs mx-auto leading-relaxed text-center">
                   Listen to the pronunciation above, then click the mic button to practice speaking the letter.
                 </p>
               </div>
@@ -751,7 +751,7 @@ export default function LetterLessonPage() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="text-xs text-zinc-500 font-bold animate-pulse tracking-wide"
+                    className="text-xs text-zinc-500 font-bold animate-pulse tracking-wide text-center"
                   >
                     Listening... Speak now
                   </motion.span>
@@ -761,10 +761,10 @@ export default function LetterLessonPage() {
                   <motion.div
                     initial={{ opacity: 0, y: 5 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="flex flex-col gap-1 items-center"
+                    className="flex flex-col gap-1 items-center text-center"
                   >
-                    <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">You said:</span>
-                    <span className="font-amiri text-lg font-bold text-ink">{spokenWord}</span>
+                    <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider text-center">You said:</span>
+                    <span className="font-amiri text-lg font-bold text-ink dark:text-zinc-100 text-center">{spokenWord}</span>
                   </motion.div>
                 )}
 
@@ -772,10 +772,10 @@ export default function LetterLessonPage() {
                   <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="bg-emerald-pale/35 border border-emerald/20 px-4 py-2 rounded-xl text-center flex flex-col gap-0.5"
+                    className="bg-emerald-pale/35 border border-emerald/20 px-4 py-2 rounded-xl text-center flex flex-col items-center justify-center gap-0.5"
                   >
-                    <span className="text-emerald font-bold text-xs">✓ Perfect! Correct Pronunciation</span>
-                    <span className="text-[9px] text-zinc-500 leading-none">Press Next to proceed.</span>
+                    <span className="text-emerald dark:text-emerald-light font-bold text-xs text-center">✓ Perfect! Correct Pronunciation</span>
+                    <span className="text-[9px] text-zinc-500 dark:text-zinc-400 leading-none text-center">Press Next to proceed.</span>
                   </motion.div>
                 )}
 
@@ -783,10 +783,10 @@ export default function LetterLessonPage() {
                   <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="bg-ruby-pale/35 border border-ruby/20 px-4 py-2 rounded-xl text-center flex flex-col gap-0.5"
+                    className="bg-ruby-pale/35 border border-ruby/20 px-4 py-2 rounded-xl text-center flex flex-col items-center justify-center gap-0.5"
                   >
-                    <span className="text-ruby font-bold text-xs">❌ Mismatch. Let&apos;s try again</span>
-                    <span className="text-[9px] text-zinc-500 leading-none">Listen to Qari above and repeat.</span>
+                    <span className="text-ruby dark:text-red-400 font-bold text-xs text-center">❌ Mismatch. Let&apos;s try again</span>
+                    <span className="text-[9px] text-zinc-500 dark:text-zinc-400 leading-none text-center">Listen to Qari above and repeat.</span>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -796,7 +796,7 @@ export default function LetterLessonPage() {
                 {hasNext && (
                   <button
                     onClick={() => router.push(`/learn/arabic-letters/${nextId}`)}
-                    className="flex-1 py-3 bg-emerald hover:bg-emerald-light text-white font-bold text-xs tracking-wider uppercase rounded-xl transition-all shadow-md shadow-emerald/10"
+                    className="flex-1 py-3 bg-emerald hover:bg-emerald-light text-white font-bold text-xs tracking-wider uppercase rounded-xl transition-all shadow-md shadow-emerald/10 text-center"
                   >
                     Next Letter →
                   </button>

@@ -337,7 +337,7 @@ export default function ShortSurahsPage() {
   const isRecitationDone = activePhase === 4 && allWords.length > 0 && wordIndex >= allWords.length;
 
   return (
-    <div className="min-h-screen flex flex-col pb-24 relative bg-[#faf6ee] text-[#1a1208] transition-colors duration-200">
+    <div className="min-h-screen flex flex-col pb-28 md:pb-16 relative bg-[#faf6ee] dark:bg-zinc-950 text-[#1a1208] dark:text-zinc-100 transition-colors duration-200">
       <Header />
 
       {activePhase === 4 && <ContinuousListener micCheckOpen={micCheckOpen} />}

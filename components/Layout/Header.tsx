@@ -17,6 +17,7 @@ export default function Header({ onOpenSettings, showSettingsBtn = false }: Head
   const [user, setUser] = useState<{ username: string; avatar: string } | null>(null);
   const [showPrompt, setShowPrompt] = useState(false);
   const [nameInput, setNameInput] = useState("");
+  const [guideOpen, setGuideOpen] = useState(false);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -28,7 +29,6 @@ export default function Header({ onOpenSettings, showSettingsBtn = false }: Head
           // ignore
         }
       } else {
-        // Check if completed 5 lessons
         const count = Number(localStorage.getItem("tilawa_completed_count") || "0");
         const prompted = localStorage.getItem("tilawa_prompted_account");
         if (count >= 5 && !prompted) {
@@ -56,8 +56,6 @@ export default function Header({ onOpenSettings, showSettingsBtn = false }: Head
     setShowPrompt(false);
   };
 
-  const [guideOpen, setGuideOpen] = useState(false);
-
   useEffect(() => {
     const handleOpen = () => setGuideOpen(true);
     window.addEventListener("open-user-guide", handleOpen);
@@ -65,90 +63,95 @@ export default function Header({ onOpenSettings, showSettingsBtn = false }: Head
   }, []);
 
   return (
-    <header className="sticky top-0 z-50 py-4 px-6 border-b border-[#c8993c]/20 bg-white/90 backdrop-blur-md transition-all w-full shadow-sm">
+    <header className="sticky top-0 z-50 py-3 px-4 sm:px-6 border-b border-[#c8993c]/20 bg-[#faf6ee]/90 dark:bg-[#0f1a14]/90 backdrop-blur-md transition-colors w-full shadow-sm">
       <UserGuideModal isOpen={guideOpen} onClose={() => setGuideOpen(false)} />
 
       <div className="max-w-6xl mx-auto flex justify-between items-center">
         {/* Left: Brand Logo */}
-        <Link href="/" className="flex items-center gap-3 select-none group">
+        <Link href="/" className="flex items-center gap-2 select-none group">
           <Logo variant="horizontal" size="sm" className="group-hover:scale-105 transition-transform" />
         </Link>
 
-        {/* Right: Desktop Navigation */}
-        <nav className="flex items-center gap-2">
+        {/* Right: Desktop & Mobile Header Actions */}
+        <div className="flex items-center gap-2">
+          {/* User Guide Button */}
           <button
             onClick={() => setGuideOpen(true)}
-            className="px-3 py-1.5 rounded-xl text-xs font-extrabold text-[#c8993c] bg-[#faf6ee] border border-[#c8993c]/30 hover:bg-[#c8993c]/15 transition-all flex items-center gap-1.5 shadow-sm"
+            className="px-2.5 py-1.5 rounded-xl text-xs font-extrabold text-[#c8993c] dark:text-[#e8c96a] bg-white/70 dark:bg-zinc-900/70 border border-[#c8993c]/30 hover:bg-[#c8993c]/15 transition-all flex items-center gap-1 shadow-xs"
             title="How to Use Tilawah"
           >
-            <span className="hidden sm:inline uppercase tracking-wider">User Guide</span>
+            <span>📖</span>
+            <span className="hidden sm:inline uppercase tracking-wider text-[11px]">Guide</span>
           </button>
 
-          <Link
-            href="/learn"
-            className={`px-4 py-2 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all ${
-              pathname.startsWith("/learn")
-                ? "bg-[#1e5e4a] text-white shadow-sm"
-                : "text-[#6b7280] hover:text-[#1e5e4a] hover:bg-[#faf6ee]"
-            }`}
-          >
-            Learn
-          </Link>
-          <Link
-            href="/recite"
-            className={`px-4 py-2 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all ${
-              pathname.startsWith("/recite")
-                ? "bg-[#1e5e4a] text-white shadow-sm"
-                : "text-[#6b7280] hover:text-[#1e5e4a] hover:bg-[#faf6ee]"
-            }`}
-          >
-            Recite
-          </Link>
-          <Link
-            href="/progress"
-            className={`px-4 py-2 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all ${
-              pathname.startsWith("/progress")
-                ? "bg-[#1e5e4a] text-white shadow-sm"
-                : "text-[#6b7280] hover:text-[#1e5e4a] hover:bg-[#faf6ee]"
-            }`}
-          >
-            My Progress
-          </Link>
+          {/* Desktop Navigation Links */}
+          <nav className="hidden md:flex items-center gap-1.5">
+            <Link
+              href="/learn"
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all ${
+                pathname.startsWith("/learn")
+                  ? "bg-[#1e5e4a] text-white shadow-xs"
+                  : "text-[#6b7280] dark:text-zinc-400 hover:text-[#1e5e4a] dark:hover:text-emerald-light hover:bg-[#faf6ee] dark:hover:bg-zinc-900"
+              }`}
+            >
+              Learn
+            </Link>
+            <Link
+              href="/recite"
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all ${
+                pathname.startsWith("/recite")
+                  ? "bg-[#1e5e4a] text-white shadow-xs"
+                  : "text-[#6b7280] dark:text-zinc-400 hover:text-[#1e5e4a] dark:hover:text-emerald-light hover:bg-[#faf6ee] dark:hover:bg-zinc-900"
+              }`}
+            >
+              Recite
+            </Link>
+            <Link
+              href="/progress"
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all ${
+                pathname.startsWith("/progress")
+                  ? "bg-[#1e5e4a] text-white shadow-xs"
+                  : "text-[#6b7280] dark:text-zinc-400 hover:text-[#1e5e4a] dark:hover:text-emerald-light hover:bg-[#faf6ee] dark:hover:bg-zinc-900"
+              }`}
+            >
+              My Progress
+            </Link>
+          </nav>
 
-          {/* User Avatar if logged in */}
+          {/* User Avatar */}
           {user ? (
-            <div className="flex items-center gap-2 px-3 py-1 rounded-full border border-gold/30 bg-gold-pale/20">
-              <span className="text-lg">{user.avatar || "👤"}</span>
-              <span className="text-xs font-bold text-ink hidden sm:inline">{user.username}</span>
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-[#c8993c]/30 bg-white/70 dark:bg-zinc-900/70">
+              <span className="text-base">{user.avatar || "👤"}</span>
+              <span className="text-xs font-bold text-[#1a1208] dark:text-zinc-200 hidden sm:inline">{user.username}</span>
             </div>
           ) : (
-            <div className="w-8 h-8 rounded-full border border-zinc-200 flex items-center justify-center text-sm text-zinc-400 bg-zinc-50">
+            <div className="w-8 h-8 rounded-full border border-[#c8993c]/30 flex items-center justify-center text-xs text-zinc-400 bg-white/70 dark:bg-zinc-900/70">
               👤
             </div>
           )}
 
-          {/* Settings Button if passed */}
+          {/* Settings Button */}
           {showSettingsBtn && onOpenSettings && (
             <button
               onClick={onOpenSettings}
-              className="p-1.5 rounded-full border border-gold/30 hover:border-gold hover:bg-gold-pale/20 transition-all text-sm flex items-center justify-center cursor-pointer"
+              className="p-1.5 rounded-full border border-[#c8993c]/30 hover:border-[#c8993c] bg-white/70 dark:bg-zinc-900/70 text-sm flex items-center justify-center cursor-pointer transition-all active:scale-95"
               title="Settings"
             >
               ⚙️
             </button>
           )}
-        </nav>
+        </div>
       </div>
 
-      {/* Optional Account Registration prompt overlay */}
+      {/* Account Registration Prompt Overlay */}
       {showPrompt && (
-        <div className="fixed inset-0 bg-[#1a1208]/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-6">
-          <div className="card max-w-sm w-full bg-white p-8 text-center flex flex-col gap-5 border border-[#c8993c]/30 shadow-2xl animate-slide-up">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
+          <div className="card max-w-sm w-full bg-[#faf6ee] dark:bg-zinc-900 p-6 text-center flex flex-col items-center gap-4 border-2 border-[#c8993c]/30 shadow-2xl animate-slide-up rounded-2xl">
             <div className="text-4xl">🌟</div>
-            <h3 className="text-xl font-bold text-[#1e5e4a] font-amiri">
+            <h3 className="text-xl font-bold text-[#1e5e4a] dark:text-emerald-light font-amiri text-center">
               Save your progress?
             </h3>
-            <p className="text-sm text-[#6b7280] leading-relaxed">
+            <p className="text-xs text-[#6b7280] dark:text-zinc-400 leading-relaxed text-center">
               Create a free local account so you never lose your learning streak and recitation logs.
             </p>
             <input
@@ -156,18 +159,18 @@ export default function Header({ onOpenSettings, showSettingsBtn = false }: Head
               placeholder="Enter your name"
               value={nameInput}
               onChange={(e) => setNameInput(e.target.value)}
-              className="w-full h-11 px-4 border border-[#c8993c]/30 rounded-xl text-sm font-medium focus:outline-none focus:border-[#1e5e4a]"
+              className="w-full h-11 px-4 border border-[#c8993c]/30 rounded-xl text-sm font-medium focus:outline-none focus:border-[#1e5e4a] dark:bg-zinc-800 dark:text-zinc-100 text-center"
             />
-            <div className="flex flex-col gap-2 mt-2">
+            <div className="flex flex-col gap-2 w-full mt-1">
               <button
                 onClick={handleRegister}
-                className="btn-primary w-full h-[52px] text-sm font-bold flex items-center justify-center"
+                className="w-full h-12 bg-[#1e5e4a] hover:bg-[#154335] text-white text-xs font-bold uppercase tracking-wider rounded-xl transition-all shadow-md"
               >
                 Create Account
               </button>
               <button
                 onClick={handleSkip}
-                className="w-full text-xs font-bold uppercase tracking-wider text-zinc-400 hover:text-zinc-600 transition-colors py-2"
+                className="w-full text-xs font-bold uppercase tracking-wider text-zinc-400 hover:text-zinc-600 transition-colors py-2 text-center"
               >
                 Skip for now
               </button>

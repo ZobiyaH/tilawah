@@ -399,7 +399,6 @@ export default function CommonWordsPage() {
           }
         }
 
-        // Auto-process after 3.5s if not matched instantly
         setTimeout(() => {
           if (recorderRef.current && recorderRef.current.isRecording()) {
             stopRecordingAndProcess();
@@ -419,44 +418,42 @@ export default function CommonWordsPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col pb-24 relative bg-[#faf6ee] text-[#1a1208] transition-colors duration-200">
+    <div className="min-h-screen flex flex-col pb-28 md:pb-16 relative bg-[#faf6ee] dark:bg-zinc-950 text-[#1a1208] dark:text-zinc-100 transition-colors duration-200">
       <Header />
 
-      <main className="flex-1 max-w-3xl mx-auto w-full px-4 py-8 flex flex-col gap-6 relative z-10">
+      <main className="flex-1 max-w-3xl mx-auto w-full px-4 py-6 md:py-8 flex flex-col gap-6 relative z-10">
         
         {/* Navigation Breadcrumb */}
-        <div className="flex items-center gap-1.5 text-xs text-zinc-500 font-semibold select-none">
+        <div className="flex items-center justify-center gap-1.5 text-xs text-zinc-500 font-semibold select-none text-center">
           <Link href="/learn" className="hover:underline">Learn</Link>
           <span>&rarr;</span>
-          <span className="text-[#1e5e4a] font-bold">Common Words ({activeIdx + 1} of {COMMON_WORDS.length})</span>
+          <span className="text-[#1e5e4a] dark:text-emerald-light font-bold">Common Words ({activeIdx + 1} of {COMMON_WORDS.length})</span>
         </div>
 
         {/* Word Card */}
-        <div className="card bg-white p-7 border border-[#c8993c]/15 shadow-sm rounded-[20px] flex flex-col gap-6">
-          <div className="flex justify-between items-center border-b border-zinc-100 pb-4 text-left">
-            <div>
-              <span className="text-[10px] font-bold uppercase tracking-[3px] text-[#1e5e4a]">
-                Common Quranic Words · {activeIdx + 1} of {COMMON_WORDS.length}
-              </span>
-              <h2 className="text-3xl font-black font-amiri text-[#1a1208] mt-1">
-                {currentWord.word}
-              </h2>
-            </div>
-            <span className="px-3 py-1 bg-gold-pale/30 border border-[#c8993c]/20 rounded-full text-[9px] font-bold uppercase tracking-wider text-yellow-800 font-lato">
+        <div className="card bg-white dark:bg-zinc-900 p-6 md:p-8 border border-[#c8993c]/20 shadow-sm rounded-[20px] flex flex-col gap-6 items-center text-center">
+          <div className="flex flex-col items-center justify-center border-b border-zinc-100 dark:border-zinc-800 pb-4 text-center w-full gap-2">
+            <span className="text-[10px] font-bold uppercase tracking-[3px] text-[#1e5e4a] dark:text-emerald-light text-center">
+              Common Quranic Words · {activeIdx + 1} of {COMMON_WORDS.length}
+            </span>
+            <h2 className="text-3xl font-black font-amiri text-[#1a1208] dark:text-zinc-100 text-center">
+              {currentWord.word}
+            </h2>
+            <span className="px-3 py-1 bg-gold-pale/30 border border-[#c8993c]/20 rounded-full text-[9px] font-bold uppercase tracking-wider text-yellow-800 dark:text-gold-light font-lato text-center">
               Appears {currentWord.count.toLocaleString()} times
             </span>
           </div>
 
-          <div className="flex flex-col items-center gap-4 py-4 text-center">
-            <span className="font-amiri text-6xl text-[#1e5e4a] leading-relaxed drop-shadow-xs select-none">
+          <div className="flex flex-col items-center gap-4 py-2 text-center w-full">
+            <span className="font-amiri text-5xl md:text-6xl text-[#1e5e4a] dark:text-emerald-light leading-relaxed drop-shadow-xs select-none text-center">
               {currentWord.word}
             </span>
-            <div className="flex flex-col gap-0.5">
-              <span className="text-sm font-semibold text-zinc-700">
-                <span className="font-bold text-[#1e5e4a]">Meaning:</span> {currentWord.meaning}
+            <div className="flex flex-col gap-1 items-center text-center">
+              <span className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 text-center">
+                <span className="font-bold text-[#1e5e4a] dark:text-emerald-light">Meaning:</span> {currentWord.meaning}
               </span>
-              <span className="text-xs font-semibold text-zinc-400">
-                Pronunciation: <span className="italic text-[#1a3a5c]">{currentWord.pronunciation}</span>
+              <span className="text-xs font-semibold text-zinc-400 dark:text-zinc-500 text-center">
+                Pronunciation: <span className="italic text-[#1a3a5c] dark:text-sky-300">{currentWord.pronunciation}</span>
               </span>
             </div>
 
@@ -475,16 +472,16 @@ export default function CommonWordsPage() {
           </div>
 
           {/* Letter Breakdown */}
-          <div className="border-t border-zinc-100 pt-5">
-            <h4 className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 text-left mb-3">
+          <div className="border-t border-zinc-100 dark:border-zinc-800 pt-5 w-full text-center flex flex-col items-center">
+            <h4 className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 text-center mb-3">
               Letter-by-Letter Breakdown
             </h4>
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap justify-center gap-3 w-full">
               {currentWord.breakdown.map((b, idx) => (
                 <button
                   key={idx}
                   onClick={() => playLetterBreakdownAudio(b)}
-                  className="px-3.5 py-2 bg-[#faf6ee] hover:bg-gold-pale/35 border border-[#c8993c]/20 rounded-xl text-xs font-bold text-yellow-800 flex items-center gap-1.5 transition-all shadow-3xs"
+                  className="px-3.5 py-2 bg-[#faf6ee] dark:bg-zinc-800 hover:bg-gold-pale/35 border border-[#c8993c]/20 rounded-xl text-xs font-bold text-yellow-800 dark:text-gold-light flex items-center gap-1.5 transition-all shadow-3xs text-center"
                 >
                   <span>🔊</span>
                   <span>{b}</span>
@@ -494,25 +491,25 @@ export default function CommonWordsPage() {
           </div>
 
           {/* Tajweed Note */}
-          <div className="border-t border-zinc-100 pt-5 text-left bg-gradient-to-tr from-[#1e5e4a]/2 to-transparent p-4 rounded-2xl border border-[#1e5e4a]/10">
-            <h4 className="text-[10px] font-bold uppercase tracking-wider text-[#1e5e4a] mb-1">
+          <div className="border-t border-zinc-100 dark:border-zinc-800 pt-5 text-center flex flex-col items-center bg-gradient-to-tr from-[#1e5e4a]/5 to-transparent p-4 rounded-2xl border border-[#1e5e4a]/10 w-full">
+            <h4 className="text-[10px] font-bold uppercase tracking-wider text-[#1e5e4a] dark:text-emerald-light mb-1 text-center">
               💡 Tajweed & Pronunciation Note
             </h4>
-            <p className="text-xs font-semibold text-zinc-600 leading-relaxed">
+            <p className="text-xs font-semibold text-zinc-600 dark:text-zinc-300 leading-relaxed text-center">
               {currentWord.notes}
             </p>
           </div>
 
           {/* Find it in the Quran */}
-          <div className="border-t border-zinc-100 pt-5 text-left">
-            <h4 className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-3">
+          <div className="border-t border-zinc-100 dark:border-zinc-800 pt-5 w-full text-center flex flex-col items-center">
+            <h4 className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mb-3 text-center">
               Find it in the Quran
             </h4>
-            <div className="p-4 bg-[#fdf8f0] border border-[#c8993c]/15 rounded-2xl flex flex-col gap-3">
-              <div className="flex justify-between items-center text-[10px] font-bold text-[#c8993c] uppercase tracking-wider">
+            <div className="p-4 bg-[#fdf8f0] dark:bg-zinc-800/60 border border-[#c8993c]/15 rounded-2xl flex flex-col items-center text-center gap-3 w-full">
+              <div className="text-[10px] font-bold text-[#c8993c] uppercase tracking-wider text-center">
                 <span>Surah {currentWord.example.surah}, Ayah {currentWord.example.ayah}</span>
               </div>
-              <div className="leading-loose text-right font-amiri text-2xl text-[#1a1208]" dir="rtl">
+              <div className="leading-loose text-center font-amiri text-2xl text-[#1a1208] dark:text-zinc-100 w-full" dir="rtl">
                 {currentWord.example.verseText.split(" ").map((w, idx) => {
                   const isMatch = w.includes(currentWord.example.highlightWord);
                   return (
@@ -524,34 +521,28 @@ export default function CommonWordsPage() {
               </div>
               <button
                 onClick={playFullAyah}
-                className="self-end h-9 px-4 rounded-lg bg-white border border-[#c8993c]/30 text-[10px] font-bold uppercase tracking-wider text-yellow-800 hover:bg-[#faf6ee] flex items-center gap-1.5 shadow-3xs"
+                className="mt-1 px-4 py-2 rounded-xl bg-white dark:bg-zinc-800 border border-[#c8993c]/30 text-[10px] font-bold uppercase tracking-wider text-yellow-800 dark:text-gold-light hover:bg-[#faf6ee] flex items-center justify-center gap-1.5 shadow-3xs"
               >
                 <span>🔊</span> Hear Full Ayah
               </button>
             </div>
           </div>
 
-          {/* Your Turn (ASR) */}
-          <div className="border-t border-zinc-100 pt-5 bg-gradient-to-tr from-[#1e5e4a]/5 to-[#c8993c]/5 p-6 border border-dashed border-[#c8993c]/30 rounded-2xl flex flex-col items-center gap-4 text-center">
-            <div>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-[#1e5e4a]">Your Turn</span>
-              <p className="text-xs font-bold text-zinc-500 mt-1">
-                Say this word into the microphone:
-              </p>
-            </div>
-
-            <span className="font-amiri text-4xl text-[#1e5e4a] leading-relaxed select-none">
-              {currentWord.word}
-            </span>
+          {/* Practical ASR Voice Check */}
+          <div className="border-t border-zinc-100 dark:border-zinc-800 pt-6 w-full flex flex-col items-center text-center gap-4">
+            <h4 className="text-[10px] font-bold uppercase tracking-wider text-[#1e5e4a] dark:text-emerald-light text-center">
+              🎙 Practical Voice Practice
+            </h4>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 max-w-sm text-center">
+              Speak the word <strong className="text-[#1a1208] dark:text-zinc-200">{currentWord.word}</strong> into your microphone to verify your pronunciation.
+            </p>
 
             <button
               onClick={startSpeechRecording}
-              className={`w-20 h-20 rounded-full flex items-center justify-center text-white shadow-md transition-all active:scale-95 ${
+              className={`w-16 h-16 rounded-full flex items-center justify-center text-white shadow-lg transition-all duration-300 ${
                 isRecording
-                  ? "bg-[#8b1a1a] shadow-[0_6px_24px_rgba(139,26,26,0.3)] animate-pulse"
-                  : asrResult === "success"
-                  ? "bg-[#1e5e4a] shadow-[0_6px_24px_rgba(30,94,74,0.3)]"
-                  : "bg-[#1e5e4a] hover:bg-[#164738]"
+                  ? "bg-[#8b1a1a] animate-pulse scale-105"
+                  : "bg-[#1e5e4a] hover:bg-[#164738] hover:scale-102"
               }`}
             >
               <span className="text-2xl">🎙️</span>

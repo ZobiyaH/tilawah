@@ -172,7 +172,7 @@ export default function LearnPage() {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col relative bg-[#faf6ee] text-[#1a1208] transition-colors duration-200">
+    <div className="min-h-screen flex flex-col pb-28 md:pb-16 relative bg-[#faf6ee] dark:bg-zinc-950 text-[#1a1208] dark:text-zinc-100 transition-colors duration-200">
       <Header />
 
       <main className="flex-1 max-w-6xl mx-auto w-full px-6 py-12 flex flex-col gap-10 relative z-10">

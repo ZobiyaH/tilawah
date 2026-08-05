@@ -4,6 +4,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import Header from "../../components/Layout/Header";
+import BottomNav from "../../components/Layout/BottomNav";
 import { SessionResult } from "../../types";
 import {
   AreaChart,
@@ -78,7 +79,7 @@ export default function ProgressPage() {
 
 
   return (
-    <div className="min-h-screen flex flex-col pb-16 relative bg-parchment dark:bg-zinc-950 transition-colors duration-200">
+    <div className="min-h-screen flex flex-col pb-28 md:pb-16 relative bg-[#faf6ee] dark:bg-zinc-950 text-[#1a1208] dark:text-zinc-100 transition-colors duration-200">
       <Header />
 
       <main className="flex-1 max-w-6xl mx-auto w-full px-4 mt-8 flex flex-col gap-6 relative z-10">
@@ -375,6 +376,8 @@ export default function ProgressPage() {
         )}
 
       </main>
+
+      <BottomNav />
     </div>
   );
 }

@@ -56,7 +56,7 @@ export default function LandingPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#faf6ee] text-[#1a1208] flex flex-col font-sans transition-colors duration-200">
+    <div className="min-h-screen pb-28 md:pb-16 bg-[#faf6ee] dark:bg-zinc-950 text-[#1a1208] dark:text-zinc-100 flex flex-col font-sans transition-colors duration-200">
       <Header />
       {/* 1. HERO SECTION */}
       <section className="relative overflow-hidden pt-6 pb-12 md:pt-8 md:pb-16 px-6 text-center flex flex-col items-center justify-center bg-gradient-to-b from-[#faf6ee] via-white to-[#faf6ee]">
