@@ -74,7 +74,7 @@ export default function RootLayout({
         />
       </head>
       <body className={`${amiriQuran.variable} ${lato.variable} font-lato antialiased text-ink bg-parchment transition-colors duration-200`}>
-        <ThemeProvider attribute="class" defaultTheme="light">
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
           <ToastProvider>
             <div className="flex flex-col min-h-screen w-full">
               <div className="flex-grow w-full">{children}</div>

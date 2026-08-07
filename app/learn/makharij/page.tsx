@@ -109,11 +109,11 @@ export default function MakharijPage() {
   const currentDetail = MAKHARIJ_DATA.find((m) => m.id === selectedPoint) || MAKHARIJ_DATA[0];
 
   return (
-    <div className="min-h-screen flex flex-col pb-16 relative bg-[#faf6ee] text-[#1a1208] transition-colors duration-200">
-      <Header showSettingsBtn onOpenSettings={() => setSettingsOpen(true)} />
+    <div className="min-h-screen flex flex-col pb-36 md:pb-16 relative bg-[#faf6ee] dark:bg-zinc-950 text-[#1a1208] dark:text-zinc-100 transition-colors duration-200">
+      <Header />
       <SettingsDrawer isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
 
-      <main className="flex-1 max-w-6xl mx-auto w-full px-4 mt-8 flex flex-col gap-6 relative z-10">
+      <main className="flex-1 max-w-6xl mx-auto w-full px-4 mt-6 flex flex-col gap-6 relative z-10">
         
         {/* Navigation & Title */}
         <section className="flex flex-col gap-2">

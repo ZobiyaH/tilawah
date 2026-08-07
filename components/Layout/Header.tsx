@@ -6,18 +6,20 @@ import { usePathname } from "next/navigation";
 
 import Logo from "../UI/Logo";
 import UserGuideModal from "../UI/UserGuideModal";
+import SettingsDrawer from "../UI/SettingsDrawer";
 
 interface HeaderProps {
   onOpenSettings?: () => void;
   showSettingsBtn?: boolean;
 }
 
-export default function Header({ onOpenSettings, showSettingsBtn = false }: HeaderProps = {}) {
+export default function Header({ onOpenSettings }: HeaderProps = {}) {
   const pathname = usePathname();
   const [user, setUser] = useState<{ username: string; avatar: string } | null>(null);
   const [showPrompt, setShowPrompt] = useState(false);
   const [nameInput, setNameInput] = useState("");
   const [guideOpen, setGuideOpen] = useState(false);
+  const [internalSettingsOpen, setInternalSettingsOpen] = useState(false);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -56,6 +58,14 @@ export default function Header({ onOpenSettings, showSettingsBtn = false }: Head
     setShowPrompt(false);
   };
 
+  const handleSettingsClick = () => {
+    if (onOpenSettings) {
+      onOpenSettings();
+    } else {
+      setInternalSettingsOpen(true);
+    }
+  };
+
   useEffect(() => {
     const handleOpen = () => setGuideOpen(true);
     window.addEventListener("open-user-guide", handleOpen);
@@ -65,6 +75,7 @@ export default function Header({ onOpenSettings, showSettingsBtn = false }: Head
   return (
     <header className="sticky top-0 z-50 py-3 px-4 sm:px-6 border-b border-[#c8993c]/20 bg-[#faf6ee]/90 dark:bg-[#0f1a14]/90 backdrop-blur-md transition-colors w-full shadow-sm">
       <UserGuideModal isOpen={guideOpen} onClose={() => setGuideOpen(false)} />
+      <SettingsDrawer isOpen={internalSettingsOpen} onClose={() => setInternalSettingsOpen(false)} />
 
       <div className="max-w-6xl mx-auto flex justify-between items-center">
         {/* Left: Brand Logo */}
@@ -130,16 +141,14 @@ export default function Header({ onOpenSettings, showSettingsBtn = false }: Head
             </div>
           )}
 
-          {/* Settings Button */}
-          {showSettingsBtn && onOpenSettings && (
-            <button
-              onClick={onOpenSettings}
-              className="p-1.5 rounded-full border border-[#c8993c]/30 hover:border-[#c8993c] bg-white/70 dark:bg-zinc-900/70 text-sm flex items-center justify-center cursor-pointer transition-all active:scale-95"
-              title="Settings"
-            >
-              ⚙️
-            </button>
-          )}
+          {/* Settings Button - Always Visible */}
+          <button
+            onClick={handleSettingsClick}
+            className="p-1.5 rounded-full border border-[#c8993c]/30 hover:border-[#c8993c] bg-white/70 dark:bg-zinc-900/70 text-sm flex items-center justify-center cursor-pointer transition-all active:scale-95 shadow-xs"
+            title="Settings & Theme"
+          >
+            ⚙️
+          </button>
         </div>
       </div>
 

@@ -65,27 +65,27 @@ export default function ArabicLettersPage() {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col pb-16 relative bg-parchment dark:bg-zinc-950 transition-colors duration-200">
-      <Header showSettingsBtn onOpenSettings={() => setSettingsOpen(true)} />
+    <div className="min-h-screen flex flex-col pb-36 md:pb-16 relative bg-[#faf6ee] dark:bg-zinc-950 text-[#1a1208] dark:text-zinc-100 transition-colors duration-200">
+      <Header />
       <SettingsDrawer isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
 
-      <main className="flex-1 max-w-6xl mx-auto w-full px-4 mt-8 flex flex-col gap-6 relative z-10">
+      <main className="flex-1 max-w-6xl mx-auto w-full px-4 mt-6 flex flex-col gap-6 relative z-10">
         
         {/* Navigation back */}
-        <section className="flex flex-col gap-3">
-          <div className="flex items-center gap-3">
-            <Link href="/" className="text-[#6b7280] hover:text-[#1e5e4a] text-xs font-bold uppercase tracking-wider bg-white px-3 py-1.5 rounded-lg border border-zinc-200 shadow-2xs">
+        <section className="flex flex-col gap-3 items-center text-center">
+          <div className="flex items-center justify-center gap-3">
+            <Link href="/" className="text-[#6b7280] hover:text-[#1e5e4a] text-xs font-bold uppercase tracking-wider bg-white dark:bg-zinc-900 px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-800 shadow-2xs">
               Main Page
             </Link>
-            <Link href="/learn" className="text-[#c8993c] hover:text-gold-light text-xs font-bold uppercase tracking-wider bg-white px-3 py-1.5 rounded-lg border border-zinc-200 shadow-2xs">
+            <Link href="/learn" className="text-[#c8993c] hover:text-gold-light text-xs font-bold uppercase tracking-wider bg-white dark:bg-zinc-900 px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-800 shadow-2xs">
               Learning Roadmap
             </Link>
           </div>
-          <div className="flex justify-between items-center mt-2">
-            <h2 className="font-amiri text-2xl font-bold text-emerald dark:text-emerald-light">
+          <div className="flex flex-col sm:flex-row justify-between items-center mt-2 gap-2 text-center w-full">
+            <h2 className="font-amiri text-2xl font-bold text-emerald dark:text-emerald-light text-center w-full">
               Arabic Alphabet · الحروف الهجائية
             </h2>
-            <span className="px-3 py-1 rounded-full border border-gold/30 bg-gold-pale/30 text-yellow-800 dark:text-gold-light text-[9px] font-bold uppercase tracking-wider font-lato">
+            <span className="px-3 py-1 rounded-full border border-gold/30 bg-gold-pale/30 text-yellow-800 dark:text-gold-light text-[9px] font-bold uppercase tracking-wider font-lato text-center">
               28 Lessons
             </span>
           </div>

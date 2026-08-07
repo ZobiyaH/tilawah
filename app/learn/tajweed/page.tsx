@@ -45,26 +45,26 @@ export default function TajweedRulesPage() {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col pb-24 relative bg-[#faf6ee] text-[#1a1208] transition-colors duration-200">
+    <div className="min-h-screen flex flex-col pb-36 md:pb-16 relative bg-[#faf6ee] dark:bg-zinc-950 text-[#1a1208] dark:text-zinc-100 transition-colors duration-200">
       <Header />
 
-      <main className="flex-1 max-w-4xl mx-auto w-full px-6 py-8 flex flex-col gap-6 relative z-10">
+      <main className="flex-1 max-w-4xl mx-auto w-full px-4 sm:px-6 py-6 md:py-8 flex flex-col gap-6 relative z-10">
         
         {/* Navigation & Header */}
-        <section className="flex flex-col gap-3">
-          <div className="flex items-center gap-3">
-            <Link href="/" className="text-[#6b7280] hover:text-[#1e5e4a] text-xs font-bold uppercase tracking-wider bg-white px-3 py-1.5 rounded-lg border border-zinc-200 shadow-2xs">
+        <section className="flex flex-col gap-3 items-center text-center">
+          <div className="flex items-center justify-center gap-3">
+            <Link href="/" className="text-[#6b7280] hover:text-[#1e5e4a] text-xs font-bold uppercase tracking-wider bg-white dark:bg-zinc-900 px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-800 shadow-2xs">
               Main Page
             </Link>
-            <Link href="/learn" className="text-[#c8993c] hover:text-gold-light text-xs font-bold uppercase tracking-wider bg-white px-3 py-1.5 rounded-lg border border-zinc-200 shadow-2xs">
+            <Link href="/learn" className="text-[#c8993c] hover:text-gold-light text-xs font-bold uppercase tracking-wider bg-white dark:bg-zinc-900 px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-800 shadow-2xs">
               Learning Roadmap
             </Link>
           </div>
-          <div className="flex justify-between items-center mt-1">
-            <h2 className="font-amiri text-2xl font-bold text-[#1e5e4a]">
+          <div className="flex flex-col sm:flex-row justify-between items-center mt-1 gap-2 text-center w-full">
+            <h2 className="font-amiri text-2xl font-bold text-[#1e5e4a] dark:text-emerald-light text-center w-full">
               Stage 4 - Tajweed Basics
             </h2>
-            <span className="px-3 py-1 rounded-full border border-[#c8993c]/30 bg-[#fdf8f0] text-[#c8993c] text-[10px] font-bold uppercase tracking-wider">
+            <span className="px-3 py-1 rounded-full border border-[#c8993c]/30 bg-[#fdf8f0] dark:bg-zinc-900 text-[#c8993c] text-[10px] font-bold uppercase tracking-wider text-center">
               12 Lessons
             </span>
           </div>
@@ -77,40 +77,40 @@ export default function TajweedRulesPage() {
             const isActive = idx === activeLessonIdx;
             const isLocked = idx > activeLessonIdx;
 
-            const cardClasses = `card relative flex flex-col justify-between p-5 border rounded-xl min-h-[150px] transition-all select-none ${
+            const cardClasses = `card relative flex flex-col items-center justify-between p-5 border rounded-xl min-h-[150px] text-center transition-all select-none ${
               isCompleted
-                ? "border-emerald/30 bg-emerald-pale/10 hover:border-emerald/60 cursor-pointer"
+                ? "border-emerald/30 bg-emerald-pale/10 dark:bg-emerald-950/20 hover:border-emerald/60 cursor-pointer"
                 : isActive
-                ? "border-[#c8993c] bg-white shadow-md ring-2 ring-[#c8993c]/25 cursor-pointer"
-                : "border-zinc-200 bg-zinc-100 opacity-40 pointer-events-none"
+                ? "border-[#c8993c] bg-white dark:bg-zinc-900 shadow-md ring-2 ring-[#c8993c]/25 cursor-pointer"
+                : "border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-900 opacity-40 pointer-events-none"
             }`;
 
             const content = (
               <div className={cardClasses}>
-                <div className="flex justify-between items-start">
+                <div className="flex justify-between items-center w-full">
                   <span className="text-[9px] font-bold text-[#c8993c] uppercase tracking-wider leading-none">
                     {rule.count}
                   </span>
                   {isCompleted && (
-                    <span className="text-emerald font-bold text-xs">✓ Done</span>
+                    <span className="text-emerald dark:text-emerald-light font-bold text-xs">✓ Done</span>
                   )}
                 </div>
 
-                <div className="mt-3">
-                  <h3 className="text-[#1a1208] text-base font-bold leading-tight">
+                <div className="mt-3 text-center flex flex-col items-center justify-center">
+                  <h3 className="text-[#1a1208] dark:text-zinc-100 text-base font-bold leading-tight text-center">
                     {rule.name}
                   </h3>
-                  <p className="text-[11px] text-[#6b7280] leading-snug mt-1 font-semibold">
+                  <p className="text-[11px] text-[#6b7280] dark:text-zinc-400 leading-snug mt-1 font-semibold text-center">
                     {rule.engName}
                   </p>
                 </div>
 
-                <div className="flex justify-between items-center border-t border-zinc-100 pt-3 mt-3">
-                  <span className="font-amiri text-lg font-bold text-[#1e5e4a] leading-none">
+                <div className="flex flex-col items-center justify-center border-t border-zinc-100 dark:border-zinc-800 pt-3 mt-3 w-full gap-2">
+                  <span className="font-amiri text-lg font-bold text-[#1e5e4a] dark:text-emerald-light leading-none text-center">
                     {rule.arabic}
                   </span>
                   {isActive && (
-                    <span className="py-1 px-2 bg-[#1e5e4a] text-white text-[9px] font-bold uppercase tracking-wider rounded-lg shadow-2xs">
+                    <span className="py-1 px-2.5 bg-[#1e5e4a] text-white text-[9px] font-bold uppercase tracking-wider rounded-lg shadow-2xs text-center">
                       Start Here
                     </span>
                   )}

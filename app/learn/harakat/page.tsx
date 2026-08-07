@@ -425,10 +425,10 @@ export default function HarakatPage() {
   const isQuizCompleted = completedQuizzes[activeLessonIdx];
 
   return (
-    <div className="min-h-screen flex flex-col pb-24 relative bg-[#faf6ee] text-[#1a1208] transition-colors duration-200">
+    <div className="min-h-screen flex flex-col pb-36 md:pb-16 relative bg-[#faf6ee] dark:bg-zinc-950 text-[#1a1208] dark:text-zinc-100 transition-colors duration-200">
       <Header />
 
-      <main className="flex-1 max-w-2xl mx-auto w-full px-6 py-8 flex flex-col gap-6 relative z-10">
+      <main className="flex-1 max-w-2xl mx-auto w-full px-4 sm:px-6 py-6 md:py-8 flex flex-col gap-6 relative z-10">
         
         {/* Navigation back */}
         <section className="flex flex-wrap items-center justify-between gap-3 select-none border-b border-zinc-200/60 pb-3">
