@@ -4,7 +4,7 @@ import Logo from "../UI/Logo";
 
 export default function Footer() {
   return (
-    <footer className="bg-[#101714] text-zinc-400 border-t border-white/5 py-12 px-6 w-full select-none mt-auto">
+    <footer className="bg-[#101714] text-zinc-400 border-t border-white/5 pt-12 pb-28 md:pb-12 px-6 w-full select-none mt-auto">
       <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
         <div className="flex flex-col gap-4">
           <Logo variant="horizontal" size="sm" className="opacity-95" />

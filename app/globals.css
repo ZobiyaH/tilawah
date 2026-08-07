@@ -56,7 +56,6 @@ p, span, div, button, input, label, select, textarea {
   font-size: 16px; /* minimum 16px */
 }
 
-/* Quranic Typography Overrides */
 .font-amiri-quran, .arabic-text {
   font-family: var(--font-amiri-quran), serif;
   font-size: 28px !important;
@@ -68,6 +67,13 @@ p, span, div, button, input, label, select, textarea {
   border: 1px solid rgba(200, 153, 60, 0.2);
   border-radius: 12px;
   padding: 24px;
+}
+
+.dark .font-amiri-quran, .dark .arabic-text,
+[data-theme='dark'] .font-amiri-quran, [data-theme='dark'] .arabic-text {
+  background-color: #16241e !important;
+  border-color: rgba(200, 153, 60, 0.35) !important;
+  color: #e8d5a3 !important;
 }
 
 @media (min-width: 768px) {
@@ -240,6 +246,12 @@ body::before {
   border-radius: 16px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
   padding: 24px;
+}
+
+.dark .card, [data-theme='dark'] .card {
+  background: #16241e;
+  border-color: rgba(200, 153, 60, 0.25);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
 }
 
 .btn-primary {
