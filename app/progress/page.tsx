@@ -28,11 +28,25 @@ export default function ProgressPage() {
   const [surahCount, setSurahCount] = useState(0);
   const { showToast } = useToast();
 
+  const [username, setUsername] = useState("Tilawah Student");
+  const [avatar, setAvatar] = useState("🌙");
+
   useEffect(() => {
     if (typeof window !== "undefined") {
       setStreak(getStreak());
       setLearnProgress(getLearningProgress());
       
+      const savedUser = localStorage.getItem("tilawa_user");
+      if (savedUser) {
+        try {
+          const parsed = JSON.parse(savedUser);
+          if (parsed.username) setUsername(parsed.username);
+          if (parsed.avatar) setAvatar(parsed.avatar);
+        } catch {
+          // ignore
+        }
+      }
+
       const saved = localStorage.getItem("tilawa_sessions");
       if (saved) {
         try {
@@ -44,6 +58,18 @@ export default function ProgressPage() {
           console.warn("Failed to parse sessions on progress mount:", e);
         }
       }
+      const handleUserUpdate = (e: Event) => {
+        const detail = (e as CustomEvent).detail;
+        if (detail) {
+          if (detail.username) setUsername(detail.username);
+          if (detail.avatar) setAvatar(detail.avatar);
+        }
+      };
+
+      window.addEventListener("tilawa-user-updated", handleUserUpdate);
+      return () => {
+        window.removeEventListener("tilawa-user-updated", handleUserUpdate);
+      };
     }
   }, []);
 
@@ -93,7 +119,7 @@ export default function ProgressPage() {
           <div className="flex gap-4 items-center relative z-10">
             {/* Avatar Circle with Gold border */}
             <div className="w-16 h-16 md:w-20 md:h-20 rounded-full border-2 border-gold bg-emerald-pale/20 flex items-center justify-center text-3xl md:text-4xl shadow-lg relative">
-              🌙
+              {avatar}
               <span className="absolute bottom-0 right-0 w-5 h-5 bg-emerald border border-gold rounded-full flex items-center justify-center text-[10px]">
                 ✓
               </span>
@@ -102,8 +128,8 @@ export default function ProgressPage() {
               <span className="text-[9px] uppercase tracking-widest text-gold font-bold">
                 Student Profile
               </span>
-              <h3 className="font-amiri text-2xl md:text-3xl font-bold leading-tight">
-                Tilawah Student
+              <h3 className="font-amiri text-2xl md:text-3xl font-extrabold text-[#e8d5a3] tracking-tight leading-tight">
+                {username}
               </h3>
               <span className="text-[10px] text-zinc-300 font-semibold italic max-w-md mt-0.5 leading-normal">
                 &quot;The best of you are those who learn the Qur&apos;an and teach it.&quot; · خَيْرُكُمْ مَنْ تَعَلَّمَ الْقُرْآنَ وَعَلَّمَهُ

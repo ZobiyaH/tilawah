@@ -46,6 +46,7 @@ export default function Header({ onOpenSettings }: HeaderProps = {}) {
     if (typeof window !== "undefined") {
       localStorage.setItem("tilawa_user", JSON.stringify(newUser));
       localStorage.setItem("tilawa_prompted_account", "done");
+      window.dispatchEvent(new CustomEvent("tilawa-user-updated", { detail: newUser }));
     }
     setUser(newUser);
     setShowPrompt(false);
@@ -129,22 +130,31 @@ export default function Header({ onOpenSettings }: HeaderProps = {}) {
             </Link>
           </nav>
 
-          {/* User Avatar */}
-          {user ? (
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-[#c8993c]/30 bg-white/70 dark:bg-zinc-900/70">
-              <span className="text-base">{user.avatar || "👤"}</span>
-              <span className="text-xs font-bold text-[#1a1208] dark:text-zinc-200 hidden sm:inline">{user.username}</span>
-            </div>
-          ) : (
-            <div className="w-8 h-8 rounded-full border border-[#c8993c]/30 flex items-center justify-center text-xs text-zinc-400 bg-white/70 dark:bg-zinc-900/70">
-              👤
-            </div>
-          )}
+          {/* User Avatar - Clickable to register/edit profile */}
+          <button
+            onClick={() => {
+              if (user) {
+                setNameInput(user.username);
+              }
+              setShowPrompt(true);
+            }}
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-[#c8993c]/30 bg-white/70 dark:bg-zinc-900/70 hover:border-[#c8993c] transition-all cursor-pointer select-none active:scale-95"
+            title="My Profile"
+          >
+            <span className="text-base">{user ? (user.avatar || "👤") : "👤"}</span>
+            {user && (
+              <span className="text-xs font-bold text-[#1a1208] dark:text-zinc-200 hidden sm:inline">
+                {user.username}
+              </span>
+            )}
+          </button>
 
-          {/* Settings Button - Always Visible */}
+          {/* Settings Button - Always Visible (Hidden on Home Page on Mobile) */}
           <button
             onClick={handleSettingsClick}
-            className="p-1.5 rounded-full border border-[#c8993c]/30 hover:border-[#c8993c] bg-white/70 dark:bg-zinc-900/70 text-sm flex items-center justify-center cursor-pointer transition-all active:scale-95 shadow-xs"
+            className={`p-1.5 rounded-full border border-[#c8993c]/30 hover:border-[#c8993c] bg-white/70 dark:bg-zinc-900/70 text-sm items-center justify-center cursor-pointer transition-all active:scale-95 shadow-xs ${
+              pathname === "/" ? "hidden md:flex" : "flex"
+            }`}
             title="Settings & Theme"
           >
             ⚙️

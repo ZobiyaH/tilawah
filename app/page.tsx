@@ -172,32 +172,32 @@ export default function LandingPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="card p-8 flex flex-col gap-5 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border border-[#c8993c]/15 rounded-3xl shadow-sm hover:shadow-xl hover:border-[#1e5e4a]/30 transition-all group hover:-translate-y-1">
+            <div className="card p-8 flex flex-col items-center justify-center text-center gap-5 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border border-[#c8993c]/15 rounded-3xl shadow-sm hover:shadow-xl hover:border-[#1e5e4a]/30 transition-all group hover:-translate-y-1">
               <div className="w-14 h-14 rounded-2xl bg-[#1e5e4a]/10 text-[#1e5e4a] flex items-center justify-center font-black text-xl group-hover:scale-110 transition-transform shadow-inner">
                 01
               </div>
-              <h3 className="font-amiri text-2xl font-bold text-[#1a1208] dark:text-zinc-100 group-hover:text-[#1e5e4a] transition-colors">Guidance isn&apos;t always nearby</h3>
-              <p className="text-sm text-[#6b7280] dark:text-zinc-400 font-medium leading-relaxed">
+              <h3 className="font-amiri text-2xl font-bold text-[#1a1208] dark:text-zinc-100 group-hover:text-[#1e5e4a] text-center transition-colors">Guidance isn&apos;t always nearby</h3>
+              <p className="text-sm text-[#6b7280] dark:text-zinc-400 font-medium leading-relaxed text-center">
                 Finding a qualified local teacher can be challenging, especially one with a flexible schedule.
               </p>
             </div>
             
-            <div className="card p-8 flex flex-col gap-5 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border border-[#c8993c]/15 rounded-3xl shadow-sm hover:shadow-xl hover:border-[#c8993c]/40 transition-all group hover:-translate-y-1">
+            <div className="card p-8 flex flex-col items-center justify-center text-center gap-5 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border border-[#c8993c]/15 rounded-3xl shadow-sm hover:shadow-xl hover:border-[#c8993c]/40 transition-all group hover:-translate-y-1">
               <div className="w-14 h-14 rounded-2xl bg-[#c8993c]/10 text-[#c8993c] flex items-center justify-center font-black text-xl group-hover:scale-110 transition-transform shadow-inner">
                 02
               </div>
-              <h3 className="font-amiri text-2xl font-bold text-[#1a1208] dark:text-zinc-100 group-hover:text-[#c8993c] transition-colors">Hard to self-correct</h3>
-              <p className="text-sm text-[#6b7280] dark:text-zinc-400 font-medium leading-relaxed">
+              <h3 className="font-amiri text-2xl font-bold text-[#1a1208] dark:text-zinc-100 group-hover:text-[#c8993c] text-center transition-colors">Hard to self-correct</h3>
+              <p className="text-sm text-[#6b7280] dark:text-zinc-400 font-medium leading-relaxed text-center">
                 It is difficult to hear your own pronunciation errors while trying to focus on rules.
               </p>
             </div>
 
-            <div className="card p-8 flex flex-col gap-5 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border border-[#c8993c]/15 rounded-3xl shadow-sm hover:shadow-xl hover:border-zinc-300 transition-all group hover:-translate-y-1">
+            <div className="card p-8 flex flex-col items-center justify-center text-center gap-5 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border border-[#c8993c]/15 rounded-3xl shadow-sm hover:shadow-xl hover:border-zinc-300 transition-all group hover:-translate-y-1">
               <div className="w-14 h-14 rounded-2xl bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 flex items-center justify-center font-black text-xl group-hover:scale-110 transition-transform shadow-inner">
                 03
               </div>
-              <h3 className="font-amiri text-2xl font-bold text-[#1a1208] dark:text-zinc-100 group-hover:text-zinc-800 dark:group-hover:text-zinc-200 transition-colors">Rules feel overwhelming</h3>
-              <p className="text-sm text-[#6b7280] dark:text-zinc-400 font-medium leading-relaxed">
+              <h3 className="font-amiri text-2xl font-bold text-[#1a1208] dark:text-zinc-100 group-hover:text-zinc-800 dark:group-hover:text-zinc-200 text-center transition-colors">Rules feel overwhelming</h3>
+              <p className="text-sm text-[#6b7280] dark:text-zinc-400 font-medium leading-relaxed text-center">
                 Explanations of Merging (Idgham) or Hiding (Ikhfa) are hard to apply without audio feedback.
               </p>
             </div>
