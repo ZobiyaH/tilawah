@@ -270,9 +270,11 @@ export default function LandingPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="card p-8 flex gap-5 hover:border-[#c8993c] hover:-translate-y-1 transition-all border border-[#c8993c]/15 rounded-3xl bg-white shadow-sm group">
-              <div className="w-14 h-14 rounded-2xl bg-[#1e5e4a]/10 flex items-center justify-center font-bold text-[#1e5e4a] text-2xl flex-shrink-0 group-hover:scale-110 transition-transform">
-                🎙️
+            <div className="card p-8 flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-5 hover:border-[#c8993c] hover:-translate-y-1 transition-all border border-[#c8993c]/15 rounded-3xl bg-white shadow-sm group">
+              <div className="w-14 h-14 rounded-2xl bg-[#1e5e4a]/10 flex items-center justify-center text-[#1e5e4a] flex-shrink-0 group-hover:scale-110 transition-transform">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-7 h-7">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z" />
+                </svg>
               </div>
               <div className="flex flex-col gap-2">
                 <h3 className="font-amiri text-xl font-bold text-[#1e5e4a]">Interactive Recitation Checker</h3>
@@ -282,9 +284,11 @@ export default function LandingPage() {
               </div>
             </div>
 
-            <div className="card p-8 flex gap-5 hover:border-[#c8993c] hover:-translate-y-1 transition-all border border-[#c8993c]/15 rounded-3xl bg-white shadow-sm group">
-              <div className="w-14 h-14 rounded-2xl bg-[#c8993c]/10 flex items-center justify-center font-bold text-[#c8993c] text-2xl flex-shrink-0 group-hover:scale-110 transition-transform">
-                🔊
+            <div className="card p-8 flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-5 hover:border-[#c8993c] hover:-translate-y-1 transition-all border border-[#c8993c]/15 rounded-3xl bg-white shadow-sm group">
+              <div className="w-14 h-14 rounded-2xl bg-[#c8993c]/10 flex items-center justify-center text-[#c8993c] flex-shrink-0 group-hover:scale-110 transition-transform">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-7 h-7">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 7.5H4.875c-.621 0-1.125.504-1.125 1.125v6.75c0 .621.504 1.125 1.125 1.125H6.75a9.06 9.06 0 0 1 1.501.124l4.93 1.11a.75.75 0 0 0 .919-.733V4.628a.75.75 0 0 0-.919-.733l-4.93 1.11A9.06 9.06 0 0 1 6.75 7.5Z" />
+                </svg>
               </div>
               <div className="flex flex-col gap-2">
                 <h3 className="font-amiri text-xl font-bold text-[#1e5e4a]">Verified Qari Recitations</h3>
@@ -294,9 +298,11 @@ export default function LandingPage() {
               </div>
             </div>
 
-            <div className="card p-8 flex gap-5 hover:border-[#c8993c] hover:-translate-y-1 transition-all border border-[#c8993c]/15 rounded-3xl bg-white shadow-sm group">
-              <div className="w-14 h-14 rounded-2xl bg-[#1e5e4a]/10 flex items-center justify-center font-bold text-[#1e5e4a] text-2xl flex-shrink-0 group-hover:scale-110 transition-transform">
-                📖
+            <div className="card p-8 flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-5 hover:border-[#c8993c] hover:-translate-y-1 transition-all border border-[#c8993c]/15 rounded-3xl bg-white shadow-sm group">
+              <div className="w-14 h-14 rounded-2xl bg-[#1e5e4a]/10 flex items-center justify-center text-[#1e5e4a] flex-shrink-0 group-hover:scale-110 transition-transform">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-7 h-7">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
+                </svg>
               </div>
               <div className="flex flex-col gap-2">
                 <h3 className="font-amiri text-xl font-bold text-[#1e5e4a]">Authentic Uthmani Text</h3>
@@ -306,9 +312,11 @@ export default function LandingPage() {
               </div>
             </div>
 
-            <div className="card p-8 flex gap-5 hover:border-[#c8993c] hover:-translate-y-1 transition-all border border-[#c8993c]/15 rounded-3xl bg-white shadow-sm group">
-              <div className="w-14 h-14 rounded-2xl bg-[#c8993c]/10 flex items-center justify-center font-bold text-[#c8993c] text-2xl flex-shrink-0 group-hover:scale-110 transition-transform">
-                💎
+            <div className="card p-8 flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-5 hover:border-[#c8993c] hover:-translate-y-1 transition-all border border-[#c8993c]/15 rounded-3xl bg-white shadow-sm group">
+              <div className="w-14 h-14 rounded-2xl bg-[#c8993c]/10 flex items-center justify-center text-[#c8993c] flex-shrink-0 group-hover:scale-110 transition-transform">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-7 h-7">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 0 1-1.043 3.296 3.745 3.745 0 0 1-3.296 1.043A3.745 3.745 0 0 1 12 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 0 1-3.296-1.043 3.745 3.745 0 0 1-1.043-3.296A3.745 3.745 0 0 1 3 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 0 1 1.043-3.296 3.746 3.746 0 0 1 3.296-1.043A3.746 3.746 0 0 1 12 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 0 1 3.296 1.043 3.746 3.746 0 0 1 1.043 3.296A3.745 3.745 0 0 1 21 12Z" />
+                </svg>
               </div>
               <div className="flex flex-col gap-2">
                 <h3 className="font-amiri text-xl font-bold text-[#1e5e4a]">100% Free Core</h3>
