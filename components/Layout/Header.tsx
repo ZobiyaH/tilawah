@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -25,8 +26,10 @@ export default function Header({ onOpenSettings }: HeaderProps = {}) {
   const [completedCount, setCompletedCount] = useState(0);
   const [guideOpen, setGuideOpen] = useState(false);
   const [internalSettingsOpen, setInternalSettingsOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     if (typeof window !== "undefined") {
       const savedUser = localStorage.getItem("tilawa_user");
       if (savedUser) {
@@ -190,10 +193,10 @@ export default function Header({ onOpenSettings }: HeaderProps = {}) {
         </div>
       </div>
 
-      {/* Account Registration / User Profile Overlay Modal */}
-      {showPrompt && (
+      {/* Account Registration / User Profile Overlay Modal rendered via Portal */}
+      {mounted && showPrompt && typeof document !== "undefined" && createPortal(
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-end sm:items-center justify-center p-0 sm:p-4">
-          <div className="relative card w-full sm:max-w-md bg-[#faf6ee] dark:bg-zinc-900 border-t sm:border-2 border-[#c8993c]/30 rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-y-auto flex flex-col p-6 text-center items-center gap-4 animate-slide-up max-h-[85vh] sm:max-h-[90vh] h-auto">
+          <div className="relative card w-full sm:max-w-md bg-[#faf6ee] dark:bg-zinc-900 border-t sm:border-2 border-[#c8993c]/30 rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-y-auto flex flex-col p-6 text-center items-center gap-4 animate-[slide-up_0.35s_ease-out] max-h-[85vh] sm:max-h-[90vh] h-auto">
             {/* Close Cross Button */}
             <button
               onClick={handleSkip}
@@ -253,7 +256,8 @@ export default function Header({ onOpenSettings }: HeaderProps = {}) {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </header>
   );

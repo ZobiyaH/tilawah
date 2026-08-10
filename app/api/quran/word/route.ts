@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { stripDiacritics } from "@/lib/arabic/normalize";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const text = searchParams.get("text");
