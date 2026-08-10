@@ -225,7 +225,7 @@ export default function LearnPage() {
             return (
               <div
                 key={stage.id}
-                className={`card p-5 bg-white border rounded-2xl flex flex-col justify-between h-full gap-4 transition-all duration-200 overflow-hidden ${
+                className={`card p-5 bg-white border rounded-2xl flex flex-col items-center md:items-stretch justify-between text-center md:text-left h-full gap-4 transition-all duration-200 overflow-hidden ${
                   stage.isActive
                     ? "border-[#c8993c] shadow-lg ring-2 ring-[#c8993c]/20"
                     : stage.isCompleted
@@ -236,8 +236,8 @@ export default function LearnPage() {
                 }`}
               >
                 {/* Top Section */}
-                <div className="flex flex-col gap-3">
-                  <div className="flex items-center justify-between min-h-[44px]">
+                <div className="flex flex-col items-center md:items-stretch gap-3 w-full">
+                  <div className="flex flex-col md:flex-row items-center justify-between gap-2 min-h-[44px]">
                     <span className="w-9 h-9 rounded-full bg-[#1e5e4a] text-white flex items-center justify-center font-bold text-sm shadow-sm flex-shrink-0">
                       {stage.isCompleted ? "✓" : stage.id}
                     </span>
@@ -246,23 +246,23 @@ export default function LearnPage() {
                     </div>
                   </div>
 
-                  <div>
+                  <div className="text-center md:text-left">
                     <span className="text-[10px] font-extrabold uppercase tracking-wider text-zinc-400 block">
                       Stage {stage.id}
                     </span>
-                    <h3 className="text-base font-bold text-[#1a1208] leading-snug mt-0.5">
+                    <h3 className="text-base font-bold text-[#1a1208] leading-snug mt-0.5 text-center md:text-left">
                       {stage.subtitle}
                     </h3>
                   </div>
 
-                  <p className="text-xs text-[#6b7280] leading-relaxed">
+                  <p className="text-xs text-[#6b7280] leading-relaxed text-center md:text-left">
                     {stage.desc}
                   </p>
                 </div>
 
                 {/* Bottom Section - Start Here Button strictly inside Card */}
-                <div className="flex flex-col gap-3 pt-3 border-t border-zinc-100 mt-auto w-full">
-                  <span className="text-[11px] font-bold text-[#1e5e4a]">
+                <div className="flex flex-col items-center md:items-stretch gap-3 pt-3 border-t border-zinc-100 mt-auto w-full text-center md:text-left">
+                  <span className="text-[11px] font-bold text-[#1e5e4a] text-center md:text-left">
                     {stage.progressText}
                   </span>
 

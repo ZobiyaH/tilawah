@@ -45,6 +45,11 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Tilawah - Free Quran Recitation Checker",
     description: "Real-time Tajweed correction. Verified Qari audio. Learn from basics. Free.",
+  },
+  icons: {
+    icon: "/favicon.png",
+    shortcut: "/favicon.ico",
+    apple: "/favicon.png",
   }
 };
 
