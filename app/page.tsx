@@ -129,7 +129,7 @@ export default function LandingPage() {
             <button
               type="button"
               onClick={handleStartBeginner}
-              className="btn-primary h-14 w-full sm:w-48 flex items-center justify-center font-extrabold px-4 text-sm shadow-lg shadow-[#1e5e4a]/20 transition-all cursor-pointer rounded-2xl bg-[#1e5e4a] hover:bg-[#164738] text-white border border-[#1e5e4a] hover:-translate-y-0.5 active:scale-[0.98]"
+              className="btn-primary h-14 w-44 flex items-center justify-center font-extrabold px-4 text-sm shadow-lg shadow-[#1e5e4a]/20 transition-all cursor-pointer rounded-2xl bg-[#1e5e4a] hover:bg-[#164738] text-white border border-[#1e5e4a] hover:-translate-y-0.5 active:scale-[0.98]"
             >
               I know no Arabic
             </button>
@@ -138,7 +138,7 @@ export default function LandingPage() {
             <Link
               href="/learn"
               onClick={handleStartBasics}
-              className="btn-secondary h-14 w-full sm:w-48 flex items-center justify-center font-extrabold px-4 text-sm transition-all rounded-2xl border-2 border-[#c8993c] text-[#c8993c] bg-white hover:bg-[#faf6ee] hover:-translate-y-0.5 shadow-sm active:scale-[0.98]"
+              className="btn-secondary h-14 w-44 flex items-center justify-center font-extrabold px-4 text-sm transition-all rounded-2xl border-2 border-[#c8993c] text-[#c8993c] bg-white hover:bg-[#faf6ee] hover:-translate-y-0.5 shadow-sm active:scale-[0.98]"
             >
               I know the basics
             </Link>
@@ -146,7 +146,7 @@ export default function LandingPage() {
             {/* Option 3: Directly recite */}
             <Link
               href="/recite"
-              className="h-14 w-full sm:w-48 flex items-center justify-center font-extrabold px-4 text-sm transition-all rounded-2xl bg-[#c8993c] text-white hover:bg-[#b08432] border border-[#c8993c] shadow-lg shadow-[#c8993c]/20 hover:-translate-y-0.5 active:scale-[0.98]"
+              className="h-14 w-44 flex items-center justify-center font-extrabold px-4 text-sm transition-all rounded-2xl bg-[#c8993c] text-white hover:bg-[#b08432] border border-[#c8993c] shadow-lg shadow-[#c8993c]/20 hover:-translate-y-0.5 active:scale-[0.98]"
             >
               Direct Recitation
             </Link>
