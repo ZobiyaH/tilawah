@@ -46,11 +46,13 @@ export function saveLearningProgress(record: {
   const attempts = currentRecord ? currentRecord.attempts + 1 : 1;
   const bestScore = currentRecord ? Math.max(currentRecord.best_score, score) : score;
 
+  const wasAlreadyCompleted = currentRecord ? currentRecord.completed : false;
+
   const updatedRecord: LearningProgressRecord = {
     user_id: "local_user",
     track: record.track,
     lesson_id: record.lesson_id,
-    completed: record.completed || (currentRecord ? currentRecord.completed : false),
+    completed: record.completed || wasAlreadyCompleted,
     attempts,
     best_score: bestScore,
     last_practiced: now,
@@ -64,6 +66,13 @@ export function saveLearningProgress(record: {
 
   localStorage.setItem(STORAGE_KEY, JSON.stringify(progressList));
   updateStreak();
+
+  // Moment A: Trigger email capture popup if newly completed a lesson
+  if (record.completed && !wasAlreadyCompleted) {
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent("open-email-capture", { detail: { moment: "MomentA" } }));
+    }, 1000);
+  }
 }
 
 export function getStreak(): number {
@@ -133,6 +142,21 @@ function getTodayString(): string {
   const month = String(d.getMonth() + 1).padStart(2, "0");
   const date = String(d.getDate()).padStart(2, "0");
   return `${year}-${month}-${date}`;
+}
+
+export function checkNextDayReturn(): boolean {
+  if (typeof window === "undefined") return false;
+  const today = getTodayString();
+  const lastVisit = localStorage.getItem("tilawah_last_visit_date");
+  if (!lastVisit) {
+    localStorage.setItem("tilawah_last_visit_date", today);
+    return false;
+  }
+  if (lastVisit < today) {
+    localStorage.setItem("tilawah_last_visit_date", today);
+    return true;
+  }
+  return false;
 }
 
 function getDaysDiff(date1: string, date2: string): number {

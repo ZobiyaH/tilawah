@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import Logo from "../UI/Logo";
 import UserGuideModal from "../UI/UserGuideModal";
 import SettingsDrawer from "../UI/SettingsDrawer";
+import { getStreak, getLearningProgress } from "@/lib/progress";
 
 interface HeaderProps {
   onOpenSettings?: () => void;
@@ -18,6 +19,10 @@ export default function Header({ onOpenSettings }: HeaderProps = {}) {
   const [user, setUser] = useState<{ username: string; avatar: string } | null>(null);
   const [showPrompt, setShowPrompt] = useState(false);
   const [nameInput, setNameInput] = useState("");
+  const [emailInput, setEmailInput] = useState("");
+  const [userEmail, setUserEmail] = useState("");
+  const [userStreak, setUserStreak] = useState(0);
+  const [completedCount, setCompletedCount] = useState(0);
   const [guideOpen, setGuideOpen] = useState(false);
   const [internalSettingsOpen, setInternalSettingsOpen] = useState(false);
 
@@ -26,36 +31,59 @@ export default function Header({ onOpenSettings }: HeaderProps = {}) {
       const savedUser = localStorage.getItem("tilawa_user");
       if (savedUser) {
         try {
-          setUser(JSON.parse(savedUser));
+          const parsed = JSON.parse(savedUser);
+          setUser(parsed);
+          if (parsed.username) setNameInput(parsed.username);
+          if (parsed.email) {
+            setUserEmail(parsed.email);
+            setEmailInput(parsed.email);
+          }
         } catch {
           // ignore
         }
-      } else {
-        const count = Number(localStorage.getItem("tilawa_completed_count") || "0");
-        const prompted = localStorage.getItem("tilawa_prompted_account");
-        if (count >= 5 && !prompted) {
-          setShowPrompt(true);
-        }
       }
+
+      // Check captured email from localStorage
+      const capturedEmail = localStorage.getItem("tilawah_user_email") || "";
+      if (capturedEmail) {
+        setUserEmail(capturedEmail);
+        setEmailInput(capturedEmail);
+      }
+
+      setUserStreak(getStreak());
+      setCompletedCount(getLearningProgress().filter(p => p.completed).length);
     }
-  }, [pathname]);
+  }, [pathname, showPrompt]);
 
   const handleRegister = () => {
     if (!nameInput.trim()) return;
-    const newUser = { username: nameInput.trim(), avatar: "⭐" };
+    const cleanEmail = emailInput.trim();
+    const newUser = { 
+      username: nameInput.trim(), 
+      avatar: "⭐",
+      email: cleanEmail || undefined
+    };
+
     if (typeof window !== "undefined") {
       localStorage.setItem("tilawa_user", JSON.stringify(newUser));
       localStorage.setItem("tilawa_prompted_account", "done");
+      
+      if (cleanEmail && cleanEmail.includes("@")) {
+        localStorage.setItem("tilawah_email_captured", "true");
+        localStorage.setItem("tilawah_user_email", cleanEmail);
+      }
+      
       window.dispatchEvent(new CustomEvent("tilawa-user-updated", { detail: newUser }));
     }
+    
     setUser(newUser);
+    if (cleanEmail && cleanEmail.includes("@")) {
+      setUserEmail(cleanEmail);
+    }
     setShowPrompt(false);
   };
 
   const handleSkip = () => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("tilawa_prompted_account", "done");
-    }
     setShowPrompt(false);
   };
 
@@ -162,36 +190,66 @@ export default function Header({ onOpenSettings }: HeaderProps = {}) {
         </div>
       </div>
 
-      {/* Account Registration Prompt Overlay */}
+      {/* Account Registration / User Profile Overlay Modal */}
       {showPrompt && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
-          <div className="card max-w-sm w-full bg-[#faf6ee] dark:bg-zinc-900 p-6 text-center flex flex-col items-center gap-4 border-2 border-[#c8993c]/30 shadow-2xl animate-slide-up rounded-2xl">
-            <div className="text-4xl">🌟</div>
-            <h3 className="text-xl font-bold text-[#1e5e4a] dark:text-emerald-light font-amiri text-center">
-              Save your progress?
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="relative card w-full sm:max-w-md bg-[#faf6ee] dark:bg-zinc-900 border-t sm:border-2 border-[#c8993c]/30 rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-hidden flex flex-col p-6 text-center items-center gap-4 animate-slide-up h-[45vh] sm:h-auto min-h-[360px] sm:min-h-0">
+            {/* Close Cross Button */}
+            <button
+              onClick={handleSkip}
+              className="absolute top-4 right-4 p-1 rounded-full text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors z-20 cursor-pointer"
+              aria-label="Close"
+            >
+              ✕
+            </button>
+
+            <div className="text-4xl">⭐</div>
+            <h3 className="text-xl font-bold text-[#1e5e4a] dark:text-emerald-light font-amiri text-center leading-normal">
+              {userEmail ? "Your Profile" : "Save your progress?"}
             </h3>
-            <p className="text-xs text-[#6b7280] dark:text-zinc-400 leading-relaxed text-center">
-              Create a free local account so you never lose your learning streak and recitation logs.
-            </p>
-            <input
-              type="text"
-              placeholder="Enter your name"
-              value={nameInput}
-              onChange={(e) => setNameInput(e.target.value)}
-              className="w-full h-11 px-4 border border-[#c8993c]/30 rounded-xl text-sm font-medium focus:outline-none focus:border-[#1e5e4a] dark:bg-zinc-800 dark:text-zinc-100 text-center"
-            />
+
+            <div className="flex flex-col gap-2 w-full">
+              <input
+                type="text"
+                placeholder="Enter your name"
+                value={nameInput}
+                onChange={(e) => setNameInput(e.target.value)}
+                className="w-full h-11 px-4 border border-[#c8993c]/30 rounded-xl text-xs font-semibold focus:outline-none focus:border-[#1e5e4a] dark:bg-zinc-800 dark:text-zinc-100 text-center"
+              />
+
+              <input
+                type="email"
+                placeholder="Enter your email address"
+                value={emailInput}
+                onChange={(e) => setEmailInput(e.target.value)}
+                className="w-full h-11 px-4 border border-[#c8993c]/30 rounded-xl text-xs font-semibold focus:outline-none focus:border-[#1e5e4a] dark:bg-zinc-800 dark:text-zinc-100 text-center"
+              />
+            </div>
+
+            {/* Profile Stats display */}
+            <div className="grid grid-cols-2 gap-4 w-full bg-white/40 dark:bg-zinc-800/30 p-3 rounded-xl border border-[#c8993c]/10 text-center select-none">
+              <div className="flex flex-col items-center">
+                <span className="text-[9px] uppercase font-bold text-zinc-400">Daily Streak</span>
+                <span className="text-sm font-black text-emerald dark:text-emerald-light mt-0.5">{userStreak} Days 🔥</span>
+              </div>
+              <div className="flex flex-col items-center">
+                <span className="text-[9px] uppercase font-bold text-zinc-400">Lessons Completed</span>
+                <span className="text-sm font-black text-gold mt-0.5">{completedCount} 📖</span>
+              </div>
+            </div>
+
             <div className="flex flex-col gap-2 w-full mt-1">
               <button
                 onClick={handleRegister}
-                className="w-full h-12 bg-[#1e5e4a] hover:bg-[#154335] text-white text-xs font-bold uppercase tracking-wider rounded-xl transition-all shadow-md"
+                className="w-full h-11 bg-[#1e5e4a] hover:bg-[#154335] text-white text-[11px] font-black uppercase tracking-wider rounded-xl transition-all shadow-md cursor-pointer"
               >
-                Create Account
+                Save Profile
               </button>
               <button
                 onClick={handleSkip}
-                className="w-full text-xs font-bold uppercase tracking-wider text-zinc-400 hover:text-zinc-600 transition-colors py-2 text-center"
+                className="w-full text-[10px] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors py-2 text-center cursor-pointer"
               >
-                Skip for now
+                Close
               </button>
             </div>
           </div>

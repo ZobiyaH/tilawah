@@ -182,15 +182,33 @@ export default function RecitationPage() {
 
   const handleSave = async () => {
     await saveSessionScore();
-    showToast("💾 Recitation Score Synced Successfully!");
     
     // Register local completed counter for progress popups
     if (typeof window !== "undefined") {
       const currentCompleted = Number(localStorage.getItem("tilawa_completed_count") || "0");
       localStorage.setItem("tilawa_completed_count", String(currentCompleted + 1));
+
+      const emailCaptured = localStorage.getItem("tilawah_email_captured") === "true";
+      const dismissed = sessionStorage.getItem("email_popup_dismissed") === "true";
+
+      if (!emailCaptured && !dismissed) {
+        window.dispatchEvent(
+          new CustomEvent("open-email-capture", { 
+            detail: { moment: "MomentC", surahName: surahData.name.split("-")[0] } 
+          })
+        );
+        const handleCloseEvent = () => {
+          router.push("/");
+          window.removeEventListener("tilawa-user-updated", handleCloseEvent);
+          window.removeEventListener("email-popup-dismissed-event", handleCloseEvent);
+        };
+        window.addEventListener("tilawa-user-updated", handleCloseEvent);
+        window.addEventListener("email-popup-dismissed-event", handleCloseEvent);
+      } else {
+        showToast("💾 Recitation Score Synced Successfully!");
+        router.push("/");
+      }
     }
-    
-    router.push("/");
   };
 
   const playCurrentWordAudio = async () => {

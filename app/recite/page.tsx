@@ -9,6 +9,8 @@ import { motion } from "framer-motion";
 import SettingsDrawer from "../../components/UI/SettingsDrawer";
 import BottomNav from "../../components/Layout/BottomNav";
 
+import { checkNextDayReturn } from "../../lib/progress";
+
 export default function DashboardPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -42,6 +44,13 @@ export default function DashboardPage() {
         } catch (e) {
           console.warn("Failed to parse sessions stats:", e);
         }
+      }
+
+      // Check next-day return Moment B
+      if (checkNextDayReturn()) {
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent("open-email-capture", { detail: { moment: "MomentB" } }));
+        }, 1500);
       }
     }
   }, []);

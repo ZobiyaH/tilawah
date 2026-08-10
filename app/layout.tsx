@@ -3,6 +3,7 @@ import { Amiri_Quran, Lato } from "next/font/google";
 import { ToastProvider } from "@/components/UI/Toast";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import Footer from "@/components/Layout/Footer";
+import EmailCaptureModal from "@/components/UI/EmailCaptureModal";
 import "./globals.css";
 
 const amiriQuran = Amiri_Quran({
@@ -80,6 +81,7 @@ export default function RootLayout({
               <div className="flex-grow w-full">{children}</div>
               <Footer />
             </div>
+            <EmailCaptureModal />
           </ToastProvider>
         </ThemeProvider>
       </body>

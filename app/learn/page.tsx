@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import Header from "@/components/Layout/Header";
 import BottomNav from "@/components/Layout/BottomNav";
-import { getLearningProgress, LearningProgressRecord } from "@/lib/progress";
+import { getLearningProgress, LearningProgressRecord, checkNextDayReturn } from "@/lib/progress";
 
 export default function LearnPage() {
   const [progress, setProgress] = useState<LearningProgressRecord[]>([]);
@@ -31,6 +31,13 @@ export default function LearnPage() {
         } catch {
           // ignore
         }
+      }
+
+      // Check next-day return Moment B
+      if (checkNextDayReturn()) {
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent("open-email-capture", { detail: { moment: "MomentB" } }));
+        }, 1500);
       }
     }
   }, []);
