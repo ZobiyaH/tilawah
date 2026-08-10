@@ -59,10 +59,11 @@ export default function WaveformBar() {
       ctx.strokeStyle = "rgba(232, 201, 106, 0.25)";
       ctx.beginPath();
       let x = 0;
+      const t = Date.now() * 0.008;
       for (let i = 0; i < bufferLength; i++) {
-        // If audio is playing, generate a simulated voice waveform
+        // If audio is playing, generate a simulated complex dancing voice waveform
         const val = isAudioPlaying 
-          ? (128 + Math.sin(i * 0.15 + Date.now() * 0.015) * 20 * Math.sin(Date.now() * 0.002)) 
+          ? (128 + Math.sin(i * 0.12 + t) * 16 + Math.cos(i * 0.22 - t * 1.4) * 10 + Math.sin(i * 0.05 + t * 0.6) * 4) 
           : dataArray[i];
         const v = val / 128.0;
         const y = (v * canvas.height) / 2;
@@ -83,7 +84,7 @@ export default function WaveformBar() {
       x = 0;
       for (let i = 0; i < bufferLength; i++) {
         const val = isAudioPlaying 
-          ? (128 + Math.sin(i * 0.15 + Date.now() * 0.015) * 20 * Math.sin(Date.now() * 0.002)) 
+          ? (128 + Math.sin(i * 0.12 + t) * 16 + Math.cos(i * 0.22 - t * 1.4) * 10 + Math.sin(i * 0.05 + t * 0.6) * 4) 
           : dataArray[i];
         const v = val / 128.0;
         const y = (v * canvas.height) / 2;

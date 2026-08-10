@@ -129,7 +129,7 @@ export default function LandingPage() {
             <button
               type="button"
               onClick={handleStartBeginner}
-              className="btn-primary h-14 flex items-center justify-center font-extrabold px-6 text-sm shadow-lg shadow-[#1e5e4a]/20 transition-all cursor-pointer rounded-2xl bg-[#1e5e4a] hover:bg-[#164738] text-white border border-[#1e5e4a] hover:-translate-y-0.5 active:scale-[0.98]"
+              className="btn-primary h-14 w-full sm:w-48 flex items-center justify-center font-extrabold px-4 text-sm shadow-lg shadow-[#1e5e4a]/20 transition-all cursor-pointer rounded-2xl bg-[#1e5e4a] hover:bg-[#164738] text-white border border-[#1e5e4a] hover:-translate-y-0.5 active:scale-[0.98]"
             >
               I know no Arabic
             </button>
@@ -138,7 +138,7 @@ export default function LandingPage() {
             <Link
               href="/learn"
               onClick={handleStartBasics}
-              className="btn-secondary h-14 flex items-center justify-center font-extrabold px-6 text-sm transition-all rounded-2xl border-2 border-[#c8993c] text-[#c8993c] bg-white hover:bg-[#faf6ee] hover:-translate-y-0.5 shadow-sm active:scale-[0.98]"
+              className="btn-secondary h-14 w-full sm:w-48 flex items-center justify-center font-extrabold px-4 text-sm transition-all rounded-2xl border-2 border-[#c8993c] text-[#c8993c] bg-white hover:bg-[#faf6ee] hover:-translate-y-0.5 shadow-sm active:scale-[0.98]"
             >
               I know the basics
             </Link>
@@ -146,7 +146,7 @@ export default function LandingPage() {
             {/* Option 3: Directly recite */}
             <Link
               href="/recite"
-              className="h-14 flex items-center justify-center font-extrabold px-6 text-sm transition-all rounded-2xl bg-[#c8993c] text-white hover:bg-[#b08432] border border-[#c8993c] shadow-lg shadow-[#c8993c]/20 hover:-translate-y-0.5 active:scale-[0.98]"
+              className="h-14 w-full sm:w-48 flex items-center justify-center font-extrabold px-4 text-sm transition-all rounded-2xl bg-[#c8993c] text-white hover:bg-[#b08432] border border-[#c8993c] shadow-lg shadow-[#c8993c]/20 hover:-translate-y-0.5 active:scale-[0.98]"
             >
               Direct Recitation
             </Link>
@@ -372,46 +372,46 @@ export default function LandingPage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-            <Link href="/learn/arabic-letters" className="card relative border-t-4 border-[#1e5e4a] p-8 flex flex-col gap-4 hover:-translate-y-1.5 transition-all text-left bg-[#faf6ee]/50 rounded-3xl shadow-sm hover:shadow-xl border border-zinc-200">
-              <span className="font-amiri text-4xl text-[#1e5e4a] block font-black">أ</span>
-              <span className="text-[10px] font-black uppercase tracking-wider text-[#1e5e4a] bg-[#1e5e4a]/10 px-3 py-1 rounded-full w-max">
+            <Link href="/learn/arabic-letters" className="card relative border-t-4 border-[#1e5e4a] p-8 flex flex-col items-center sm:items-start gap-4 hover:-translate-y-1.5 transition-all text-center sm:text-left bg-[#faf6ee]/50 rounded-3xl shadow-sm hover:shadow-xl border border-zinc-200">
+              <span className="font-amiri text-4xl text-[#1e5e4a] block font-black text-center sm:text-left">أ</span>
+              <span className="text-[10px] font-black uppercase tracking-wider text-[#1e5e4a] bg-[#1e5e4a]/10 px-3 py-1 rounded-full w-max text-center">
                 28 Lessons
               </span>
-              <h3 className="font-amiri font-bold text-lg text-[#1a1208]">Arabic Alphabet</h3>
-              <p className="text-xs text-[#6b7280] font-medium leading-normal">
+              <h3 className="font-amiri font-bold text-lg text-[#1a1208] text-center sm:text-left">Arabic Alphabet</h3>
+              <p className="text-xs text-[#6b7280] font-medium leading-normal text-center sm:text-left">
                 Learn every letter, its 4 written forms, and its correct pronunciation.
               </p>
             </Link>
 
-            <Link href="/learn/harakat" className="card relative border-t-4 border-[#c8993c] p-8 flex flex-col gap-4 hover:-translate-y-1.5 transition-all text-left bg-[#faf6ee]/50 rounded-3xl shadow-sm hover:shadow-xl border border-zinc-200">
-              <span className="font-amiri text-4xl text-[#c8993c] block font-black">بَ بِ بُ</span>
-              <span className="text-[10px] font-black uppercase tracking-wider text-[#c8993c] bg-[#c8993c]/10 px-3 py-1 rounded-full w-max">
+            <Link href="/learn/harakat" className="card relative border-t-4 border-[#c8993c] p-8 flex flex-col items-center sm:items-start gap-4 hover:-translate-y-1.5 transition-all text-center sm:text-left bg-[#faf6ee]/50 rounded-3xl shadow-sm hover:shadow-xl border border-zinc-200">
+              <span className="font-amiri text-4xl text-[#c8993c] block font-black text-center sm:text-left">بَ بِ بُ</span>
+              <span className="text-[10px] font-black uppercase tracking-wider text-[#c8993c] bg-[#c8993c]/10 px-3 py-1 rounded-full w-max text-center">
                 10 Lessons
               </span>
-              <h3 className="font-amiri font-bold text-lg text-[#1a1208]">Vowel Marks</h3>
-              <p className="text-xs text-[#6b7280] font-medium leading-normal">
+              <h3 className="font-amiri font-bold text-lg text-[#1a1208] text-center sm:text-left">Vowel Marks</h3>
+              <p className="text-xs text-[#6b7280] font-medium leading-normal text-center sm:text-left">
                 Understand fatha, kasra, damma, sukoon, and vowel merges.
               </p>
             </Link>
 
-            <Link href="/learn/tajweed" className="card relative border-t-4 border-sky-500 p-8 flex flex-col gap-4 hover:-translate-y-1.5 transition-all text-left bg-[#faf6ee]/50 rounded-3xl shadow-sm hover:shadow-xl border border-zinc-200">
-              <span className="font-amiri text-4xl text-sky-500 block font-black">تجويد</span>
-              <span className="text-[10px] font-black uppercase tracking-wider text-sky-600 bg-sky-500/10 px-3 py-1 rounded-full w-max">
+            <Link href="/learn/tajweed" className="card relative border-t-4 border-sky-500 p-8 flex flex-col items-center sm:items-start gap-4 hover:-translate-y-1.5 transition-all text-center sm:text-left bg-[#faf6ee]/50 rounded-3xl shadow-sm hover:shadow-xl border border-zinc-200">
+              <span className="font-amiri text-4xl text-sky-500 block font-black text-center sm:text-left">تجويد</span>
+              <span className="text-[10px] font-black uppercase tracking-wider text-sky-600 bg-sky-500/10 px-3 py-1 rounded-full w-max text-center">
                 12 Lessons
               </span>
-              <h3 className="font-amiri font-bold text-lg text-[#1a1208]">Tajweed Rules</h3>
-              <p className="text-xs text-[#6b7280] font-medium leading-normal">
+              <h3 className="font-amiri font-bold text-lg text-[#1a1208] text-center sm:text-left">Tajweed Rules</h3>
+              <p className="text-xs text-[#6b7280] font-medium leading-normal text-center sm:text-left">
                 Master Ghunna, Madd, Qalqala, and merged throat letters.
               </p>
             </Link>
 
-            <Link href="/learn/short-surahs" className="card relative border-t-4 border-[#8b1a1a] p-8 flex flex-col gap-4 hover:-translate-y-1.5 transition-all text-left bg-[#faf6ee]/50 rounded-3xl shadow-sm hover:shadow-xl border border-zinc-200">
-              <span className="font-amiri text-4xl text-[#8b1a1a] block font-black">الفاتحة</span>
-              <span className="text-[10px] font-black uppercase tracking-wider text-[#8b1a1a] bg-[#8b1a1a]/10 px-3 py-1 rounded-full w-max">
+            <Link href="/learn/short-surahs" className="card relative border-t-4 border-[#8b1a1a] p-8 flex flex-col items-center sm:items-start gap-4 hover:-translate-y-1.5 transition-all text-center sm:text-left bg-[#faf6ee]/50 rounded-3xl shadow-sm hover:shadow-xl border border-zinc-200">
+              <span className="font-amiri text-4xl text-[#8b1a1a] block font-black text-center sm:text-left">الفاتحة</span>
+              <span className="text-[10px] font-black uppercase tracking-wider text-[#8b1a1a] bg-[#8b1a1a]/10 px-3 py-1 rounded-full w-max text-center">
                 10 Surahs
               </span>
-              <h3 className="font-amiri font-bold text-lg text-[#1a1208]">Surah Practice</h3>
-              <p className="text-xs text-[#6b7280] font-medium leading-normal">
+              <h3 className="font-amiri font-bold text-lg text-[#1a1208] text-center sm:text-left">Surah Practice</h3>
+              <p className="text-xs text-[#6b7280] font-medium leading-normal text-center sm:text-left">
                 Recite Al-Fatiha, Al-Falaq, and An-Nas with live correction.
               </p>
             </Link>

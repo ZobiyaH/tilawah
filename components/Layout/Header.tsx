@@ -101,8 +101,13 @@ export default function Header({ onOpenSettings }: HeaderProps = {}) {
 
   useEffect(() => {
     const handleOpen = () => setGuideOpen(true);
+    const handleOpenSettings = () => setInternalSettingsOpen(true);
     window.addEventListener("open-user-guide", handleOpen);
-    return () => window.removeEventListener("open-user-guide", handleOpen);
+    window.addEventListener("open-settings-drawer", handleOpenSettings);
+    return () => {
+      window.removeEventListener("open-user-guide", handleOpen);
+      window.removeEventListener("open-settings-drawer", handleOpenSettings);
+    };
   }, []);
 
   return (
