@@ -116,7 +116,7 @@ export default function EmailCaptureModal() {
     switch (moment) {
       case "MomentA":
         return {
-          title: "Great work! 🌟",
+          title: "Great work!",
           desc: hasUsername ? "Save your progress so you never lose it." : "Create your profile to save your progress report.",
           submitLabel: "Save progress",
           skipLabel: "Continue without saving",
@@ -124,7 +124,7 @@ export default function EmailCaptureModal() {
         };
       case "MomentB":
         return {
-          title: "Welcome back! 🌙",
+          title: "Welcome back!",
           desc: "Save your progress across devices so you can learn on any phone or computer.",
           submitLabel: "Save progress",
           skipLabel: "Continue as guest",
@@ -133,7 +133,7 @@ export default function EmailCaptureModal() {
       case "MomentC":
         return {
           title: `You completed ${surahName}!`,
-          subTitleText: "MashaAllah 🌟",
+          subTitleText: "MashaAllah",
           desc: "Get your completion certificate sent to your email:",
           submitLabel: "Get Certificate",
           skipLabel: "Skip",
@@ -171,7 +171,11 @@ export default function EmailCaptureModal() {
         <div className="px-6 pb-6 pt-2 sm:pt-6 flex flex-col justify-between flex-grow text-center items-center gap-4">
           {success ? (
             <div className="flex-1 flex flex-col items-center justify-center gap-3 py-6 animate-pulse">
-              <span className="text-4xl">🎉</span>
+              <div className="w-12 h-12 flex items-center justify-center text-[#c8993c] animate-bounce">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-10 h-10">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 0 1-1.043 3.296 3.745 3.745 0 0 1-3.296 1.043A3.745 3.745 0 0 1 12 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 0 1-3.296-1.043 3.745 3.745 0 0 1-1.043-3.296A3.745 3.745 0 0 1 3 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 0 1 1.043-3.296 3.746 3.746 0 0 1 3.296-1.043A3.746 3.746 0 0 1 12 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 0 1 3.296 1.043 3.746 3.746 0 0 1 1.043 3.296A3.745 3.745 0 0 1 21 12Z" />
+                </svg>
+              </div>
               <h3 className="text-xl font-bold text-emerald dark:text-emerald-light">Saved Successfully!</h3>
               <p className="text-xs text-zinc-500">Your progress is synchronized.</p>
             </div>

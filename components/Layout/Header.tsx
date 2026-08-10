@@ -178,15 +178,19 @@ export default function Header({ onOpenSettings }: HeaderProps = {}) {
           >
             {user ? (
               <div className="flex items-center gap-1.5">
-                <span className="text-sm select-none">⭐</span>
-                <span className="text-xs font-black uppercase tracking-wider">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4.5 h-4.5 text-gold drop-shadow-sm animate-pulse">
+                  <path fillRule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z" clipRule="evenodd" />
+                </svg>
+                <span className="text-xs font-black uppercase tracking-wider text-[#1e5e4a] dark:text-[#e8c96a]">
                   {user.username}
                 </span>
               </div>
             ) : (
               <div className="flex items-center gap-1.5 text-zinc-400 dark:text-zinc-500">
-                <span className="text-sm select-none">👤</span>
-                <span className="text-xs font-bold uppercase tracking-wider hidden sm:inline">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} className="w-4 h-4 stroke-zinc-500 dark:stroke-zinc-400">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                </svg>
+                <span className="text-xs font-bold uppercase tracking-wider hidden sm:inline text-zinc-500 dark:text-zinc-400">
                   Guest
                 </span>
               </div>
@@ -201,7 +205,7 @@ export default function Header({ onOpenSettings }: HeaderProps = {}) {
             }`}
             title="Settings & Theme"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4.5 h-4.5">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} className="w-4.5 h-4.5 stroke-[#1e5e4a] dark:stroke-[#e8c96a]">
               <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.43l-1.003.828c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.43l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z" />
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
             </svg>
@@ -222,7 +226,11 @@ export default function Header({ onOpenSettings }: HeaderProps = {}) {
               ✕
             </button>
 
-            <div className="text-4xl">⭐</div>
+            <div className="w-12 h-12 flex items-center justify-center text-gold animate-bounce drop-shadow-md">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-10 h-10">
+                <path fillRule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z" clipRule="evenodd" />
+              </svg>
+            </div>
             <h3 className="text-xl font-bold text-[#1e5e4a] dark:text-emerald-light font-amiri text-center leading-normal">
               {userEmail ? "Your Profile" : "Save your progress?"}
             </h3>
@@ -249,11 +257,21 @@ export default function Header({ onOpenSettings }: HeaderProps = {}) {
             <div className="grid grid-cols-2 gap-4 w-full bg-white/40 dark:bg-zinc-800/30 p-3 rounded-xl border border-[#c8993c]/10 text-center select-none">
               <div className="flex flex-col items-center">
                 <span className="text-[9px] uppercase font-bold text-zinc-400">Daily Streak</span>
-                <span className="text-sm font-black text-emerald dark:text-emerald-light mt-0.5">{userStreak} Days 🔥</span>
+                <span className="text-sm font-black text-emerald dark:text-emerald-light mt-0.5 flex items-center gap-1">
+                  {userStreak} Days 
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4.5 h-4.5 text-orange-500 animate-pulse">
+                    <path fillRule="evenodd" d="M12.969 2.108a.75.75 0 0 1 .343.882l-1.34 3.917a4.882 4.882 0 0 0 2.228-.088l5.372-2.035a.75.75 0 0 1 1.014.795l-.15 2.14a9.94 9.94 0 0 1-1.905 4.757l-1.905 2.762a11.962 11.962 0 0 1-5.183 4.303 9.75 9.75 0 0 1-7.748-1.353.75.75 0 0 1-.027-1.22l2.88-2.16a6.726 6.726 0 0 0 2.508-3.076l1.32-3.858a7.896 7.896 0 0 1 1.83-2.923L12.97 2.108ZM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" clipRule="evenodd" />
+                  </svg>
+                </span>
               </div>
               <div className="flex flex-col items-center">
                 <span className="text-[9px] uppercase font-bold text-zinc-400">Lessons Completed</span>
-                <span className="text-sm font-black text-gold mt-0.5">{completedCount} 📖</span>
+                <span className="text-sm font-black text-gold mt-0.5 flex items-center gap-1">
+                  {completedCount} 
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4 text-[#c8993c]">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
+                  </svg>
+                </span>
               </div>
             </div>
 

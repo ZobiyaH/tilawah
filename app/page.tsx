@@ -68,7 +68,6 @@ export default function LandingPage() {
 
           {/* Badge Tag */}
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-[#c8993c]/30 shadow-sm text-xs font-bold text-[#1e5e4a] tracking-normal">
-            <span className="w-2 h-2 rounded-full bg-[#c8993c] animate-ping"></span>
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-gold animate-pulse">
               <path fillRule="evenodd" d="M9 4.5a.75.75 0 0 1 .721.544l.813 2.846a3.75 3.75 0 0 0 2.576 2.576l2.846.813a.75.75 0 0 1 0 1.442l-2.846.813a3.75 3.75 0 0 0-2.576 2.576l-.813 2.846a.75.75 0 0 1-1.442 0l-.813-2.846a3.75 3.75 0 0 0-2.576-2.576l-2.846-.813a.75.75 0 0 1 0-1.442l2.846-.813A3.75 3.75 0 0 0 7.466 7.89l.813-2.846A.75.75 0 0 1 9 4.5ZM18 1.5a.75.75 0 0 1 .728.552l.38 1.33a1.875 1.875 0 0 0 1.29 1.29l1.33.38a.75.75 0 0 1 0 1.456l-1.33.38a1.875 1.875 0 0 0-1.29 1.29l-.38 1.33a.75.75 0 0 1-1.456 0l-.38-1.33a1.875 1.875 0 0 0-1.29-1.29l-1.33-.38a.75.75 0 0 1 0-1.456l1.33-.38a1.875 1.875 0 0 0 1.29-1.29l.38-1.33A.75.75 0 0 1 18 1.5ZM4.5 16.5a.75.75 0 0 1 .728.552l.38 1.33a1.875 1.875 0 0 0 1.29 1.29l1.33.38a.75.75 0 0 1 0 1.456l-1.33.38a1.875 1.875 0 0 0-1.29 1.29l-.38 1.33a.75.75 0 0 1-1.456 0l-.38-1.33a1.875 1.875 0 0 0-1.29-1.29l-1.33-.38a.75.75 0 0 1 0-1.456l1.33-.38a1.875 1.875 0 0 0 1.29-1.29l.38-1.33A.75.75 0 0 1 4.5 16.5Z" clipRule="evenodd" />
             </svg>
@@ -332,13 +331,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Beautiful Islamic Gold Ornament Divider */}
-      <div className="flex items-center justify-center gap-4 max-w-xl mx-auto py-6 opacity-80 select-none">
-        <div className="flex-1 h-[1px] bg-gradient-to-r from-transparent to-[#c8993c]/60"></div>
-        <span className="text-[#c8993c] text-xs font-bold tracking-widest">✦ 🕌 ✦</span>
-        <div className="flex-1 h-[1px] bg-gradient-to-l from-transparent to-[#c8993c]/60"></div>
-      </div>
-
       {/* 5. LEARNING TRACKS SECTION */}
       <section className="py-24 px-6 bg-gradient-to-b from-white via-[#faf6ee]/40 to-white border-y border-[#c8993c]/15">
         <div className="max-w-5xl mx-auto flex flex-col gap-14">
@@ -399,13 +391,6 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
-
-      {/* Beautiful Islamic Gold Ornament Divider */}
-      <div className="flex items-center justify-center gap-4 max-w-xl mx-auto py-6 opacity-80 select-none">
-        <div className="flex-1 h-[1px] bg-gradient-to-r from-transparent to-[#c8993c]/60"></div>
-        <span className="text-[#c8993c] text-xs font-bold tracking-widest">✦ 🕌 ✦</span>
-        <div className="flex-1 h-[1px] bg-gradient-to-l from-transparent to-[#c8993c]/60"></div>
-      </div>
 
       {/* 6. FAQ ACCORDION */}
       <section className="py-20 px-6 bg-gradient-to-b from-white to-[#faf6ee]/50">
