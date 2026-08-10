@@ -28,11 +28,6 @@ export default function WaveformBar() {
   }, []);
 
   useEffect(() => {
-    if (!analyser) {
-      setLevelBars(0);
-      return;
-    }
-
     let animFrame: number;
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -40,20 +35,24 @@ export default function WaveformBar() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    analyser.fftSize = 256; // lightweight frequency resolution to minimize drawing overhead
-    const bufferLength = analyser.frequencyBinCount; // 128 points
+    const bufferLength = 128;
     const dataArray = new Uint8Array(bufferLength);
 
     const draw = () => {
       animFrame = requestAnimationFrame(draw);
-      analyser.getByteTimeDomainData(dataArray);
+
+      if (analyser) {
+        analyser.fftSize = 256;
+        analyser.getByteTimeDomainData(dataArray);
+      } else {
+        dataArray.fill(128);
+      }
 
       // Clears canvas with alpha transparency to leave trailing waves
       ctx.fillStyle = "rgba(26, 18, 8, 0.25)";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       const sliceWidth = canvas.width / bufferLength;
-      const playing = useRecitationStore.getState().isAudioPlaying;
 
       // 1. Draw outer glow line (semi-transparent wider stroke)
       ctx.lineWidth = 5.0;
@@ -61,8 +60,10 @@ export default function WaveformBar() {
       ctx.beginPath();
       let x = 0;
       for (let i = 0; i < bufferLength; i++) {
-        // Draw silent baseline (128) if audio is playing to show visual mute state
-        const val = playing ? 128 : dataArray[i];
+        // If audio is playing, generate a simulated voice waveform
+        const val = isAudioPlaying 
+          ? (128 + Math.sin(i * 0.15 + Date.now() * 0.015) * 20 * Math.sin(Date.now() * 0.002)) 
+          : dataArray[i];
         const v = val / 128.0;
         const y = (v * canvas.height) / 2;
         if (i === 0) {
@@ -81,7 +82,9 @@ export default function WaveformBar() {
       ctx.beginPath();
       x = 0;
       for (let i = 0; i < bufferLength; i++) {
-        const val = playing ? 128 : dataArray[i];
+        const val = isAudioPlaying 
+          ? (128 + Math.sin(i * 0.15 + Date.now() * 0.015) * 20 * Math.sin(Date.now() * 0.002)) 
+          : dataArray[i];
         const v = val / 128.0;
         const y = (v * canvas.height) / 2;
         if (i === 0) {
@@ -95,11 +98,23 @@ export default function WaveformBar() {
       ctx.stroke();
     };
 
-    draw();
+    if (analyser || isAudioPlaying) {
+      draw();
+    } else {
+      // Draw static flat baseline if silent
+      ctx.fillStyle = "#1a1208";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.lineWidth = 2.0;
+      ctx.strokeStyle = "#c8993c";
+      ctx.beginPath();
+      ctx.moveTo(0, canvas.height / 2);
+      ctx.lineTo(canvas.width, canvas.height / 2);
+      ctx.stroke();
+    }
 
     // Poll RMS level every 100ms for the signal bars
     const interval = setInterval(() => {
-      if (useRecitationStore.getState().isAudioPlaying) {
+      if (!analyser || isAudioPlaying) {
         setLevelBars(0);
         return;
       }
@@ -119,7 +134,7 @@ export default function WaveformBar() {
       cancelAnimationFrame(animFrame);
       clearInterval(interval);
     };
-  }, [analyser]);
+  }, [analyser, isAudioPlaying]);
 
   return (
     <div className="flex flex-col gap-2">

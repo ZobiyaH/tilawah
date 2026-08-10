@@ -197,12 +197,10 @@ export default function Header({ onOpenSettings }: HeaderProps = {}) {
             )}
           </button>
 
-          {/* Settings Button - Always Visible (Hidden on Home Page on Mobile) */}
+          {/* Settings Button - Always Visible everywhere in Navbar */}
           <button
             onClick={handleSettingsClick}
-            className={`p-2 rounded-full border border-[#c8993c]/30 hover:border-[#c8993c] bg-white/70 dark:bg-zinc-900/70 items-center justify-center cursor-pointer transition-all active:scale-95 shadow-xs text-[#1e5e4a] dark:text-emerald-light ${
-              pathname === "/" ? "hidden md:flex" : "flex"
-            }`}
+            className="flex p-2 rounded-full border border-[#c8993c]/30 hover:border-[#c8993c] bg-white/70 dark:bg-zinc-900/70 items-center justify-center cursor-pointer transition-all active:scale-95 shadow-xs text-[#1e5e4a] dark:text-emerald-light"
             title="Settings & Theme"
           >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} className="w-4.5 h-4.5 stroke-[#1e5e4a] dark:stroke-[#e8c96a]">

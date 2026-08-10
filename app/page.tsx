@@ -60,9 +60,36 @@ export default function LandingPage() {
       <Header />
       {/* 1. HERO SECTION */}
       <section className="relative overflow-hidden pt-6 pb-12 md:pt-8 md:pb-16 px-6 text-center flex flex-col items-center justify-center bg-gradient-to-b from-[#faf6ee] via-white to-[#faf6ee]">
+        {/* Custom CSS animations for drifting light and bokeh particles */}
+        <style dangerouslySetInnerHTML={{__html: `
+          @keyframes float-slow {
+            0%, 100% { transform: translateY(0px) scale(1) rotate(0deg); opacity: 0.15; }
+            50% { transform: translateY(-30px) scale(1.15) rotate(180deg); opacity: 0.35; }
+          }
+          @keyframes float-medium {
+            0%, 100% { transform: translateY(0px) scale(1) rotate(0deg); opacity: 0.2; }
+            50% { transform: translateY(-45px) scale(0.9) rotate(-180deg); opacity: 0.4; }
+          }
+          @keyframes pulse-gentle {
+            0%, 100% { transform: scale(1); opacity: 0.04; }
+            50% { transform: scale(1.08); opacity: 0.12; }
+          }
+          .animate-float-slow { animation: float-slow 16s ease-in-out infinite; }
+          .animate-float-medium { animation: float-medium 10s ease-in-out infinite; }
+          .animate-pulse-gentle { animation: pulse-gentle 8s ease-in-out infinite; }
+        `}} />
+
         {/* Soft Background Glow Orbs */}
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-gradient-to-tr from-[#1e5e4a]/10 via-[#c8993c]/15 to-transparent rounded-full blur-3xl pointer-events-none"></div>
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] bg-gradient-to-tr from-[#1e5e4a]/12 via-[#c8993c]/18 to-transparent rounded-full blur-3xl pointer-events-none animate-pulse-gentle"></div>
         <div className="absolute inset-0 opacity-5 pointer-events-none bg-[radial-gradient(#c8993c_1px,transparent_0)] [background-size:20px_20px]"></div>
+
+        {/* Floating Elegant Gold Orbs */}
+        <div className="absolute top-12 left-10 w-24 h-24 bg-gradient-to-r from-gold/20 to-transparent rounded-full blur-xl pointer-events-none animate-float-slow"></div>
+        <div className="absolute bottom-8 right-16 w-32 h-32 bg-gradient-to-tr from-emerald/15 to-transparent rounded-full blur-xl pointer-events-none animate-float-medium"></div>
+        <div className="absolute top-1/3 right-1/4 w-16 h-16 bg-gradient-to-b from-gold/15 to-transparent rounded-full blur-lg pointer-events-none animate-float-medium"></div>
+
+        {/* Silhouette of Elegant Arch vector at bottom */}
+        <div className="absolute bottom-0 left-0 right-0 h-28 opacity-10 pointer-events-none bg-[url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1440 320%22><path fill=%22%23c8993c%22 fill-opacity=%221%22 d=%22M0,192L48,197.3C96,203,192,213,288,208C384,203,480,181,576,181.3C672,181,768,203,864,197.3C960,192,1056,160,1152,144C1248,128,1344,128,1392,128L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z%22></path></svg>')] bg-cover bg-bottom"></div>
 
         <div className="max-w-4xl mx-auto flex flex-col items-center gap-6 relative z-10">
 
