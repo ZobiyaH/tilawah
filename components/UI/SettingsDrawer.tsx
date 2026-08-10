@@ -1,6 +1,7 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { useRecitationStore } from "../../lib/store/recitationStore";
 import { useTheme } from "next-themes";
 
@@ -27,9 +28,15 @@ export default function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps)
   const micGain = useRecitationStore((state) => state.micGain);
   const setMicGain = useRecitationStore((state) => state.setMicGain);
 
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   if (!isOpen) return null;
 
-  return (
+  const renderContent = () => (
     <div className="fixed inset-0 z-50 overflow-hidden" aria-modal="true" role="dialog">
       {/* Backdrop */}
       <div 
@@ -170,4 +177,9 @@ export default function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps)
       </div>
     </div>
   );
+
+  if (mounted && typeof document !== "undefined") {
+    return createPortal(renderContent(), document.body);
+  }
+  return null;
 }

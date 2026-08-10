@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 import Logo from "../UI/Logo";
 import UserGuideModal from "../UI/UserGuideModal";
@@ -17,6 +17,7 @@ interface HeaderProps {
 
 export default function Header({ onOpenSettings }: HeaderProps = {}) {
   const pathname = usePathname();
+  const router = useRouter();
   const [user, setUser] = useState<{ username: string; avatar: string } | null>(null);
   const [showPrompt, setShowPrompt] = useState(false);
   const [nameInput, setNameInput] = useState("");
@@ -161,16 +162,17 @@ export default function Header({ onOpenSettings }: HeaderProps = {}) {
             </Link>
           </nav>
 
-          {/* User Avatar - Clickable to register/edit profile */}
+          {/* User Avatar - Clickable (Redirects to Progress page if profile exists, otherwise opens setup) */}
           <button
             onClick={() => {
               if (user) {
-                setNameInput(user.username);
+                router.push("/progress");
+              } else {
+                setShowPrompt(true);
               }
-              setShowPrompt(true);
             }}
             className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-[#c8993c]/30 bg-white/70 dark:bg-zinc-900/70 hover:border-[#c8993c] transition-all cursor-pointer select-none active:scale-95"
-            title="My Profile"
+            title={user ? "View My Progress" : "Setup Profile"}
           >
             <span className="text-base">{user ? (user.avatar || "👤") : "👤"}</span>
             {user && (

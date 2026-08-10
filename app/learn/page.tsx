@@ -153,19 +153,21 @@ export default function LearnPage() {
     {
       id: 5,
       badge: "كَلِمَة",
-      title: "Common Quranic Words",
-      subtitle: "50 Most Essential Words",
+      title: "Stage 5 - Essential Words",
+      subtitle: "50 Most Common Words",
       desc: "Learn and practice the 50 most common words and phrases in the Quran with real Qari audio.",
-      progressText: "Practice anytime",
+      progressText: (knowsBasics || stage4Done)
+        ? "Practice anytime"
+        : "Locked - Complete Stage 4",
       url: "/learn/common-words",
       isCompleted: false,
-      isActive: true,
-      isLocked: false
+      isActive: activeStage === 5,
+      isLocked: knowsBasics ? false : !stage4Done
     },
     {
       id: 6,
       badge: "الفاتحة",
-      title: "Stage 5 - Recite Surahs",
+      title: "Stage 6 - Recite Surahs",
       subtitle: "Surah Practice",
       desc: "Apply rules to short Surahs, starting with Surah Al-Fatiha.",
       progressText: (knowsBasics || stage4Done)
@@ -229,7 +231,7 @@ export default function LearnPage() {
                     : stage.isCompleted
                     ? "border-[#1e5e4a]/40 bg-white"
                     : stage.isLocked
-                    ? "border-zinc-200 opacity-60 bg-zinc-50/50"
+                    ? "border-zinc-200 opacity-60 bg-zinc-50/50 dark:bg-zinc-900/50 dark:border-zinc-800"
                     : "border-zinc-200 hover:border-[#c8993c]/50 hover:shadow-md"
                 }`}
               >
