@@ -193,7 +193,7 @@ export default function Header({ onOpenSettings }: HeaderProps = {}) {
       {/* Account Registration / User Profile Overlay Modal */}
       {showPrompt && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-end sm:items-center justify-center p-0 sm:p-4">
-          <div className="relative card w-full sm:max-w-md bg-[#faf6ee] dark:bg-zinc-900 border-t sm:border-2 border-[#c8993c]/30 rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-hidden flex flex-col p-6 text-center items-center gap-4 animate-slide-up h-[45vh] sm:h-auto min-h-[360px] sm:min-h-0">
+          <div className="relative card w-full sm:max-w-md bg-[#faf6ee] dark:bg-zinc-900 border-t sm:border-2 border-[#c8993c]/30 rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-y-auto flex flex-col p-6 text-center items-center gap-4 animate-slide-up max-h-[85vh] sm:max-h-[90vh] h-auto">
             {/* Close Cross Button */}
             <button
               onClick={handleSkip}

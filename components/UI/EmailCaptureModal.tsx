@@ -13,6 +13,8 @@ export default function EmailCaptureModal() {
   const [moment, setMoment] = useState<"MomentA" | "MomentB" | "MomentC">("MomentA");
   const [surahName, setSurahName] = useState("Al-Fatiha");
   const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
+  const [hasUsername, setHasUsername] = useState(false);
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
@@ -33,6 +35,24 @@ export default function EmailCaptureModal() {
         }
         setSuccess(false);
         setEmail("");
+
+        const savedUser = localStorage.getItem("tilawa_user");
+        if (savedUser) {
+          try {
+            const parsed = JSON.parse(savedUser);
+            if (parsed.username) {
+              setUsername(parsed.username);
+              setHasUsername(true);
+            } else {
+              setHasUsername(false);
+            }
+          } catch {
+            setHasUsername(false);
+          }
+        } else {
+          setHasUsername(false);
+        }
+
         setIsOpen(true);
       }
     };
@@ -57,20 +77,26 @@ export default function EmailCaptureModal() {
     localStorage.setItem("tilawah_email_captured", "true");
     localStorage.setItem("tilawah_user_email", email.trim());
 
-    // Update tilawa_user if it exists
+    // Update tilawa_user or create it with profile name
     const savedUser = localStorage.getItem("tilawa_user");
+    let nameToSave = username.trim() || "Tilawah Student";
     if (savedUser) {
       try {
         const parsed = JSON.parse(savedUser);
+        if (parsed.username) nameToSave = parsed.username;
         parsed.email = email.trim();
+        parsed.username = nameToSave;
         localStorage.setItem("tilawa_user", JSON.stringify(parsed));
       } catch {
-        // ignore
+        localStorage.setItem(
+          "tilawa_user",
+          JSON.stringify({ username: nameToSave, email: email.trim(), avatar: "🌙" })
+        );
       }
     } else {
       localStorage.setItem(
         "tilawa_user",
-        JSON.stringify({ username: "Tilawah Student", email: email.trim(), avatar: "🌙" })
+        JSON.stringify({ username: nameToSave, email: email.trim(), avatar: "🌙" })
       );
     }
 
@@ -91,7 +117,7 @@ export default function EmailCaptureModal() {
       case "MomentA":
         return {
           title: "Great work! 🌟",
-          desc: "Save your progress so you never lose it.",
+          desc: hasUsername ? "Save your progress so you never lose it." : "Create your profile to save your progress report.",
           submitLabel: "Save progress",
           skipLabel: "Continue without saving",
           subtext: "We will email you your progress report and notify you when new lessons launch."
@@ -128,7 +154,7 @@ export default function EmailCaptureModal() {
         animate={{ y: 0 }}
         exit={{ y: "100%" }}
         transition={{ type: "spring", damping: 25, stiffness: 220 }}
-        className="relative w-full sm:max-w-md bg-white dark:bg-zinc-900 border-t sm:border border-[#c8993c]/30 rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col z-10 h-[42vh] sm:h-auto min-h-[300px] sm:min-h-0"
+        className="relative w-full sm:max-w-md bg-white dark:bg-zinc-900 border-t sm:border border-[#c8993c]/30 rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-y-auto flex flex-col z-10 max-h-[85vh] sm:max-h-[90vh] h-auto"
       >
         {/* Swipe indicator handle on mobile */}
         <div className="w-12 h-1 bg-zinc-300 dark:bg-zinc-700 rounded-full mx-auto my-3 sm:hidden" onClick={handleDismiss} />
@@ -164,6 +190,17 @@ export default function EmailCaptureModal() {
               </div>
 
               <div className="flex flex-col gap-2.5 w-full">
+                {!hasUsername && (
+                  <input
+                    type="text"
+                    required
+                    placeholder="Enter your name"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    className="w-full h-11 px-4 border border-[#c8993c]/30 rounded-xl text-xs font-semibold focus:outline-none focus:border-[#1e5e4a] dark:bg-zinc-800 dark:text-zinc-100 text-center mb-1"
+                  />
+                )}
+
                 <input
                   type="email"
                   required
