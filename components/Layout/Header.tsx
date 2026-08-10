@@ -124,7 +124,9 @@ export default function Header({ onOpenSettings }: HeaderProps = {}) {
             className="px-2.5 py-1.5 rounded-xl text-xs font-extrabold text-[#c8993c] dark:text-[#e8c96a] bg-white/70 dark:bg-zinc-900/70 border border-[#c8993c]/30 hover:bg-[#c8993c]/15 transition-all flex items-center gap-1 shadow-xs"
             title="How to Use Tilawah"
           >
-            <span>📖</span>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
+            </svg>
             <span className="hidden sm:inline uppercase tracking-wider text-[11px]">Guide</span>
           </button>
 
@@ -171,22 +173,23 @@ export default function Header({ onOpenSettings }: HeaderProps = {}) {
                 setShowPrompt(true);
               }
             }}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-[#c8993c]/30 bg-white/70 dark:bg-zinc-900/70 hover:border-[#c8993c] transition-all cursor-pointer select-none active:scale-95 text-[#1e5e4a] dark:text-emerald-light"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-xl border-2 border-[#c8993c]/50 hover:border-[#c8993c] bg-white/90 dark:bg-zinc-900/90 text-[#1a1208] dark:text-zinc-200 transition-all cursor-pointer select-none active:scale-95 shadow-xs hover:shadow-md"
             title={user ? "View My Progress" : "Setup Profile"}
           >
             {user ? (
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4.5 h-4.5 text-gold">
-                <path fillRule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z" clipRule="evenodd" />
-              </svg>
+              <div className="flex items-center gap-1.5">
+                <span className="text-sm select-none">⭐</span>
+                <span className="text-xs font-black uppercase tracking-wider">
+                  {user.username}
+                </span>
+              </div>
             ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
-              </svg>
-            )}
-            {user && (
-              <span className="text-xs font-bold text-[#1a1208] dark:text-zinc-200 hidden sm:inline">
-                {user.username}
-              </span>
+              <div className="flex items-center gap-1.5 text-zinc-400 dark:text-zinc-500">
+                <span className="text-sm select-none">👤</span>
+                <span className="text-xs font-bold uppercase tracking-wider hidden sm:inline">
+                  Guest
+                </span>
+              </div>
             )}
           </button>
 
