@@ -59,7 +59,7 @@ export default function LandingPage() {
     <div className="min-h-screen pb-28 md:pb-16 bg-[#faf6ee] dark:bg-zinc-950 text-[#1a1208] dark:text-zinc-100 flex flex-col font-sans transition-colors duration-200">
       <Header />
       {/* 1. HERO SECTION */}
-      <section className="relative overflow-hidden pt-6 pb-12 md:pt-8 md:pb-16 px-6 text-center flex flex-col items-center justify-center bg-gradient-to-b from-[#faf6ee] via-white to-[#faf6ee]">
+      <section className="relative overflow-hidden pt-3 pb-12 md:pt-4 md:pb-16 px-6 text-center flex flex-col items-center justify-center bg-gradient-to-b from-[#faf6ee] via-white to-[#faf6ee]">
         {/* Custom CSS animations for drifting light and bokeh particles */}
         <style dangerouslySetInnerHTML={{__html: `
           @keyframes float-slow {
@@ -112,7 +112,7 @@ export default function LandingPage() {
         {/* Silhouette of Elegant Arch vector at bottom */}
         <div className="absolute bottom-0 left-0 right-0 h-28 opacity-10 pointer-events-none bg-[url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1440 320%22><path fill=%22%23c8993c%22 fill-opacity=%221%22 d=%22M0,192L48,197.3C96,203,192,213,288,208C384,203,480,181,576,181.3C672,181,768,203,864,197.3C960,192,1056,160,1152,144C1248,128,1344,128,1392,128L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z%22></path></svg>')] bg-cover bg-bottom"></div>
 
-        <div className="max-w-4xl mx-auto flex flex-col items-center gap-4.5 relative z-10">
+        <div className="max-w-4xl mx-auto flex flex-col items-center gap-6 relative z-10">
 
           {/* Badge Tag */}
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-[#c8993c]/30 shadow-sm text-xs font-bold text-[#1e5e4a] tracking-normal">
@@ -130,7 +130,7 @@ export default function LandingPage() {
           </div>
 
           {/* Hero Headers */}
-          <div className="flex flex-col gap-2.5 max-w-3xl">
+          <div className="flex flex-col gap-3 max-w-3xl">
             <h1 className="text-3xl md:text-5xl font-black text-[#1a1208] leading-[1.15] font-amiri">
               Recite the Quran correctly.<br />
               <span className="text-[#1e5e4a] inline-block border-b-4 border-[#c8993c]/40 pb-1">
@@ -150,7 +150,7 @@ export default function LandingPage() {
             <button
               type="button"
               onClick={handleStartBeginner}
-              className="btn-primary h-14 w-fit px-8 flex items-center justify-center font-extrabold text-sm shadow-lg shadow-[#1e5e4a]/20 transition-all cursor-pointer rounded-2xl bg-[#1e5e4a] hover:bg-[#164738] text-white border border-[#1e5e4a] hover:-translate-y-0.5 active:scale-[0.98]"
+              className="h-14 w-44 flex items-center justify-center font-extrabold px-4 text-xs sm:text-sm shadow-lg shadow-[#1e5e4a]/20 transition-all cursor-pointer rounded-2xl bg-[#1e5e4a] hover:bg-[#164738] text-white border border-[#1e5e4a] hover:-translate-y-0.5 active:scale-[0.98]"
             >
               I know no Arabic
             </button>
@@ -159,7 +159,7 @@ export default function LandingPage() {
             <Link
               href="/learn"
               onClick={handleStartBasics}
-              className="btn-secondary h-14 w-fit px-8 flex items-center justify-center font-extrabold text-sm transition-all rounded-2xl border-2 border-[#c8993c] text-[#c8993c] bg-white hover:bg-[#faf6ee] hover:-translate-y-0.5 shadow-sm active:scale-[0.98]"
+              className="h-14 w-44 flex items-center justify-center font-extrabold px-4 text-xs sm:text-sm transition-all rounded-2xl border-2 border-[#c8993c] text-[#c8993c] bg-white hover:bg-[#faf6ee] hover:-translate-y-0.5 shadow-sm active:scale-[0.98]"
             >
               I know the basics
             </Link>
@@ -167,7 +167,7 @@ export default function LandingPage() {
             {/* Option 3: Directly recite */}
             <Link
               href="/recite"
-              className="h-14 w-fit px-8 flex items-center justify-center font-extrabold text-sm transition-all rounded-2xl bg-[#c8993c] text-white hover:bg-[#b08432] border border-[#c8993c] shadow-lg shadow-[#c8993c]/20 hover:-translate-y-0.5 active:scale-[0.98]"
+              className="h-14 w-44 flex items-center justify-center font-extrabold px-4 text-xs sm:text-sm transition-all rounded-2xl bg-[#c8993c] text-white hover:bg-[#b08432] border border-[#c8993c] shadow-lg shadow-[#c8993c]/20 hover:-translate-y-0.5 active:scale-[0.98]"
             >
               Direct Recitation
             </Link>
