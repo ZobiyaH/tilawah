@@ -1,4 +1,5 @@
 "use client";
+// Force Vercel build reload to load env variables
 
 import React, { useState } from "react";
 import Link from "next/link";
