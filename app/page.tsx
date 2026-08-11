@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Layout/Header";
 import BottomNav from "@/components/Layout/BottomNav";
+import { EmailCapture } from "@/components/email/EmailCapture";
 
 export default function LandingPage() {
   const router = useRouter();
@@ -102,7 +103,7 @@ export default function LandingPage() {
 
         {/* Soft Background Glow Orbs */}
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] bg-gradient-to-tr from-[#1e5e4a]/8 via-[#c8993c]/12 to-transparent rounded-full blur-3xl pointer-events-none animate-pulse-gentle"></div>
-        <div className="absolute inset-0 opacity-[0.06] pointer-events-none bg-[url('/images/quran_bg.png')] bg-center bg-cover bg-no-repeat"></div>
+        <div className="absolute inset-0 opacity-[0.1] pointer-events-none bg-[url('/images/quran_bg.png')] bg-center bg-cover bg-no-repeat"></div>
 
         {/* Silhouette of Elegant Arch vector at bottom */}
         <div className="absolute bottom-0 left-0 right-0 h-28 opacity-10 pointer-events-none bg-[url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1440 320%22><path fill=%22%23c8993c%22 fill-opacity=%221%22 d=%22M0,192L48,197.3C96,203,192,213,288,208C384,203,480,181,576,181.3C672,181,768,203,864,197.3C960,192,1056,160,1152,144C1248,128,1344,128,1392,128L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z%22></path></svg>')] bg-cover bg-bottom"></div>
@@ -202,7 +203,7 @@ export default function LandingPage() {
       </section>
 
       {/* 2. THE CHALLENGE SECTION */}
-      <section className="py-24 px-6 bg-gradient-to-b from-white to-[#faf6ee] border-y border-[#c8993c]/15 relative">
+      <section className="py-24 px-6 bg-gradient-to-b from-[#faf6ee] to-white border-y border-[#c8993c]/15 relative">
         <div className="max-w-5xl mx-auto flex flex-col gap-14 relative z-10">
           
           <div className="text-center flex flex-col items-center gap-3">
@@ -371,6 +372,18 @@ export default function LandingPage() {
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Email Capture Banner */}
+      <section className="py-16 px-6 bg-[#faf6ee] border-b border-[#c8993c]/15">
+        <div className="max-w-xl mx-auto text-center">
+          <EmailCapture
+            variant="banner"
+            source="homepage_banner"
+            heading="Stay Updated on Tilawah"
+            subheading="Join our newsletter to receive progress reports, new features, and updates."
+          />
         </div>
       </section>
 

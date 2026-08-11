@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { subscribeEmail } from "@/lib/email/subscribe";
 
 interface EmailCaptureEventDetail {
   moment: "MomentA" | "MomentB" | "MomentC";
@@ -69,21 +70,36 @@ export default function EmailCaptureModal() {
     setIsOpen(false);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim() || !email.includes("@")) return;
+
+    let nameToSave = username.trim() || "Tilawah Student";
+    const savedUser = localStorage.getItem("tilawa_user");
+    if (savedUser) {
+      try {
+        const parsed = JSON.parse(savedUser);
+        if (parsed.username) nameToSave = parsed.username;
+      } catch {
+        // ignore
+      }
+    }
+
+    // Call the Formspree subscription utility
+    const result = await subscribeEmail(email.trim(), `popup_${moment}`, nameToSave);
+    if (!result.success) {
+      alert(result.message);
+      return;
+    }
 
     // Save to localStorage
     localStorage.setItem("tilawah_email_captured", "true");
     localStorage.setItem("tilawah_user_email", email.trim());
 
     // Update tilawa_user or create it with profile name
-    const savedUser = localStorage.getItem("tilawa_user");
-    let nameToSave = username.trim() || "Tilawah Student";
     if (savedUser) {
       try {
         const parsed = JSON.parse(savedUser);
-        if (parsed.username) nameToSave = parsed.username;
         parsed.email = email.trim();
         parsed.username = nameToSave;
         localStorage.setItem("tilawa_user", JSON.stringify(parsed));

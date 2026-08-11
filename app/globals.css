@@ -349,3 +349,135 @@ body::before {
     box-shadow: 0 0 0 2px #f59e0b;
   }
 }
+
+/* Email Capture UI Styles */
+.email-capture {
+  display: flex;
+  flex-col: column;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: 100%;
+}
+
+.email-capture__heading {
+  font-family: var(--font-amiri), serif;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #1e5e4a;
+  margin-bottom: 0.5rem;
+}
+
+.email-capture__subheading {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-weight: 600;
+  max-width: 280px;
+  margin-bottom: 1rem;
+}
+
+.email-capture__form {
+  display: flex;
+  width: 100%;
+  max-width: 320px;
+  gap: 0.5rem;
+}
+
+.email-capture__input {
+  flex-grow: 1;
+  height: 42px;
+  padding: 0 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid rgba(200, 153, 60, 0.3);
+  border-radius: 10px;
+  background-color: rgba(255, 255, 255, 0.8);
+  color: #1a1208;
+  outline: none;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.email-capture__input:focus {
+  border-color: #1e5e4a;
+}
+
+.email-capture__button {
+  height: 42px;
+  padding: 0 1rem;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #ffffff;
+  background-color: #1e5e4a;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.email-capture__button:hover {
+  background-color: #154536;
+}
+
+.email-capture__error {
+  font-size: 0.7rem;
+  color: #ef4444;
+  font-weight: 700;
+  margin-top: 0.5rem;
+}
+
+.email-capture__privacy {
+  font-size: 0.65rem;
+  color: #9ca3af;
+  margin-top: 0.5rem;
+}
+
+.email-capture--success {
+  padding: 1rem;
+  background-color: rgba(30, 94, 74, 0.08);
+  border-radius: 12px;
+  border: 1px solid rgba(30, 94, 74, 0.2);
+}
+
+.email-capture__success-msg {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #1e5e4a;
+  margin-top: 0.25rem;
+}
+
+/* Banner specific styling */
+.email-capture--banner {
+  padding: 1.5rem;
+  background: white;
+  border-radius: 20px;
+  border: 1px solid rgba(200, 153, 60, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+}
+
+/* Inline specific styling */
+.email-capture--inline {
+  justify-content: center;
+  height: 100%;
+}
+
+.email-capture--inline .email-capture__form {
+  flex-direction: column;
+}
+
+/* Footer specific styling */
+.email-capture--footer .email-capture__heading {
+  color: #ffffff;
+}
+
+.email-capture--footer .email-capture__subheading {
+  color: #9ca3af;
+}
+
+.email-capture--footer .email-capture__input {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}

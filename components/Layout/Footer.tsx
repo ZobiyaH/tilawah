@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import Logo from "../UI/Logo";
+import { subscribeEmail } from "@/lib/email/subscribe";
 
 export default function Footer() {
   const [emailCaptured, setEmailCaptured] = useState(false);
@@ -26,15 +27,31 @@ export default function Footer() {
     };
   }, []);
 
-  const handleSubscribe = (e: React.FormEvent) => {
+  const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!emailInput.trim() || !emailInput.includes("@")) return;
+
+    let nameToSave = "Tilawah Student";
+    const savedUser = localStorage.getItem("tilawa_user");
+    if (savedUser) {
+      try {
+        const parsed = JSON.parse(savedUser);
+        if (parsed.username) nameToSave = parsed.username;
+      } catch {
+        // ignore
+      }
+    }
+
+    const result = await subscribeEmail(emailInput.trim(), "footer", nameToSave);
+    if (!result.success) {
+      alert(result.message);
+      return;
+    }
 
     if (typeof window !== "undefined") {
       localStorage.setItem("tilawah_email_captured", "true");
       localStorage.setItem("tilawah_user_email", emailInput.trim());
 
-      const savedUser = localStorage.getItem("tilawa_user");
       if (savedUser) {
         try {
           const parsed = JSON.parse(savedUser);

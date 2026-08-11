@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import Header from "@/components/Layout/Header";
 import BottomNav from "@/components/Layout/BottomNav";
+import { EmailCapture } from "@/components/email/EmailCapture";
 import { getLearningProgress, LearningProgressRecord, checkNextDayReturn } from "@/lib/progress";
 
 export default function LearnPage() {
@@ -218,75 +219,87 @@ export default function LearnPage() {
         </div>
 
         {/* 5-Stage Grid Layout - Full Width Visibility */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-5 mt-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-5 mt-4">
           {STAGES.map((stage) => {
             const isSelectable = !stage.isLocked;
 
             return (
-              <div
-                key={stage.id}
-                className={`card p-5 bg-white border rounded-2xl flex flex-col items-center md:items-stretch justify-between text-center md:text-left h-full gap-4 transition-all duration-200 overflow-hidden ${
-                  stage.isActive
-                    ? "border-[#c8993c] shadow-lg ring-2 ring-[#c8993c]/20"
-                    : stage.isCompleted
-                    ? "border-[#1e5e4a]/40 bg-white"
-                    : stage.isLocked
-                    ? "border-zinc-200 opacity-60 bg-zinc-50/50 dark:bg-zinc-900/50 dark:border-zinc-800"
-                    : "border-zinc-200 hover:border-[#c8993c]/50 hover:shadow-md"
-                }`}
-              >
-                {/* Top Section */}
-                <div className="flex flex-col items-center md:items-stretch gap-3 w-full">
-                  <div className="flex flex-col md:flex-row items-center justify-between gap-2 min-h-[44px]">
-                    <span className="w-9 h-9 rounded-full bg-[#1e5e4a] text-white flex items-center justify-center font-bold text-sm shadow-sm flex-shrink-0">
-                      {stage.isCompleted ? "✓" : stage.id}
-                    </span>
-                    <div className="h-10 flex items-center justify-end font-amiri text-2xl md:text-3xl font-bold text-[#c8993c]">
-                      {stage.badge}
+              <React.Fragment key={stage.id}>
+                <div
+                  className={`card p-5 bg-white border rounded-2xl flex flex-col items-center md:items-stretch justify-between text-center md:text-left h-full gap-4 transition-all duration-200 overflow-hidden ${
+                    stage.isActive
+                      ? "border-[#c8993c] shadow-lg ring-2 ring-[#c8993c]/20"
+                      : stage.isCompleted
+                      ? "border-[#1e5e4a]/40 bg-white"
+                      : stage.isLocked
+                      ? "border-zinc-200 opacity-60 bg-zinc-50/50 dark:bg-zinc-900/50 dark:border-zinc-800"
+                      : "border-zinc-200 hover:border-[#c8993c]/50 hover:shadow-md"
+                  }`}
+                >
+                  {/* Top Section */}
+                  <div className="flex flex-col items-center md:items-stretch gap-3 w-full">
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-2 min-h-[44px]">
+                      <span className="w-9 h-9 rounded-full bg-[#1e5e4a] text-white flex items-center justify-center font-bold text-sm shadow-sm flex-shrink-0">
+                        {stage.isCompleted ? "✓" : stage.id}
+                      </span>
+                      <div className="h-10 flex items-center justify-end font-amiri text-2xl md:text-3xl font-bold text-[#c8993c]">
+                        {stage.badge}
+                      </div>
                     </div>
+
+                    <div className="text-center md:text-left">
+                      <span className="text-[10px] font-extrabold uppercase tracking-wider text-zinc-400 block">
+                        Stage {stage.id}
+                      </span>
+                      <h3 className="text-base font-bold text-[#1a1208] leading-snug mt-0.5 text-center md:text-left">
+                        {stage.subtitle}
+                      </h3>
+                    </div>
+
+                    <p className="text-xs text-[#6b7280] leading-relaxed text-center md:text-left">
+                      {stage.desc}
+                    </p>
                   </div>
 
-                  <div className="text-center md:text-left">
-                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-zinc-400 block">
-                      Stage {stage.id}
+                  {/* Bottom Section - Start Here Button strictly inside Card */}
+                  <div className="flex flex-col items-center md:items-stretch gap-3 pt-3 border-t border-zinc-100 mt-auto w-full text-center md:text-left">
+                    <span className="text-[11px] font-bold text-[#1e5e4a] text-center md:text-left">
+                      {stage.progressText}
                     </span>
-                    <h3 className="text-base font-bold text-[#1a1208] leading-snug mt-0.5 text-center md:text-left">
-                      {stage.subtitle}
-                    </h3>
+
+                    {isSelectable ? (
+                      <Link
+                        href={stage.url}
+                        className={`h-11 w-full flex items-center justify-center font-bold text-[11px] uppercase tracking-wider rounded-xl transition-all shadow-2xs ${
+                          stage.isActive
+                            ? "bg-[#c8993c] text-white hover:bg-gold-light border border-[#c8993c]"
+                            : "bg-[#1e5e4a] text-white hover:bg-[#154536] border border-[#1e5e4a]"
+                        }`}
+                      >
+                        {stage.isActive ? "Start Here" : `Start Stage ${stage.id}`}
+                      </Link>
+                    ) : (
+                      <button
+                        disabled
+                        className="h-11 w-full flex items-center justify-center font-bold text-[11px] uppercase tracking-wider rounded-xl bg-zinc-100 text-zinc-400 cursor-not-allowed border border-zinc-200"
+                      >
+                        Locked
+                      </button>
+                    )}
                   </div>
-
-                  <p className="text-xs text-[#6b7280] leading-relaxed text-center md:text-left">
-                    {stage.desc}
-                  </p>
                 </div>
 
-                {/* Bottom Section - Start Here Button strictly inside Card */}
-                <div className="flex flex-col items-center md:items-stretch gap-3 pt-3 border-t border-zinc-100 mt-auto w-full text-center md:text-left">
-                  <span className="text-[11px] font-bold text-[#1e5e4a] text-center md:text-left">
-                    {stage.progressText}
-                  </span>
-
-                  {isSelectable ? (
-                    <Link
-                      href={stage.url}
-                      className={`h-11 w-full flex items-center justify-center font-bold text-[11px] uppercase tracking-wider rounded-xl transition-all shadow-2xs ${
-                        stage.isActive
-                          ? "bg-[#c8993c] text-white hover:bg-gold-light border border-[#c8993c]"
-                          : "bg-[#1e5e4a] text-white hover:bg-[#154536] border border-[#1e5e4a]"
-                      }`}
-                    >
-                      {stage.isActive ? "Start Here" : `Start Stage ${stage.id}`}
-                    </Link>
-                  ) : (
-                    <button
-                      disabled
-                      className="h-11 w-full flex items-center justify-center font-bold text-[11px] uppercase tracking-wider rounded-xl bg-zinc-100 text-zinc-400 cursor-not-allowed border border-zinc-200"
-                    >
-                      Locked
-                    </button>
-                  )}
-                </div>
-              </div>
+                {stage.id === 2 && (
+                  <div className="card p-5 bg-white border border-[#c8993c]/20 rounded-2xl flex flex-col justify-center text-center h-full gap-4 transition-all duration-200">
+                    <EmailCapture
+                      variant="inline"
+                      source="learn_inline"
+                      heading="Save your progress"
+                      subheading="Receive reports & new lessons."
+                    />
+                  </div>
+                )}
+              </React.Fragment>
             );
           })}
         </div>
