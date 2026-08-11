@@ -104,7 +104,7 @@ export default function LandingPage() {
 
         {/* Soft Background Glow Orbs */}
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] bg-gradient-to-tr from-[#1e5e4a]/8 via-[#c8993c]/12 to-transparent rounded-full blur-3xl pointer-events-none animate-pulse-gentle"></div>
-        <div className="absolute inset-0 opacity-[0.1] pointer-events-none bg-[url('/images/quran_bg.png')] bg-center bg-cover bg-no-repeat"></div>
+        <div className="absolute inset-0 opacity-[0.18] pointer-events-none bg-[url('/images/quran_bg.png')] bg-center bg-cover bg-no-repeat"></div>
 
         {/* Silhouette of Elegant Arch vector at bottom */}
         <div className="absolute bottom-0 left-0 right-0 h-28 opacity-10 pointer-events-none bg-[url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1440 320%22><path fill=%22%23c8993c%22 fill-opacity=%221%22 d=%22M0,192L48,197.3C96,203,192,213,288,208C384,203,480,181,576,181.3C672,181,768,203,864,197.3C960,192,1056,160,1152,144C1248,128,1344,128,1392,128L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z%22></path></svg>')] bg-cover bg-bottom"></div>
