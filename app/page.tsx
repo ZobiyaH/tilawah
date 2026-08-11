@@ -141,9 +141,9 @@ export default function LandingPage() {
           </div>
 
           {/* Action CTAs: Three Pathways */}
-          <div className="flex flex-col items-center gap-3 w-full max-w-sm sm:max-w-none mt-1 select-none">
+          <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-2.5 w-full max-w-sm sm:max-w-none mt-1 select-none justify-center">
             {/* Row 1: Side by side */}
-            <div className="flex flex-row gap-2.5 w-full justify-center">
+            <div className="flex flex-row gap-2.5 w-full sm:w-auto justify-center">
               <button
                 type="button"
                 onClick={handleStartBeginner}
@@ -160,10 +160,10 @@ export default function LandingPage() {
               </Link>
             </div>
 
-            {/* Row 2: Full width / centered */}
+            {/* Row 2: Full width on mobile, standard w-44 on desktop */}
             <Link
               href="/recite"
-              className="h-14 w-full sm:w-[360px] flex items-center justify-center font-extrabold px-4 text-xs sm:text-sm transition-all rounded-2xl bg-[#c8993c] text-white hover:bg-[#b08432] border border-[#c8993c] shadow-lg shadow-[#c8993c]/20 hover:-translate-y-0.5 active:scale-[0.98]"
+              className="h-14 w-full sm:w-44 flex items-center justify-center font-extrabold px-4 text-xs sm:text-sm transition-all rounded-2xl bg-[#c8993c] text-white hover:bg-[#b08432] border border-[#c8993c] shadow-lg shadow-[#c8993c]/20 hover:-translate-y-0.5 active:scale-[0.98]"
             >
               Direct Recitation
             </Link>
