@@ -59,7 +59,7 @@ export async function subscribeEmail(
 
       return {
         success: true,
-        message: 'JazakAllah Khair! You are on the list. 🤲',
+        message: 'JazakAllah Khair! You are on the list.',
       };
     } else {
       const errorData = await response.json().catch(() => null);
