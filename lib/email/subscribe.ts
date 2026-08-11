@@ -32,21 +32,19 @@ export async function subscribeEmail(
   }
 
   try {
+    const formData = new FormData();
+    formData.append('email', email);
+    formData.append('name', name || 'Not provided');
+    formData.append('source', source);
+    formData.append('page', typeof window !== 'undefined' ? window.location.pathname : 'unknown');
+    formData.append('submittedAt', new Date().toISOString());
+
     const response = await fetch(formspreeUrl, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
-      body: JSON.stringify({
-        email: email,
-        name: name || 'Not provided',
-        source: source,
-        page: typeof window !== 'undefined' 
-          ? window.location.pathname 
-          : 'unknown',
-        submittedAt: new Date().toISOString(),
-      }),
+      body: formData,
     });
 
     if (response.ok) {
