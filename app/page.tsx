@@ -101,13 +101,8 @@ export default function LandingPage() {
         `}} />
 
         {/* Soft Background Glow Orbs */}
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] bg-gradient-to-tr from-[#1e5e4a]/12 via-[#c8993c]/18 to-transparent rounded-full blur-3xl pointer-events-none animate-pulse-gentle"></div>
-        <div className="absolute inset-0 opacity-5 pointer-events-none bg-[radial-gradient(#c8993c_1px,transparent_0)] [background-size:20px_20px]"></div>
-
-        {/* Floating Elegant Gold Orbs */}
-        <div className="absolute top-12 left-10 w-24 h-24 bg-gradient-to-r from-gold/20 to-transparent rounded-full blur-xl pointer-events-none animate-float-slow"></div>
-        <div className="absolute bottom-8 right-16 w-32 h-32 bg-gradient-to-tr from-emerald/15 to-transparent rounded-full blur-xl pointer-events-none animate-float-medium"></div>
-        <div className="absolute top-1/3 right-1/4 w-16 h-16 bg-gradient-to-b from-gold/15 to-transparent rounded-full blur-lg pointer-events-none animate-float-medium"></div>
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] bg-gradient-to-tr from-[#1e5e4a]/8 via-[#c8993c]/12 to-transparent rounded-full blur-3xl pointer-events-none animate-pulse-gentle"></div>
+        <div className="absolute inset-0 opacity-[0.06] pointer-events-none bg-[url('/images/quran_bg.png')] bg-center bg-cover bg-no-repeat"></div>
 
         {/* Silhouette of Elegant Arch vector at bottom */}
         <div className="absolute bottom-0 left-0 right-0 h-28 opacity-10 pointer-events-none bg-[url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1440 320%22><path fill=%22%23c8993c%22 fill-opacity=%221%22 d=%22M0,192L48,197.3C96,203,192,213,288,208C384,203,480,181,576,181.3C672,181,768,203,864,197.3C960,192,1056,160,1152,144C1248,128,1344,128,1392,128L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z%22></path></svg>')] bg-cover bg-bottom"></div>
@@ -145,29 +140,29 @@ export default function LandingPage() {
           </div>
 
           {/* Action CTAs: Three Pathways */}
-          <div className="flex flex-col sm:flex-row gap-4 w-full justify-center items-center max-w-2xl mt-1 select-none">
-            {/* Option 1: I know no Arabic */}
-            <button
-              type="button"
-              onClick={handleStartBeginner}
-              className="h-14 w-44 flex items-center justify-center font-extrabold px-4 text-xs sm:text-sm shadow-lg shadow-[#1e5e4a]/20 transition-all cursor-pointer rounded-2xl bg-[#1e5e4a] hover:bg-[#164738] text-white border border-[#1e5e4a] hover:-translate-y-0.5 active:scale-[0.98]"
-            >
-              I know no Arabic
-            </button>
-            
-            {/* Option 2: I know the basics */}
-            <Link
-              href="/learn"
-              onClick={handleStartBasics}
-              className="h-14 w-44 flex items-center justify-center font-extrabold px-4 text-xs sm:text-sm transition-all rounded-2xl border-2 border-[#c8993c] text-[#c8993c] bg-white hover:bg-[#faf6ee] hover:-translate-y-0.5 shadow-sm active:scale-[0.98]"
-            >
-              I know the basics
-            </Link>
+          <div className="flex flex-col items-center gap-3 w-full max-w-sm sm:max-w-none mt-1 select-none">
+            {/* Row 1: Side by side */}
+            <div className="flex flex-row gap-2.5 w-full justify-center">
+              <button
+                type="button"
+                onClick={handleStartBeginner}
+                className="h-14 w-1/2 sm:w-44 flex items-center justify-center font-extrabold px-3 text-[11px] sm:text-xs md:text-sm shadow-lg shadow-[#1e5e4a]/20 transition-all cursor-pointer rounded-2xl bg-[#1e5e4a] hover:bg-[#164738] text-white border border-[#1e5e4a] hover:-translate-y-0.5 active:scale-[0.98]"
+              >
+                I know no Arabic
+              </button>
+              <Link
+                href="/learn"
+                onClick={handleStartBasics}
+                className="h-14 w-1/2 sm:w-44 flex items-center justify-center font-extrabold px-3 text-[11px] sm:text-xs md:text-sm transition-all rounded-2xl border-2 border-[#c8993c] text-[#c8993c] bg-white hover:bg-[#faf6ee] hover:-translate-y-0.5 shadow-sm active:scale-[0.98]"
+              >
+                I know the basics
+              </Link>
+            </div>
 
-            {/* Option 3: Directly recite */}
+            {/* Row 2: Full width / centered */}
             <Link
               href="/recite"
-              className="h-14 w-44 flex items-center justify-center font-extrabold px-4 text-xs sm:text-sm transition-all rounded-2xl bg-[#c8993c] text-white hover:bg-[#b08432] border border-[#c8993c] shadow-lg shadow-[#c8993c]/20 hover:-translate-y-0.5 active:scale-[0.98]"
+              className="h-14 w-full sm:w-[360px] flex items-center justify-center font-extrabold px-4 text-xs sm:text-sm transition-all rounded-2xl bg-[#c8993c] text-white hover:bg-[#b08432] border border-[#c8993c] shadow-lg shadow-[#c8993c]/20 hover:-translate-y-0.5 active:scale-[0.98]"
             >
               Direct Recitation
             </Link>
