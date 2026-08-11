@@ -77,7 +77,7 @@ export function EmailCapture({
           disabled={status === 'loading' || !email}
           className="email-capture__button"
         >
-          {status === 'loading' ? 'Sending...' : 'Notify me 🤲'}
+          {status === 'loading' ? 'Sending...' : 'Notify me'}
         </button>
       </form>
       {status === 'error' && (

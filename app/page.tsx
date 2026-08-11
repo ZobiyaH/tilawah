@@ -147,14 +147,14 @@ export default function LandingPage() {
               <button
                 type="button"
                 onClick={handleStartBeginner}
-                className="h-14 w-1/2 sm:w-44 flex items-center justify-center font-extrabold px-3 text-[11px] sm:text-xs md:text-sm shadow-lg shadow-[#1e5e4a]/20 transition-all cursor-pointer rounded-2xl bg-[#1e5e4a] hover:bg-[#164738] text-white border border-[#1e5e4a] hover:-translate-y-0.5 active:scale-[0.98]"
+                className="h-14 w-1/2 sm:w-44 flex items-center justify-center font-extrabold px-3 text-xs sm:text-sm shadow-lg shadow-[#1e5e4a]/20 transition-all cursor-pointer rounded-2xl bg-[#1e5e4a] hover:bg-[#164738] text-white border border-[#1e5e4a] hover:-translate-y-0.5 active:scale-[0.98]"
               >
                 I know no Arabic
               </button>
               <Link
                 href="/learn"
                 onClick={handleStartBasics}
-                className="h-14 w-1/2 sm:w-44 flex items-center justify-center font-extrabold px-3 text-[11px] sm:text-xs md:text-sm transition-all rounded-2xl border-2 border-[#c8993c] text-[#c8993c] bg-white hover:bg-[#faf6ee] hover:-translate-y-0.5 shadow-sm active:scale-[0.98]"
+                className="h-14 w-1/2 sm:w-44 flex items-center justify-center font-extrabold px-3 text-xs sm:text-sm transition-all rounded-2xl border-2 border-[#c8993c] text-[#c8993c] bg-white hover:bg-[#faf6ee] hover:-translate-y-0.5 shadow-sm active:scale-[0.98]"
               >
                 I know the basics
               </Link>
@@ -163,7 +163,7 @@ export default function LandingPage() {
             {/* Row 2: Full width on mobile, standard w-44 on desktop */}
             <Link
               href="/recite"
-              className="h-14 w-full sm:w-44 flex items-center justify-center font-extrabold px-4 text-xs sm:text-sm transition-all rounded-2xl bg-[#c8993c] text-white hover:bg-[#b08432] border border-[#c8993c] shadow-lg shadow-[#c8993c]/20 hover:-translate-y-0.5 active:scale-[0.98]"
+              className="h-14 w-full sm:w-44 flex items-center justify-center font-extrabold px-4 text-sm transition-all rounded-2xl bg-[#c8993c] text-white hover:bg-[#b08432] border border-[#c8993c] shadow-lg shadow-[#c8993c]/20 hover:-translate-y-0.5 active:scale-[0.98]"
             >
               Direct Recitation
             </Link>
