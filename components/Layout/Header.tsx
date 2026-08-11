@@ -9,6 +9,7 @@ import Logo from "../UI/Logo";
 import UserGuideModal from "../UI/UserGuideModal";
 import SettingsDrawer from "../UI/SettingsDrawer";
 import { getStreak, getLearningProgress } from "@/lib/progress";
+import { subscribeEmail } from "@/lib/email/subscribe";
 
 interface HeaderProps {
   onOpenSettings?: () => void;
@@ -59,31 +60,53 @@ export default function Header({ onOpenSettings }: HeaderProps = {}) {
     }
   }, [pathname, showPrompt]);
 
-  const handleRegister = () => {
-    if (!nameInput.trim()) return;
+  const handleRegister = async () => {
+    const hasName = !!nameInput.trim();
+    const hasEmail = !!emailInput.trim();
+
+    // Check if either is entered - they are both required simultaneously
+    if (hasName || hasEmail) {
+      if (!hasName || !hasEmail) {
+        alert("Please enter both your name and email address to save your profile.");
+        return;
+      }
+      if (!emailInput.trim().includes("@")) {
+        alert("Please enter a valid email address.");
+        return;
+      }
+    } else {
+      // If neither is entered, they cannot submit profile
+      alert("Please enter your name and email address.");
+      return;
+    }
+
     const cleanEmail = emailInput.trim();
+    const cleanName = nameInput.trim();
+
+    // Call the Formspree subscription utility
+    const result = await subscribeEmail(cleanEmail, "navbar_popup", cleanName);
+    if (!result.success) {
+      alert(result.message);
+      return;
+    }
+
     const newUser = { 
-      username: nameInput.trim(), 
+      username: cleanName, 
       avatar: "⭐",
-      email: cleanEmail || undefined
+      email: cleanEmail
     };
 
     if (typeof window !== "undefined") {
       localStorage.setItem("tilawa_user", JSON.stringify(newUser));
       localStorage.setItem("tilawa_prompted_account", "done");
-      
-      if (cleanEmail && cleanEmail.includes("@")) {
-        localStorage.setItem("tilawah_email_captured", "true");
-        localStorage.setItem("tilawah_user_email", cleanEmail);
-      }
+      localStorage.setItem("tilawah_email_captured", "true");
+      localStorage.setItem("tilawah_user_email", cleanEmail);
       
       window.dispatchEvent(new CustomEvent("tilawa-user-updated", { detail: newUser }));
     }
     
     setUser(newUser);
-    if (cleanEmail && cleanEmail.includes("@")) {
-      setUserEmail(cleanEmail);
-    }
+    setUserEmail(cleanEmail);
     setShowPrompt(false);
   };
 
