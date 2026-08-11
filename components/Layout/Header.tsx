@@ -111,7 +111,7 @@ export default function Header({ onOpenSettings }: HeaderProps = {}) {
   }, []);
 
   return (
-    <header className="sticky top-0 z-50 py-3 px-4 sm:px-6 border-b border-[#c8993c]/20 bg-[#faf6ee]/90 dark:bg-[#0f1a14]/90 backdrop-blur-md transition-colors w-full shadow-sm">
+    <header className="sticky top-0 z-50 py-1.5 px-4 sm:px-6 border-b border-[#c8993c]/20 bg-[#faf6ee]/90 dark:bg-[#0f1a14]/90 backdrop-blur-md transition-colors w-full shadow-sm">
       <UserGuideModal isOpen={guideOpen} onClose={() => setGuideOpen(false)} />
       <SettingsDrawer isOpen={internalSettingsOpen} onClose={() => setInternalSettingsOpen(false)} />
 

@@ -112,7 +112,7 @@ export default function LandingPage() {
         {/* Silhouette of Elegant Arch vector at bottom */}
         <div className="absolute bottom-0 left-0 right-0 h-28 opacity-10 pointer-events-none bg-[url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1440 320%22><path fill=%22%23c8993c%22 fill-opacity=%221%22 d=%22M0,192L48,197.3C96,203,192,213,288,208C384,203,480,181,576,181.3C672,181,768,203,864,197.3C960,192,1056,160,1152,144C1248,128,1344,128,1392,128L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z%22></path></svg>')] bg-cover bg-bottom"></div>
 
-        <div className="max-w-4xl mx-auto flex flex-col items-center gap-6 relative z-10">
+        <div className="max-w-4xl mx-auto flex flex-col items-center gap-4.5 relative z-10">
 
           {/* Badge Tag */}
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-[#c8993c]/30 shadow-sm text-xs font-bold text-[#1e5e4a] tracking-normal">
@@ -123,14 +123,14 @@ export default function LandingPage() {
           </div>
 
           {/* Centered Wide Bismillah Banner */}
-          <div className="w-full max-w-2xl mx-auto py-4 px-8 rounded-3xl bg-white/80 border border-[#c8993c]/30 shadow-md backdrop-blur-xl flex items-center justify-center group hover:border-[#c8993c]/50 transition-all">
+          <div className="w-full max-w-2xl mx-auto py-2.5 px-6 rounded-3xl bg-white/80 border border-[#c8993c]/30 shadow-md backdrop-blur-xl flex items-center justify-center group hover:border-[#c8993c]/50 transition-all">
             <span className="font-amiri text-2xl md:text-4xl text-[#c8993c] select-none leading-relaxed text-center block w-full drop-shadow-sm group-hover:scale-105 transition-transform">
               بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ
             </span>
           </div>
 
           {/* Hero Headers */}
-          <div className="flex flex-col gap-3 max-w-3xl">
+          <div className="flex flex-col gap-2.5 max-w-3xl">
             <h1 className="text-3xl md:text-5xl font-black text-[#1a1208] leading-[1.15] font-amiri">
               Recite the Quran correctly.<br />
               <span className="text-[#1e5e4a] inline-block border-b-4 border-[#c8993c]/40 pb-1">
@@ -150,7 +150,7 @@ export default function LandingPage() {
             <button
               type="button"
               onClick={handleStartBeginner}
-              className="btn-primary h-14 w-44 flex items-center justify-center font-extrabold px-4 text-sm shadow-lg shadow-[#1e5e4a]/20 transition-all cursor-pointer rounded-2xl bg-[#1e5e4a] hover:bg-[#164738] text-white border border-[#1e5e4a] hover:-translate-y-0.5 active:scale-[0.98]"
+              className="btn-primary h-14 w-fit px-8 flex items-center justify-center font-extrabold text-sm shadow-lg shadow-[#1e5e4a]/20 transition-all cursor-pointer rounded-2xl bg-[#1e5e4a] hover:bg-[#164738] text-white border border-[#1e5e4a] hover:-translate-y-0.5 active:scale-[0.98]"
             >
               I know no Arabic
             </button>
@@ -159,7 +159,7 @@ export default function LandingPage() {
             <Link
               href="/learn"
               onClick={handleStartBasics}
-              className="btn-secondary h-14 w-44 flex items-center justify-center font-extrabold px-4 text-sm transition-all rounded-2xl border-2 border-[#c8993c] text-[#c8993c] bg-white hover:bg-[#faf6ee] hover:-translate-y-0.5 shadow-sm active:scale-[0.98]"
+              className="btn-secondary h-14 w-fit px-8 flex items-center justify-center font-extrabold text-sm transition-all rounded-2xl border-2 border-[#c8993c] text-[#c8993c] bg-white hover:bg-[#faf6ee] hover:-translate-y-0.5 shadow-sm active:scale-[0.98]"
             >
               I know the basics
             </Link>
@@ -167,7 +167,7 @@ export default function LandingPage() {
             {/* Option 3: Directly recite */}
             <Link
               href="/recite"
-              className="h-14 w-44 flex items-center justify-center font-extrabold px-4 text-sm transition-all rounded-2xl bg-[#c8993c] text-white hover:bg-[#b08432] border border-[#c8993c] shadow-lg shadow-[#c8993c]/20 hover:-translate-y-0.5 active:scale-[0.98]"
+              className="h-14 w-fit px-8 flex items-center justify-center font-extrabold text-sm transition-all rounded-2xl bg-[#c8993c] text-white hover:bg-[#b08432] border border-[#c8993c] shadow-lg shadow-[#c8993c]/20 hover:-translate-y-0.5 active:scale-[0.98]"
             >
               Direct Recitation
             </Link>
@@ -484,22 +484,22 @@ export default function LandingPage() {
             Whether starting from the alphabet or reciting full Surahs with Tajweed, Tilawah guides you every step of the way.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-3.5 w-full justify-center items-center max-w-2xl mt-4 select-none">
+          <div className="flex flex-col sm:flex-row gap-3.5 w-full justify-center items-center max-w-2xl mt-4 select-none px-4">
             <button
               onClick={handleStartBeginner}
-              className="h-14 w-fit px-8 bg-white text-[#1e5e4a] font-bold text-sm uppercase tracking-wider rounded-xl hover:bg-zinc-100 transition-all flex items-center justify-center shadow-md cursor-pointer"
+              className="h-14 w-full sm:w-48 max-w-xs bg-white text-[#1e5e4a] font-bold text-sm uppercase tracking-wider rounded-xl hover:bg-zinc-100 transition-all flex items-center justify-center shadow-md cursor-pointer"
             >
               Start Alphabet
             </button>
             <button
               onClick={handleStartBasics}
-              className="h-14 w-fit px-8 border border-[#c8993c] text-[#e8c96a] font-bold text-sm uppercase tracking-wider rounded-xl hover:bg-white/10 transition-all flex items-center justify-center cursor-pointer"
+              className="h-14 w-full sm:w-48 max-w-xs border border-[#c8993c] text-[#e8c96a] font-bold text-sm uppercase tracking-wider rounded-xl hover:bg-white/10 transition-all flex items-center justify-center cursor-pointer"
             >
               Explore Roadmap
             </button>
             <Link
               href="/recite"
-              className="h-14 w-fit px-8 bg-[#c8993c] text-white font-bold text-sm uppercase tracking-wider rounded-xl hover:bg-gold-light transition-all flex items-center justify-center shadow-md cursor-pointer"
+              className="h-14 w-full sm:w-48 max-w-xs bg-[#c8993c] text-white font-bold text-sm uppercase tracking-wider rounded-xl hover:bg-gold-light transition-all flex items-center justify-center shadow-md cursor-pointer"
             >
               Direct Recite
             </Link>
