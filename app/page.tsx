@@ -124,7 +124,7 @@ export default function LandingPage() {
           </div>
 
           {/* Action CTAs: Three Pathways */}
-          <div className="flex flex-col sm:flex-row gap-4 w-full justify-center max-w-2xl mt-1 select-none">
+          <div className="flex flex-col sm:flex-row gap-4 w-full justify-center items-center max-w-2xl mt-1 select-none">
             {/* Option 1: I know no Arabic */}
             <button
               type="button"
@@ -156,13 +156,13 @@ export default function LandingPage() {
           <div className="flex flex-col items-center gap-2.5 mt-2 select-none">
             <div className="flex items-center justify-center gap-[5px] h-[44px] bg-white/80 px-6 py-2 rounded-full border border-[#c8993c]/20 shadow-sm backdrop-blur-md">
               <div className="w-[4px] rounded-[4px] bg-[#c8993c] h-[14px] animate-pulse"></div>
-              <div className="w-[4px] rounded-[4px] bg-[#c8993c] h-[28px] animate-pulse"></div>
-              <div className="w-[4px] rounded-[4px] bg-[#1e5e4a] h-[40px] animate-pulse"></div>
-              <div className="w-[4px] rounded-[4px] bg-[#c8993c] h-[32px] animate-pulse"></div>
-              <div className="w-[4px] rounded-[4px] bg-[#1e5e4a] h-[20px] animate-pulse"></div>
-              <div className="w-[4px] rounded-[4px] bg-[#c8993c] h-[36px] animate-pulse"></div>
-              <div className="w-[4px] rounded-[4px] bg-[#1e5e4a] h-[24px] animate-pulse"></div>
-              <div className="w-[4px] rounded-[4px] bg-[#c8993c] h-[16px] animate-pulse"></div>
+              <div className="w-[4px] rounded-[4px] bg-[#1e5e4a] h-[28px] animate-pulse"></div>
+              <div className="w-[4px] rounded-[4px] bg-[#c8993c] h-[40px] animate-pulse"></div>
+              <div className="w-[4px] rounded-[4px] bg-[#1e5e4a] h-[32px] animate-pulse"></div>
+              <div className="w-[4px] rounded-[4px] bg-[#c8993c] h-[20px] animate-pulse"></div>
+              <div className="w-[4px] rounded-[4px] bg-[#1e5e4a] h-[36px] animate-pulse"></div>
+              <div className="w-[4px] rounded-[4px] bg-[#c8993c] h-[24px] animate-pulse"></div>
+              <div className="w-[4px] rounded-[4px] bg-[#1e5e4a] h-[16px] animate-pulse"></div>
               <div className="w-[4px] rounded-[4px] bg-[#c8993c] h-[30px] animate-pulse"></div>
             </div>
             <span className="text-[11px] uppercase tracking-widest text-zinc-500 font-black">
@@ -463,22 +463,22 @@ export default function LandingPage() {
             Whether starting from the alphabet or reciting full Surahs with Tajweed, Tilawah guides you every step of the way.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-3.5 w-full justify-center max-w-2xl mt-4 select-none">
+          <div className="flex flex-col sm:flex-row gap-3.5 w-full justify-center items-center max-w-2xl mt-4 select-none">
             <button
               onClick={handleStartBeginner}
-              className="h-14 px-6 bg-white text-[#1e5e4a] font-bold text-sm uppercase tracking-wider rounded-xl hover:bg-zinc-100 transition-all flex items-center justify-center shadow-md"
+              className="h-14 w-fit px-8 bg-white text-[#1e5e4a] font-bold text-sm uppercase tracking-wider rounded-xl hover:bg-zinc-100 transition-all flex items-center justify-center shadow-md cursor-pointer"
             >
               Start Alphabet
             </button>
             <button
               onClick={handleStartBasics}
-              className="h-14 px-6 border border-[#c8993c] text-[#e8c96a] font-bold text-sm uppercase tracking-wider rounded-xl hover:bg-white/10 transition-all flex items-center justify-center"
+              className="h-14 w-fit px-8 border border-[#c8993c] text-[#e8c96a] font-bold text-sm uppercase tracking-wider rounded-xl hover:bg-white/10 transition-all flex items-center justify-center cursor-pointer"
             >
               Explore Roadmap
             </button>
             <Link
               href="/recite"
-              className="h-14 px-6 bg-[#c8993c] text-white font-bold text-sm uppercase tracking-wider rounded-xl hover:bg-gold-light transition-all flex items-center justify-center shadow-md"
+              className="h-14 w-fit px-8 bg-[#c8993c] text-white font-bold text-sm uppercase tracking-wider rounded-xl hover:bg-gold-light transition-all flex items-center justify-center shadow-md cursor-pointer"
             >
               Direct Recite
             </Link>
