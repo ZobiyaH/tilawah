@@ -74,9 +74,30 @@ export default function LandingPage() {
             0%, 100% { transform: scale(1); opacity: 0.04; }
             50% { transform: scale(1.08); opacity: 0.12; }
           }
+          @keyframes wave-bounce-1 {
+            0%, 100% { transform: scaleY(0.35); }
+            50% { transform: scaleY(1.1); }
+          }
+          @keyframes wave-bounce-2 {
+            0%, 100% { transform: scaleY(0.2); }
+            50% { transform: scaleY(1.3); }
+          }
+          @keyframes wave-bounce-3 {
+            0%, 100% { transform: scaleY(0.5); }
+            50% { transform: scaleY(0.85); }
+          }
           .animate-float-slow { animation: float-slow 16s ease-in-out infinite; }
           .animate-float-medium { animation: float-medium 10s ease-in-out infinite; }
           .animate-pulse-gentle { animation: pulse-gentle 8s ease-in-out infinite; }
+          .animate-wave-a { animation: wave-bounce-1 1.2s ease-in-out infinite; transform-origin: center; }
+          .animate-wave-b { animation: wave-bounce-2 0.8s ease-in-out infinite 0.15s; transform-origin: center; }
+          .animate-wave-c { animation: wave-bounce-3 1.4s ease-in-out infinite 0.3s; transform-origin: center; }
+          .animate-wave-d { animation: wave-bounce-1 1.0s ease-in-out infinite 0.45s; transform-origin: center; }
+          .animate-wave-e { animation: wave-bounce-2 1.6s ease-in-out infinite 0.2s; transform-origin: center; }
+          .animate-wave-f { animation: wave-bounce-3 1.1s ease-in-out infinite 0.1s; transform-origin: center; }
+          .animate-wave-g { animation: wave-bounce-1 1.3s ease-in-out infinite 0.25s; transform-origin: center; }
+          .animate-wave-h { animation: wave-bounce-2 0.9s ease-in-out infinite 0.35s; transform-origin: center; }
+          .animate-wave-i { animation: wave-bounce-3 1.5s ease-in-out infinite 0.05s; transform-origin: center; }
         `}} />
 
         {/* Soft Background Glow Orbs */}
@@ -155,15 +176,15 @@ export default function LandingPage() {
           {/* Waveform Animation */}
           <div className="flex flex-col items-center gap-2.5 mt-2 select-none">
             <div className="flex items-center justify-center gap-[5px] h-[44px] bg-white/80 px-6 py-2 rounded-full border border-[#c8993c]/20 shadow-sm backdrop-blur-md">
-              <div className="w-[4px] rounded-[4px] bg-[#c8993c] h-[14px] animate-pulse"></div>
-              <div className="w-[4px] rounded-[4px] bg-[#1e5e4a] h-[28px] animate-pulse"></div>
-              <div className="w-[4px] rounded-[4px] bg-[#c8993c] h-[40px] animate-pulse"></div>
-              <div className="w-[4px] rounded-[4px] bg-[#1e5e4a] h-[32px] animate-pulse"></div>
-              <div className="w-[4px] rounded-[4px] bg-[#c8993c] h-[20px] animate-pulse"></div>
-              <div className="w-[4px] rounded-[4px] bg-[#1e5e4a] h-[36px] animate-pulse"></div>
-              <div className="w-[4px] rounded-[4px] bg-[#c8993c] h-[24px] animate-pulse"></div>
-              <div className="w-[4px] rounded-[4px] bg-[#1e5e4a] h-[16px] animate-pulse"></div>
-              <div className="w-[4px] rounded-[4px] bg-[#c8993c] h-[30px] animate-pulse"></div>
+              <div className="w-[4px] rounded-[4px] bg-[#c8993c] h-[14px] animate-wave-a"></div>
+              <div className="w-[4px] rounded-[4px] bg-[#1e5e4a] h-[28px] animate-wave-b"></div>
+              <div className="w-[4px] rounded-[4px] bg-[#c8993c] h-[40px] animate-wave-c"></div>
+              <div className="w-[4px] rounded-[4px] bg-[#1e5e4a] h-[32px] animate-wave-d"></div>
+              <div className="w-[4px] rounded-[4px] bg-[#c8993c] h-[20px] animate-wave-e"></div>
+              <div className="w-[4px] rounded-[4px] bg-[#1e5e4a] h-[36px] animate-wave-f"></div>
+              <div className="w-[4px] rounded-[4px] bg-[#c8993c] h-[24px] animate-wave-g"></div>
+              <div className="w-[4px] rounded-[4px] bg-[#1e5e4a] h-[16px] animate-wave-h"></div>
+              <div className="w-[4px] rounded-[4px] bg-[#c8993c] h-[30px] animate-wave-i"></div>
             </div>
             <span className="text-[11px] uppercase tracking-widest text-zinc-500 font-black">
               Listening to your recitation…
