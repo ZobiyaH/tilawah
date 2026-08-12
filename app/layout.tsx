@@ -50,6 +50,9 @@ export const metadata: Metadata = {
     icon: "/favicon.png",
     shortcut: "/favicon.ico",
     apple: "/favicon.png",
+  },
+  verification: {
+    google: "nE31zfopQ4RKaFt2p-kyhvABVCOhPz25aJ_3GwwS0hM",
   }
 };
 
