@@ -4,6 +4,8 @@ import { ToastProvider } from "@/components/UI/Toast";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import Footer from "@/components/Layout/Footer";
 import EmailCaptureModal from "@/components/UI/EmailCaptureModal";
+import Script from "next/script";
+import { GA_ID } from "@/lib/analytics/ga";
 import "./globals.css";
 
 const amiriQuran = Amiri_Quran({
@@ -90,6 +92,22 @@ export default function RootLayout({
               <Footer />
             </div>
             <EmailCaptureModal />
+            {GA_ID && (
+              <>
+                <Script
+                  src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
+                  strategy="afterInteractive"
+                />
+                <Script id="google-analytics" strategy="afterInteractive">
+                  {`
+                    window.dataLayer = window.dataLayer || [];
+                    function gtag(){dataLayer.push(arguments);}
+                    gtag('js', new Date());
+                    gtag('config', '${GA_ID}');
+                  `}
+                </Script>
+              </>
+            )}
           </ToastProvider>
         </ThemeProvider>
       </body>

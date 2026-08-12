@@ -12,6 +12,7 @@ import { saveLearningProgress, getLearningProgress } from "@/lib/progress";
 import { arabicSimilarity } from "@/lib/arabic/similarity";
 import { normalizeArabic } from "@/lib/arabic/normalize";
 import { transcribeAudio } from "@/lib/speech/transcribe";
+import { trackEvent } from "@/lib/analytics/ga";
 
 interface QuranExample {
   word: string;
@@ -286,6 +287,9 @@ export default function TajweedLessonPage() {
       router.push("/learn");
       return;
     }
+    // Track lesson start event
+    trackEvent("lesson_start", "learning", lesson.id);
+
     const prog = getLearningProgress();
     const completed = prog.some((p) => p.track === "tajweed" && p.lesson_id === lesson.id && p.completed);
     setIsCompleted(completed);
@@ -349,6 +353,7 @@ export default function TajweedLessonPage() {
       setAsrSuccess(true);
       setIsCompleted(true);
       playChime();
+      trackEvent("lesson_complete", "learning", lesson.id);
       saveLearningProgress({
         track: "tajweed",
         lesson_id: lesson.id,

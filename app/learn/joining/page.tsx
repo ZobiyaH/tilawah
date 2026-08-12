@@ -7,6 +7,7 @@ import Header from "@/components/Layout/Header";
 import BottomNav from "@/components/Layout/BottomNav";
 import { QariAudioManager } from "@/lib/qariAudio";
 import { saveLearningProgress, getLearningProgress } from "@/lib/progress";
+import { trackEvent } from "@/lib/analytics/ga";
 
 interface JoiningStep {
   text: string;
@@ -120,6 +121,9 @@ export default function JoiningPage() {
       prog.some((p) => p.track === "joining" && p.lesson_id === l.id && p.completed)
     );
     setCompletedQuizzes(loadedCompletions);
+
+    // Track lesson start event
+    trackEvent("lesson_start", "learning", lesson.id);
   }, [activeLessonIdx]);
 
   const setCompletedQuizzes = (completions: boolean[]) => {
@@ -127,10 +131,7 @@ export default function JoiningPage() {
   };
 
   const playStepAudio = async () => {
-    try {
-      const audioMgr = QariAudioManager.getInstance();
-      await audioMgr.playWord(step.audioWord, 1);
-    } catch {
+    if (step.audioWord) {
       try {
         const audioMgr = QariAudioManager.getInstance();
         const baseChar = step.audioWord.replace(/[ًٌٍَُِّْٰ]/g, "").trim() || step.audioWord.charAt(0);
@@ -156,6 +157,7 @@ export default function JoiningPage() {
       updated[activeLessonIdx] = true;
       setCompletedLessons(updated);
 
+      trackEvent("lesson_complete", "learning", lesson.id);
       saveLearningProgress({
         track: "joining",
         lesson_id: lesson.id,

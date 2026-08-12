@@ -15,6 +15,7 @@ import { useRecitationStore } from "@/lib/store/recitationStore";
 import { getSurahData } from "@/lib/quran/quranData";
 import { QariAudioManager } from "@/lib/qariAudio";
 import { saveLearningProgress } from "@/lib/progress";
+import { trackEvent } from "@/lib/analytics/ga";
 import { arabicSimilarity } from "@/lib/arabic/similarity";
 import { normalizeArabic } from "@/lib/arabic/normalize";
 import { transcribeAudio } from "@/lib/speech/transcribe";
@@ -72,6 +73,10 @@ export default function ShortSurahsPage() {
         )
       : [];
   }, [surahData]);
+
+  useEffect(() => {
+    trackEvent("recitation_start", "engagement", `surah_${surahMeta.id}`);
+  }, [selectedSurahIdx, surahMeta.id]);
 
   useEffect(() => {
     setPlayingAyahIdx(null);
@@ -323,6 +328,7 @@ export default function ShortSurahsPage() {
 
   // --- Phase 4 Finish ---
   const handleRecitationComplete = () => {
+    trackEvent("surah_complete", "engagement", `surah_${surahMeta.id}`);
     saveLearningProgress({
       track: "surahs",
       lesson_id: `surah_${selectedSurahIdx}`,

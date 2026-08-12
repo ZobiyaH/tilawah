@@ -14,6 +14,7 @@ import { saveLearningProgress, getLearningProgress } from "@/lib/progress";
 import { arabicSimilarity } from "@/lib/arabic/similarity";
 import { stripDiacritics } from "@/lib/arabic/normalize";
 import { transcribeAudio } from "@/lib/speech/transcribe";
+import { trackEvent } from "@/lib/analytics/ga";
 
 interface QuranExample {
   word: string;
@@ -422,6 +423,9 @@ export default function LetterLessonPage() {
       return;
     }
 
+    // Track lesson start event
+    trackEvent("lesson_start", "learning", `letter_${letterId}`);
+
     // Load progress
     const prog = getLearningProgress();
     const completed = prog.some(
@@ -478,6 +482,7 @@ export default function LetterLessonPage() {
     if (isMatch) {
       setAsrResult("success");
       setIsCompleted(true);
+      trackEvent("lesson_complete", "learning", `letter_${letterId}`);
       saveLearningProgress({
         track: "letters",
         lesson_id: `letter_${letterId}`,

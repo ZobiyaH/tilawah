@@ -1,3 +1,5 @@
+import { trackEvent } from '@/lib/analytics/ga';
+
 export type SubscribeResult = {
   success: boolean;
   message: string;
@@ -48,6 +50,9 @@ export async function subscribeEmail(
     });
 
     if (response.ok) {
+      // Track conversion
+      trackEvent('email_signup', 'conversion', source);
+
       // Mark this browser as having submitted
       // so we do not show the form again
       if (typeof window !== 'undefined') {

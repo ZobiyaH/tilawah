@@ -7,6 +7,7 @@ import Header from "@/components/Layout/Header";
 import BottomNav from "@/components/Layout/BottomNav";
 import { QariAudioManager } from "@/lib/qariAudio";
 import { saveLearningProgress, getLearningProgress } from "@/lib/progress";
+import { trackEvent } from "@/lib/analytics/ga";
 
 interface QuizQuestion {
   audioWord: string;
@@ -333,6 +334,12 @@ export default function HarakatPage() {
     setCompletedQuizzes(loadedCompletions);
   }, []);
 
+  useEffect(() => {
+    if (lesson) {
+      trackEvent("lesson_start", "learning", lesson.id);
+    }
+  }, [activeLessonIdx, lesson]);
+
   const playVowelSound = async () => {
     setIsPlaying(true);
     try {
@@ -373,6 +380,7 @@ export default function HarakatPage() {
         updated[activeLessonIdx] = true;
         setCompletedQuizzes(updated);
 
+        trackEvent("lesson_complete", "learning", lesson.id);
         saveLearningProgress({
           track: "harakat",
           lesson_id: lesson.id,

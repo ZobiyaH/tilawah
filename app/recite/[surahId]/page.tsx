@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { speakArabicWord } from "../../../lib/speech/tts";
 import { stripDiacritics } from "../../../lib/arabic/normalize";
 import { preloadAudio, getWordAudio } from "../../../lib/audio/qariCDN";
+import { trackEvent } from "../../../lib/analytics/ga";
 
 import Header from "../../../components/Layout/Header";
 import SettingsDrawer from "../../../components/UI/SettingsDrawer";
@@ -144,6 +145,7 @@ export default function RecitationPage() {
   useEffect(() => {
     if (surahData) {
       loadSurah(surahId, surahData.name, surahData.ayat);
+      trackEvent("recitation_start", "engagement", `surah_${surahId}`);
     } else {
       router.push("/");
     }
@@ -181,6 +183,7 @@ export default function RecitationPage() {
   const phoneticGuide = currentWordToken ? (PHONETIC_DICT[cleanWord] || cleanWord) : "";
 
   const handleSave = async () => {
+    trackEvent("surah_complete", "engagement", `surah_${surahId}`);
     await saveSessionScore();
     
     // Register local completed counter for progress popups
