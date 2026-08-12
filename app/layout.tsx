@@ -4,7 +4,6 @@ import { ToastProvider } from "@/components/UI/Toast";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import Footer from "@/components/Layout/Footer";
 import EmailCaptureModal from "@/components/UI/EmailCaptureModal";
-import Script from "next/script";
 import { GA_ID } from "@/lib/analytics/ga";
 import "./globals.css";
 
@@ -67,6 +66,22 @@ export default function RootLayout({
     <html lang="en" dir="ltr" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
+        {/* Google Analytics Tag */}
+        {GA_ID && (
+          <>
+            <script async src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}></script>
+            <script
+              dangerouslySetInnerHTML={{
+                __html: `
+                  window.dataLayer = window.dataLayer || [];
+                  function gtag(){dataLayer.push(arguments);}
+                  gtag('js', new Date());
+                  gtag('config', '${GA_ID}');
+                `
+              }}
+            />
+          </>
+        )}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -92,22 +107,6 @@ export default function RootLayout({
               <Footer />
             </div>
             <EmailCaptureModal />
-            {GA_ID && (
-              <>
-                <Script
-                  src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
-                  strategy="afterInteractive"
-                />
-                <Script id="google-analytics" strategy="afterInteractive">
-                  {`
-                    window.dataLayer = window.dataLayer || [];
-                    function gtag(){dataLayer.push(arguments);}
-                    gtag('js', new Date());
-                    gtag('config', '${GA_ID}');
-                  `}
-                </Script>
-              </>
-            )}
           </ToastProvider>
         </ThemeProvider>
       </body>
