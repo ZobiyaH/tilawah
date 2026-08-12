@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-export const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
+export const GA_ID = process.env.NEXT_PUBLIC_GA_ID || 'G-7LWNDJGQL7';
 
 export function pageview(url: string) {
   if (typeof window !== 'undefined' && (window as any).gtag) {
