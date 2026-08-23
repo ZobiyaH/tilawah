@@ -57,15 +57,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const prompt = formData.get('prompt') as string || 'بسم الله الرحمن الرحيم الحمد لله';
+
     const buffer = Buffer.from(await audioFile.arrayBuffer());
     const fileToUpload = await toFile(buffer, 'recording.webm', { type: 'audio/webm' });
 
-    console.log('[API] Sending to Groq...');
+    console.log('[API] Sending to Groq with prompt:', prompt);
     const transcription = await groq.audio.transcriptions.create({
       file: fileToUpload,
       model: 'whisper-large-v3',
       language: 'ar',
-      prompt: 'بسم الله الرحمن الرحيم الحمد لله',
+      prompt: prompt,
       response_format: 'json',
       temperature: 0.0,
     });

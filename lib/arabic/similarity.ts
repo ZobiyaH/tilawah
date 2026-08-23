@@ -95,9 +95,25 @@ export function arabicSimilarity(spoken: string, reference: string): number {
  * Align and compare spoken word alternatives against expected Quran word.
  * Also checks English ASR transliterations as a fallback.
  */
-export function checkWord(spokenAlternatives: string | string[], expectedWord: string): CheckResult {
+export function checkWord(
+  spokenAlternatives: string | string[],
+  expectedWord: string,
+  recitationLevel: 'beginner' | 'intermediate' | 'advanced' = 'intermediate',
+  confidentReciterMode: boolean = false
+): CheckResult {
   const alternatives = Array.isArray(spokenAlternatives) ? spokenAlternatives : [spokenAlternatives];
   
+  let correctThreshold = 0.65;
+  let tajweedThreshold = 0.45;
+
+  if (recitationLevel === 'beginner' || confidentReciterMode) {
+    correctThreshold = 0.55;
+    tajweedThreshold = 0.35;
+  } else if (recitationLevel === 'advanced') {
+    correctThreshold = 0.75;
+    tajweedThreshold = 0.55;
+  }
+
   let bestResult: CheckResult = { status: 'error', similarity: 0, tajweedIssue: null };
   
   for (const alt of alternatives) {
@@ -115,9 +131,9 @@ export function checkWord(spokenAlternatives: string | string[], expectedWord: s
       }
     }
     
-    if (similarity >= 0.65) {
+    if (similarity >= correctThreshold) {
       status = 'correct';
-    } else if (similarity >= 0.45) {
+    } else if (similarity >= tajweedThreshold) {
       tajweedIssue = detectTajweedIssue(alt, expectedWord);
       status = 'tajweed';
     }

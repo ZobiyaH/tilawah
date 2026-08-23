@@ -7,14 +7,27 @@ export type TranscriptResult = {
 };
 
 export async function transcribeAudio(
-  audioBlob: Blob
+  audioBlob: Blob,
+  lessonType: 'letter' | 'word' | 'phrase' | 'ayah' = 'word',
+  prompt: string = ''
 ): Promise<TranscriptResult> {
 
-  console.log('[Transcribe] Blob size:', audioBlob.size, 'bytes');
+  console.log('[Transcribe] Blob size:', audioBlob.size, 'bytes, type:', lessonType);
+
+  // For letters: reject audio blobs under 2000 bytes (too short/silent)
+  if (lessonType === 'letter' && audioBlob.size < 2000) {
+    console.warn('[Transcribe] Letter audio too short:', audioBlob.size);
+    return {
+      transcript: '',
+      method: 'groq',
+      success: false,
+      error: 'TOO_SHORT',
+    };
+  }
 
   // CRITICAL: Reject silence before sending to Groq
   // Blob under 3000 bytes = silence = do not send
-  if (audioBlob.size < 3000) {
+  if (lessonType !== 'letter' && audioBlob.size < 3000) {
     console.warn(
       '[Transcribe] Audio blob too small:', 
       audioBlob.size, 
@@ -37,6 +50,9 @@ export async function transcribeAudio(
       audioBlob, 
       'recording.webm'
     );
+    if (prompt) {
+      formData.append('prompt', prompt);
+    }
 
     const response = await fetch('/api/transcribe', {
       method: 'POST',

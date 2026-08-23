@@ -507,7 +507,7 @@ export default function LetterLessonPage() {
       if (recorderRef.current && recorderRef.current.isRecording()) {
         setSpokenWord("Processing...");
         const audioBlob = await recorderRef.current.stop();
-        const result = await transcribeAudio(audioBlob);
+        const result = await transcribeAudio(audioBlob, 'letter');
 
         if (!result.success || !result.transcript) {
           setAsrResult("retry");
@@ -708,9 +708,9 @@ export default function LetterLessonPage() {
                     </motion.span>
                   )}
 
-                  {spokenWord && !isRecording && (
-                    <span className="text-xs text-zinc-500 font-semibold text-center">
-                      You said: <strong className="font-amiri text-base text-ink dark:text-zinc-100">{spokenWord}</strong>
+                  {spokenWord === "Processing..." && (
+                    <span className="text-xs text-zinc-500 font-semibold animate-pulse text-center">
+                      Analyzing audio...
                     </span>
                   )}
 
@@ -721,7 +721,7 @@ export default function LetterLessonPage() {
                       exit={{ opacity: 0 }}
                       className="bg-emerald-pale/60 dark:bg-emerald-950/40 border border-emerald/30 px-3.5 py-1.5 rounded-xl text-center flex items-center justify-center gap-1"
                     >
-                      <span className="text-emerald dark:text-emerald-light font-extrabold text-xs text-center">✓ Perfect! Correct Pronunciation</span>
+                      <span className="text-emerald dark:text-emerald-light font-extrabold text-xs text-center">✓ Correct</span>
                     </motion.div>
                   )}
 
@@ -732,7 +732,7 @@ export default function LetterLessonPage() {
                       exit={{ opacity: 0 }}
                       className="bg-ruby-pale/60 dark:bg-ruby-pale/30 border border-ruby/30 px-3.5 py-1.5 rounded-xl text-center flex items-center justify-center gap-1"
                     >
-                      <span className="text-ruby dark:text-red-400 font-extrabold text-xs text-center">❌ Mismatch. Tap mic & try again</span>
+                      <span className="text-ruby dark:text-red-400 font-extrabold text-xs text-center">Let&apos;s try that again</span>
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -823,24 +823,13 @@ export default function LetterLessonPage() {
                   </motion.span>
                 )}
 
-                {spokenWord && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="flex flex-col gap-1 items-center text-center"
-                  >
-                    <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider text-center">You said:</span>
-                    <span className="font-amiri text-lg font-bold text-ink dark:text-zinc-100 text-center">{spokenWord}</span>
-                  </motion.div>
-                )}
-
                 {asrResult === "success" && (
                   <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     className="bg-emerald-pale/35 border border-emerald/20 px-4 py-2 rounded-xl text-center flex flex-col items-center justify-center gap-0.5"
                   >
-                    <span className="text-emerald dark:text-emerald-light font-bold text-xs text-center">✓ Perfect! Correct Pronunciation</span>
+                    <span className="text-emerald dark:text-emerald-light font-bold text-xs text-center">✓ Correct</span>
                     <span className="text-[9px] text-zinc-500 dark:text-zinc-400 leading-none text-center">Press Next to proceed.</span>
                   </motion.div>
                 )}
@@ -851,7 +840,7 @@ export default function LetterLessonPage() {
                     animate={{ opacity: 1, scale: 1 }}
                     className="bg-ruby-pale/35 border border-ruby/20 px-4 py-2 rounded-xl text-center flex flex-col items-center justify-center gap-0.5"
                   >
-                    <span className="text-ruby dark:text-red-400 font-bold text-xs text-center">❌ Mismatch. Let&apos;s try again</span>
+                    <span className="text-ruby dark:text-red-400 font-bold text-xs text-center">Let&apos;s try that again</span>
                     <span className="text-[9px] text-zinc-500 dark:text-zinc-400 leading-none text-center">Listen to Qari above and repeat.</span>
                   </motion.div>
                 )}

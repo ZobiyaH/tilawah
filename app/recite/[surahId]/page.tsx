@@ -5,83 +5,25 @@ import { useParams, useRouter } from "next/navigation";
 import { useRecitationStore } from "../../../lib/store/recitationStore";
 import { getSurahData } from "../../../lib/quran/quranData";
 import { motion, AnimatePresence } from "framer-motion";
-import { speakArabicWord } from "../../../lib/speech/tts";
-import { stripDiacritics } from "../../../lib/arabic/normalize";
 import { preloadAudio, getWordAudio } from "../../../lib/audio/qariCDN";
+import { QariAudioManager } from "../../../lib/qariAudio";
 import { trackEvent } from "../../../lib/analytics/ga";
+import { checkWord } from "../../../lib/arabic/similarity";
+import { transcribeAudio } from "../../../lib/speech/transcribe";
+import { AudioRecorder } from "../../../lib/speech/recorder";
 
 import Header from "../../../components/Layout/Header";
 import SettingsDrawer from "../../../components/UI/SettingsDrawer";
 import QuranDisplay from "../../../components/QuranDisplay/QuranDisplay";
 import WaveformBar from "../../../components/Listening/WaveformBar";
 import LiveTranscript from "../../../components/Listening/LiveTranscript";
-import ContinuousListener from "../../../components/Listening/ContinuousListener";
 import CorrectionOverlay from "../../../components/Correction/CorrectionOverlay";
 import ScoreRing from "../../../components/UI/ScoreRing";
 import { useToast } from "../../../components/UI/Toast";
 import BottomNav from "../../../components/Layout/BottomNav";
 import MicCheckModal from "../../../components/Listening/MicCheckModal";
 
-// Word-by-word phonetic guide dictionary for short Surahs
-const PHONETIC_DICT: Record<string, string> = {
-  // Al-Fatiha
-  "بسم": "bis-mi",
-  "الله": "Al-lah",
-  "الرحمن": "ar-Rah-man",
-  "الرحيم": "ar-Ra-heem",
-  "الحمد": "al-Ham-du",
-  "لله": "lil-lah",
-  "رب": "Rab-bi",
-  "العالمين": "al-'Aa-la-meen",
-  "مالك": "Maa-li-ki",
-  "يوم": "Yaw-mi",
-  "الدين": "ad-Deen",
-  "اياك": "Iy-yaa-ka",
-  "نعبد": "na'-bu-du",
-  "واياك": "wa-Iy-yaa-ka",
-  "نستعين": "nas-ta-'een",
-  "اهدنا": "Ih-di-naa",
-  "الصراط": "as-Si-raat",
-  "المستقيم": "al-Mus-ta-qeem",
-  "صراط": "si-raat",
-  "الذين": "al-la-thee-na",
-  "انعمت": "an-'am-ta",
-  "عليهم": "a-lay-him",
-  "غير": "ghay-ri",
-  "المغضوب": "al-Magh-doo-bi",
-  "ولا": "wa-laa",
-  "الضالين": "ad-Daal-leen",
-  
-  // Al-Falaq
-  "قل": "Qul",
-  "اعوذ": "a-'oo-thu",
-  "برب": "bi-Rab-bi",
-  "الفلق": "al-Fa-laq",
-  "من": "min",
-  "شر": "shar-ri",
-  "ما": "maa",
-  "خلق": "kha-laq",
-  "ومن": "wa-min",
-  "غاسق": "ghaa-si-qin",
-  "اذا": "i-thaa",
-  "وقب": "wa-qab",
-  "النفاثات": "an-Naf-faa-thaa-ti",
-  "في": "fee",
-  "العقد": "al-'u-qad",
-  "حاسد": "haa-si-din",
-  "حسد": "ha-sad",
 
-  // An-Nas
-  "الناس": "an-Naas",
-  "ملك": "Ma-li-ki",
-  "اله": "I-laa-hi",
-  "الوسواس": "al-Was-waa-si",
-  "الخناس": "al-Khan-naas",
-  "الذي": "al-la-thee",
-  "يوسوس": "yu-was-wi-su",
-  "صدور": "su-doo-ri",
-  "الجنة": "al-Jin-na-ti"
-};
 
 export default function RecitationPage() {
   const params = useParams();
@@ -101,39 +43,152 @@ export default function RecitationPage() {
   const practiceWords = useRecitationStore((state) => state.practiceWords);
 
   const isListening = useRecitationStore((state) => state.isListening);
-  const setListening = useRecitationStore((state) => state.setListening);
-  const recitationState = useRecitationStore((state) => state.recitationState);
   const wordIndex = useRecitationStore((state) => state.wordIndex);
   const allWords = useRecitationStore((state) => state.allWords);
-  const liveTranscript = useRecitationStore((state) => state.liveTranscript);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [micCheckOpen, setMicCheckOpen] = useState(true);
   const [statsOpen, setStatsOpen] = useState(false);
-  const [playingWord, setPlayingWord] = useState(false);
-  const [showSilenceWarning, setShowSilenceWarning] = useState(false);
-  const lastActivityRef = React.useRef(Date.now());
   const quranDisplayRef = React.useRef<HTMLDivElement>(null);
 
-  // Reset silence timer whenever wordIndex or liveTranscript changes
-  useEffect(() => {
-    lastActivityRef.current = Date.now();
-    setShowSilenceWarning(false);
-  }, [wordIndex, liveTranscript]);
+  // Local recording & verification states
+  const [recordingState, setRecordingState] = useState<'idle' | 'listening' | 'processing' | 'summary'>('idle');
+  const [alignedResults, setAlignedResults] = useState<{ word: string; status: 'correct' | 'tajweed' | 'error'; similarity: number; wordIdxInAyah: number }[]>([]);
+  const recorderRef = React.useRef<AudioRecorder | null>(null);
+  const [showMuteToast, setShowMuteToast] = useState(false);
 
-  // Check for 4 seconds of silence while isListening is active
-  useEffect(() => {
-    if (!isListening) {
-      setShowSilenceWarning(false);
-      return;
+  const recitationLevel = useRecitationStore((state) => state.recitationLevel);
+  const confidentReciterMode = useRecitationStore((state) => state.confidentReciterMode);
+  const setLiveTranscript = useRecitationStore((state) => state.setLiveTranscript);
+
+  const advanceAyah = () => {
+    if (!currentWordToken) return;
+    const nextIdx = allWords.findIndex(w => w.ayahN === currentWordToken.ayahN + 1);
+    if (nextIdx !== -1) {
+      useRecitationStore.setState({ wordIndex: nextIdx });
+    } else {
+      useRecitationStore.setState({ wordIndex: allWords.length });
     }
-    lastActivityRef.current = Date.now();
-    const interval = setInterval(() => {
-      if (Date.now() - lastActivityRef.current >= 4000) {
-        setShowSilenceWarning(true);
+    setRecordingState('idle');
+    setAlignedResults([]);
+  };
+
+  const startRecording = async () => {
+    try {
+      if (!recorderRef.current) {
+        recorderRef.current = new AudioRecorder();
       }
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [isListening]);
+      
+      const audioMgr = QariAudioManager.getInstance();
+      audioMgr.stop();
+      
+      setShowMuteToast(true);
+      setTimeout(() => setShowMuteToast(false), 2500);
+
+      await recorderRef.current.start();
+      setRecordingState('listening');
+      
+      let silenceMs = 0;
+      const interval = setInterval(async () => {
+        if (!recorderRef.current || !recorderRef.current.isRecording()) {
+          clearInterval(interval);
+          return;
+        }
+        
+        const volume = await recorderRef.current.getRMSLevel();
+        if (volume < 0.02) {
+          silenceMs += 100;
+        } else {
+          silenceMs = 0;
+        }
+        
+        if (silenceMs >= 3000) {
+          clearInterval(interval);
+          stopRecordingAndProcess();
+        }
+      }, 100);
+      
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to start microphone.";
+      showToast(msg);
+    }
+  };
+
+  const stopRecordingAndProcess = async () => {
+    if (!recorderRef.current || !recorderRef.current.isRecording()) return;
+    setRecordingState('processing');
+    
+    try {
+      const audioBlob = await recorderRef.current.stop();
+      if (!currentWordToken) return;
+      const promptText = currentWordToken.ayahData.words.join(" ");
+      
+      const result = await transcribeAudio(audioBlob, 'ayah', promptText);
+      if (!result.success || !result.transcript) {
+        setRecordingState('summary');
+        setAlignedResults(currentWordToken.ayahData.words.map((w, idx) => ({
+          word: w,
+          status: 'error',
+          similarity: 0,
+          wordIdxInAyah: idx
+        })));
+        return;
+      }
+      
+      const spokenTranscript = result.transcript.trim();
+      setLiveTranscript(spokenTranscript);
+      
+      const spokenWords = spokenTranscript.split(/\s+/).filter(Boolean);
+      const expectedWords = currentWordToken.ayahData.words;
+      
+      const aligned = expectedWords.map((expectedWord, idx) => {
+        let bestMatch: { similarity: number; status: 'correct' | 'tajweed' | 'error' } = { similarity: 0, status: 'error' };
+        for (const spokenWord of spokenWords) {
+          const check = checkWord(spokenWord, expectedWord, recitationLevel, confidentReciterMode);
+          if (check.similarity > bestMatch.similarity) {
+            bestMatch = check;
+          }
+        }
+        return {
+          word: expectedWord,
+          status: bestMatch.status,
+          similarity: bestMatch.similarity,
+          wordIdxInAyah: idx
+        };
+      });
+      
+      setAlignedResults(aligned);
+      setRecordingState('summary');
+      
+      const correctWords = aligned.filter(w => w.status === 'correct' || w.status === 'tajweed').length;
+      const errorWords = aligned.length - correctWords;
+      
+      useRecitationStore.setState(state => ({
+        correctCount: state.correctCount + correctWords,
+        errorCount: state.errorCount + errorWords,
+      }));
+      
+    } catch {
+      setRecordingState('idle');
+      showToast("Verification failed. Please try again.");
+    }
+  };
+
+  const toggleLocalRecording = () => {
+    if (recordingState === 'listening') {
+      stopRecordingAndProcess();
+    } else if (recordingState === 'idle') {
+      startRecording();
+    }
+  };
+
+  const playQariWord = (wordIdx: number) => {
+    if (!currentWordToken) return;
+    const url = getWordAudio(currentWordToken.ayahData.surahId, currentWordToken.ayahN, wordIdx + 1);
+    const audio = new Audio(url);
+    audio.play().catch(() => {});
+  };
+
+
 
   // Automatically switch/scroll to the Ayah text screen when user begins reciting
   useEffect(() => {
@@ -179,9 +234,6 @@ export default function RecitationPage() {
   const liveAccuracy = totalChecked > 0 ? Math.round((correctCount / totalChecked) * 100) : null;
 
   const currentWordToken = allWords[wordIndex];
-  const cleanWord = currentWordToken ? stripDiacritics(currentWordToken.arabic) : "";
-  const phoneticGuide = currentWordToken ? (PHONETIC_DICT[cleanWord] || cleanWord) : "";
-
   const handleSave = async () => {
     trackEvent("surah_complete", "engagement", `surah_${surahId}`);
     await saveSessionScore();
@@ -214,14 +266,6 @@ export default function RecitationPage() {
     }
   };
 
-  const playCurrentWordAudio = async () => {
-    if (currentWordToken && !playingWord) {
-      setPlayingWord(true);
-      await speakArabicWord(currentWordToken.arabic, currentWordToken, false);
-      setPlayingWord(false);
-    }
-  };
-
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -232,9 +276,6 @@ export default function RecitationPage() {
     >
       <Header />
       
-      {/* Listening loop */}
-      <ContinuousListener micCheckOpen={micCheckOpen} />
-
       {/* Settings Panel Drawer */}
       <SettingsDrawer isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
 
@@ -243,9 +284,6 @@ export default function RecitationPage() {
 
       {/* Mic Check Modal */}
       <MicCheckModal isOpen={micCheckOpen} onClose={() => setMicCheckOpen(false)} />
-
-      {/* Continuous Speech Listener Hook */}
-      <ContinuousListener micCheckOpen={micCheckOpen} />
 
       {/* Recitation Main UI */}
       <main className="flex-1 max-w-6xl mx-auto w-full px-6 mt-6 grid grid-cols-1 lg:grid-cols-12 gap-8 relative z-10">
@@ -269,29 +307,111 @@ export default function RecitationPage() {
 
           {/* Focal Active Word Container (min-height 40% on mobile) */}
           {currentWordToken ? (
-            <div className="card border-2 border-[#c8993c]/30 shadow-[0_4px_16px_rgba(200,153,60,0.1)] rounded-2xl flex flex-col justify-center items-center py-10 min-h-[40vh] bg-white relative overflow-hidden">
-              <span className="text-[10px] text-[#6b7280] font-extrabold uppercase tracking-widest absolute top-4">
-                Say this word
-              </span>
-              
-              {/* Gold outline glow wrapper */}
-              <div className="font-amiri text-5xl md:text-6xl text-[#1e5e4a] bg-[#fdf8f0] border border-[#c8993c]/30 shadow-[0_0_24px_rgba(200,153,60,0.2)] rounded-2xl px-10 py-5 leading-normal text-center select-all my-4 transition-all duration-300">
-                {currentWordToken.arabic}
+            recordingState === 'summary' ? (
+              <div className="card border-2 border-[#c8993c]/30 shadow-[0_4px_16px_rgba(200,153,60,0.1)] rounded-2xl flex flex-col justify-center items-center py-10 min-h-[40vh] bg-white relative overflow-hidden px-8">
+                <span className="text-[10px] text-[#6b7280] font-extrabold uppercase tracking-widest absolute top-4">
+                  Ayah Recitation Summary
+                </span>
+                
+                <div className="flex flex-wrap gap-x-2 gap-y-4 justify-center items-center my-6 select-text max-w-xl text-center">
+                  {alignedResults.map((w, idx) => {
+                    const isCorrect = w.status === 'correct';
+                    const isTajweed = w.status === 'tajweed';
+                    const isError = w.status === 'error';
+                    
+                    return (
+                      <div key={idx} className="flex flex-col items-center gap-1.5">
+                        <span
+                          className={`font-amiri text-4xl md:text-5xl leading-none px-1.5 py-1 rounded transition-colors duration-200 ${
+                            isCorrect ? "text-[#1e5e4a] bg-emerald-pale/40 font-bold" : ""
+                          } ${
+                            isTajweed ? "text-amber-700 bg-amber-50 font-bold" : ""
+                          } ${
+                            isError ? "text-[#8b1a1a] bg-red-50" : ""
+                          }`}
+                        >
+                          {w.word}
+                        </span>
+                        {isError && (
+                          <button
+                            onClick={() => playQariWord(w.wordIdxInAyah)}
+                            className="text-[10px] text-[#c8993c] hover:text-gold font-bold px-1.5 py-0.5 rounded border border-[#c8993c]/30 bg-[#faf6ee] active:scale-95 transition-all flex items-center gap-0.5"
+                            title="Listen to correct pronunciation"
+                          >
+                            🔊 Listen
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Navigation/Retry options */}
+                <div className="flex gap-4 mt-6">
+                  <button
+                    onClick={() => {
+                      setRecordingState('idle');
+                      setAlignedResults([]);
+                    }}
+                    className="px-5 py-2.5 rounded-xl border border-[#c8993c] bg-[#faf6ee] hover:bg-gold-pale/30 text-[#c8993c] font-bold text-xs uppercase tracking-widest transition-all active:scale-95 shadow-sm"
+                  >
+                    🔄 Retry Ayah
+                  </button>
+                  <button
+                    onClick={advanceAyah}
+                    className="px-5 py-2.5 rounded-xl bg-[#1e5e4a] text-white font-bold text-xs uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-emerald/10"
+                  >
+                    Next Ayah ➡️
+                  </button>
+                </div>
               </div>
+            ) : (
+              <div className="card border-2 border-[#c8993c]/30 shadow-[0_4px_16px_rgba(200,153,60,0.1)] rounded-2xl flex flex-col justify-center items-center py-10 min-h-[40vh] bg-white relative overflow-hidden px-8">
+                <span className="text-[10px] text-[#6b7280] font-extrabold uppercase tracking-widest absolute top-4">
+                  {recordingState === 'listening' ? "Reciting Active Verse" : "Active Verse"}
+                </span>
+                
+                <div className="font-amiri text-4xl md:text-5xl text-[#1e5e4a] leading-relaxed text-center my-6 max-w-xl">
+                  {currentWordToken ? currentWordToken.ayahData.words.join(" ") : ""}
+                </div>
 
-              {/* Transliteration / Phonetics Guide */}
-              <span className="text-lg font-bold text-[#1a1208] italic tracking-wide mt-2">
-                {phoneticGuide}
-              </span>
+                {recordingState === 'idle' && (
+                  <span className="text-xs text-[#6b7280] font-semibold mt-2">
+                    Press the mic button below and read the entire verse.
+                  </span>
+                )}
 
-              {/* Hear it first Qari playback */}
-              <button
-                onClick={playCurrentWordAudio}
-                className="mt-6 px-5 py-2.5 rounded-xl border border-[#c8993c] bg-[#faf6ee] hover:bg-gold-pale/30 text-[#c8993c] font-bold text-xs uppercase tracking-widest flex items-center gap-2 transition-all active:scale-95 shadow-sm"
-              >
-                <span>🔊</span> {playingWord ? "Listening..." : "Hear it first"}
-              </button>
-            </div>
+                {recordingState === 'listening' && (
+                  <div className="flex flex-col items-center gap-2">
+                    <span className="text-xs text-[#8b1a1a] font-bold animate-pulse">
+                      🎙️ Voice active... speak now
+                    </span>
+                    {/* Local waveform indicator visual cue */}
+                    <div className="flex gap-1 mt-2 justify-center items-center h-4">
+                      {[1, 2, 3, 4, 5, 4, 3, 2, 1].map((h, i) => (
+                        <div
+                          key={i}
+                          className="w-1 bg-[#8b1a1a] rounded animate-pulse"
+                          style={{
+                            height: `${h * 4}px`,
+                            animationDelay: `${i * 0.1}s`
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {recordingState === 'processing' && (
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="w-6 h-6 border-2 border-gold border-t-transparent rounded-full animate-spin" />
+                    <span className="text-xs text-amber-600 font-bold">
+                      Analyzing recitation alignment...
+                    </span>
+                  </div>
+                )}
+              </div>
+            )
           ) : (
             <div className="card shadow-sm rounded-2xl flex flex-col justify-center items-center py-10 min-h-[300px] bg-white">
               <span className="text-4xl mb-4">🎉</span>
@@ -393,25 +513,43 @@ export default function RecitationPage() {
 
       {/* Floating ASR Microphone Button (Positioned above mobile BottomNav) */}
       <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 z-50 md:bottom-8 select-none flex flex-col items-center gap-2">
-        {isListening && showSilenceWarning && (
-          <div className="bg-[#faf6ee] dark:bg-zinc-900 border border-[#c8993c]/35 text-[#1e5e4a] dark:text-emerald-light text-[10px] font-extrabold px-3 py-1 rounded-xl shadow-lg whitespace-nowrap text-center animate-pulse">
-            Mic not detecting? Toggle off and on to reset! 🎙️
+        {showMuteToast && (
+          <div className="bg-[#faf6ee] border border-[#c8993c]/35 text-[#8b1a1a] text-[11px] font-bold px-3 py-1.5 rounded-xl shadow-lg transition-all animate-bounce">
+            🔇 Audio paused while listening
           </div>
         )}
         <button
-          onClick={() => setListening(!isListening)}
+          onClick={toggleLocalRecording}
+          disabled={recordingState === 'processing'}
           className={`w-[72px] h-[72px] md:w-[80px] md:h-[80px] rounded-full flex items-center justify-center text-white shadow-2xl transition-all duration-300 transform hover:scale-105 active:scale-95 ${
-            !isListening
-              ? "bg-[#6b7280] shadow-[0_4px_12px_rgba(107,114,128,0.3)]"
-              : recitationState === "error" || recitationState === "correction"
-              ? "bg-[#8b1a1a] shadow-[0_0_15px_rgba(139,26,26,0.5)] animate-pulse"
-              : recitationState === "listening" || recitationState === "retry"
-              ? "bg-[#1e5e4a] shadow-[0_0_15px_rgba(30,94,74,0.5)]"
-              : "bg-[#c8993c] animate-pulse"
+            recordingState === 'idle'
+              ? "bg-[#1e5e4a] shadow-[0_4px_12px_rgba(30,94,74,0.3)]"
+              : recordingState === 'listening'
+              ? "bg-[#8b1a1a] shadow-[0_0_15px_rgba(139,26,26,0.5)] active:scale-95 animate-pulse"
+              : recordingState === 'processing'
+              ? "bg-[#c8993c] cursor-wait"
+              : "bg-zinc-400"
           }`}
         >
-          <span className="text-2xl md:text-3xl">{isListening ? "🎙️" : "🔇"}</span>
+          {recordingState === 'idle' && (
+            <span className="text-2xl md:text-3xl">🎙️</span>
+          )}
+          {recordingState === 'listening' && (
+            <div className="w-5 h-5 bg-white rounded-full" />
+          )}
+          {recordingState === 'processing' && (
+            <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          )}
+          {recordingState === 'summary' && (
+            <span className="text-2xl md:text-3xl">✓</span>
+          )}
         </button>
+        <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 text-center">
+          {recordingState === 'idle' && "Tap to speak"}
+          {recordingState === 'listening' && "Listening... tap to stop"}
+          {recordingState === 'processing' && "Checking..."}
+          {recordingState === 'summary' && "Done"}
+        </span>
       </div>
 
       {/* Stats Trigger overlay button on mobile view */}

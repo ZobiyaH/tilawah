@@ -28,6 +28,11 @@ export default function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps)
   const micGain = useRecitationStore((state) => state.micGain);
   const setMicGain = useRecitationStore((state) => state.setMicGain);
 
+  const recitationLevel = useRecitationStore((state) => state.recitationLevel);
+  const setRecitationLevel = useRecitationStore((state) => state.setRecitationLevel);
+  const confidentReciterMode = useRecitationStore((state) => state.confidentReciterMode);
+  const setConfidentReciterMode = useRecitationStore((state) => state.setConfidentReciterMode);
+
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -148,6 +153,37 @@ export default function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps)
                   type="checkbox"
                   checked={showTajweedColors}
                   onChange={toggleTajweedColors}
+                  className="w-9 h-5 rounded-full bg-parchment-dark dark:bg-zinc-800 checked:bg-gold appearance-none relative cursor-pointer outline-none transition-colors before:content-[''] before:absolute before:w-4 before:h-4 before:rounded-full before:bg-white before:top-0.5 before:left-0.5 checked:before:translate-x-4 before:transition-transform"
+                />
+              </div>
+
+              {/* Recitation Level */}
+              <div className="flex flex-col gap-2 p-3 rounded-lg border border-gold/10 bg-white/50 dark:bg-zinc-800/20">
+                <div>
+                  <span className="text-sm font-bold block">Recitation Level</span>
+                  <span className="text-[10px] text-zinc-400">Sets pronunciation matching strictness</span>
+                </div>
+                <select
+                  value={recitationLevel}
+                  onChange={(e) => setRecitationLevel(e.target.value as "beginner" | "intermediate" | "advanced")}
+                  className="w-full mt-2 p-2 bg-parchment dark:bg-zinc-850 border border-gold/20 rounded-md text-xs font-bold focus:outline-none"
+                >
+                  <option value="beginner">Beginner (Very Lenient)</option>
+                  <option value="intermediate">Intermediate (Standard)</option>
+                  <option value="advanced">Advanced (Strict Tajweed)</option>
+                </select>
+              </div>
+
+              {/* Confident Reciter Mode */}
+              <div className="flex items-center justify-between p-3 rounded-lg border border-gold/10 bg-white/50 dark:bg-zinc-800/20">
+                <div>
+                  <span className="text-sm font-bold block">Confident Reciter Mode</span>
+                  <span className="text-[10px] text-zinc-400">Lenient checking, no live mid-verse warnings</span>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={confidentReciterMode}
+                  onChange={(e) => setConfidentReciterMode(e.target.checked)}
                   className="w-9 h-5 rounded-full bg-parchment-dark dark:bg-zinc-800 checked:bg-gold appearance-none relative cursor-pointer outline-none transition-colors before:content-[''] before:absolute before:w-4 before:h-4 before:rounded-full before:bg-white before:top-0.5 before:left-0.5 checked:before:translate-x-4 before:transition-transform"
                 />
               </div>

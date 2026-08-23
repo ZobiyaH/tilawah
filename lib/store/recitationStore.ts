@@ -36,6 +36,8 @@ interface RecitationState {
   showTranslation: boolean;
   showTajweedColors: boolean;
   micGain: number;
+  recitationLevel: "beginner" | "intermediate" | "advanced";
+  confidentReciterMode: boolean;
 
   // Actions
   loadSurah: (surahId: string, surahName: string, ayat: Ayah[]) => void;
@@ -53,6 +55,8 @@ interface RecitationState {
   saveSessionScore: () => Promise<void>;
   setFontScale: (scale: number) => void;
   setMicGain: (gain: number) => void;
+  setRecitationLevel: (level: "beginner" | "intermediate" | "advanced") => void;
+  setConfidentReciterMode: (mode: boolean) => void;
   toggleTransliteration: () => void;
   toggleTranslation: () => void;
   toggleTajweedColors: () => void;
@@ -89,6 +93,8 @@ export const useRecitationStore = create<RecitationState>((set, get) => {
     showTranslation: true,
     showTajweedColors: true,
     micGain: typeof window !== 'undefined' ? parseFloat(localStorage.getItem('tilawa_mic_gain') || '2.5') : 2.5,
+    recitationLevel: typeof window !== 'undefined' ? (localStorage.getItem('tilawa_recitation_level') as "beginner" | "intermediate" | "advanced" || 'intermediate') : 'intermediate',
+    confidentReciterMode: typeof window !== 'undefined' ? localStorage.getItem('tilawa_confident_reciter') === 'true' : false,
 
     loadSurah: (surahId, surahName, ayat) => {
       const allWords: WordToken[] = [];
@@ -151,7 +157,7 @@ export const useRecitationStore = create<RecitationState>((set, get) => {
     },
 
     processSpeech: (spokenAlternatives) => {
-      const { allWords, wordIndex, mode, recitationState, correctWord, retryCount, isAudioPlaying } = get();
+      const { allWords, wordIndex, mode, recitationState, correctWord, retryCount, isAudioPlaying, recitationLevel, confidentReciterMode } = get();
       if (wordIndex >= allWords.length) return;
       if (isAudioPlaying) return;
 
@@ -167,7 +173,7 @@ export const useRecitationStore = create<RecitationState>((set, get) => {
         if (allSpokenWords.length > 0) {
           // Score all alternatives and pick the best match
           const scores = allSpokenWords.map((s) => {
-            const check = checkWord(s, correctWord);
+            const check = checkWord(s, correctWord, recitationLevel, confidentReciterMode);
             return {
               text: s,
               similarity: check.similarity,
@@ -261,7 +267,7 @@ export const useRecitationStore = create<RecitationState>((set, get) => {
             // Find the best starting index in spokenWords that matches the chosen expected start word
             let startSpokenIdx = 0;
             for (let i = 0; i < Math.min(spokenWords.length, 3); i++) {
-              const check = checkWord(spokenWords[i], allWords[expectedStart].arabic);
+              const check = checkWord(spokenWords[i], allWords[expectedStart].arabic, recitationLevel, confidentReciterMode);
               if (check.status === "correct" || check.status === "tajweed") {
                 startSpokenIdx = i;
                 break;
@@ -272,7 +278,7 @@ export const useRecitationStore = create<RecitationState>((set, get) => {
               const sWord = spokenWords[s];
               if (tempExpectedIdx >= allWords.length) break;
               const expected = allWords[tempExpectedIdx];
-              const check = checkWord(sWord, expected.arabic);
+              const check = checkWord(sWord, expected.arabic, recitationLevel, confidentReciterMode);
               
               if (check.status === "correct" || check.status === "tajweed") {
                 matchedCount++;
@@ -287,7 +293,7 @@ export const useRecitationStore = create<RecitationState>((set, get) => {
                 // Try checking if sWord matches tempExpectedIdx + 1 (user skipped a particle or slight ASR gap)
                 if (tempExpectedIdx + 1 < allWords.length) {
                   const nextExpected = allWords[tempExpectedIdx + 1];
-                  const nextCheck = checkWord(sWord, nextExpected.arabic);
+                  const nextCheck = checkWord(sWord, nextExpected.arabic, recitationLevel, confidentReciterMode);
                   if (nextCheck.status === "correct" || nextCheck.status === "tajweed") {
                     matchedCount++;
                     tempResults.push({
@@ -304,7 +310,7 @@ export const useRecitationStore = create<RecitationState>((set, get) => {
                 // Or check if sWord + sNext combined matches expected.arabic (ASR split 1 Arabic word into 2 tokens)
                 if (s + 1 < spokenWords.length) {
                   const combined = sWord + spokenWords[s + 1];
-                  const combCheck = checkWord(combined, expected.arabic);
+                  const combCheck = checkWord(combined, expected.arabic, recitationLevel, confidentReciterMode);
                   if (combCheck.status === "correct" || combCheck.status === "tajweed") {
                     matchedCount++;
                     tempResults.push({
@@ -526,6 +532,14 @@ export const useRecitationStore = create<RecitationState>((set, get) => {
     setMicGain: (gain) => {
       localStorage.setItem("tilawa_mic_gain", String(gain));
       set({ micGain: gain });
+    },
+    setRecitationLevel: (level) => {
+      localStorage.setItem("tilawa_recitation_level", level);
+      set({ recitationLevel: level });
+    },
+    setConfidentReciterMode: (mode) => {
+      localStorage.setItem("tilawa_confident_reciter", String(mode));
+      set({ confidentReciterMode: mode });
     },
     setAudioPlaying: (playing) => set({ isAudioPlaying: playing }),
     toggleTransliteration: () => set((state) => ({ showTransliteration: !state.showTransliteration })),

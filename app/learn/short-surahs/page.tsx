@@ -50,6 +50,9 @@ export default function ShortSurahsPage() {
   const allWords = useRecitationStore((state) => state.allWords);
   const correctCount = useRecitationStore((state) => state.correctCount);
   const errorCount = useRecitationStore((state) => state.errorCount);
+  const isListening = useRecitationStore((state) => state.isListening);
+  const setListening = useRecitationStore((state) => state.setListening);
+  const recitationState = useRecitationStore((state) => state.recitationState);
 
   // Audio / ASR states
   const [playingAyahIdx, setPlayingAyahIdx] = useState<number | null>(null);
@@ -484,11 +487,11 @@ export default function ShortSurahsPage() {
                       
                       <button
                         onClick={startWordASR}
-                        className={`h-10 px-4 rounded-lg text-white font-bold text-xs uppercase tracking-wider ${
-                          isRecording ? "bg-red-600 animate-pulse" : "bg-[#1e5e4a]"
+                        className={`h-10 px-4 rounded-lg text-white font-bold text-xs uppercase tracking-wider transition-all duration-300 ${
+                          isRecording ? "bg-[#8b1a1a] animate-pulse" : "bg-[#1e5e4a]"
                         }`}
                       >
-                        🎙️ Speak Word
+                        {isRecording ? "Listening... tap to stop" : "🎙️ Tap to speak"}
                       </button>
                     </div>
 
@@ -528,11 +531,11 @@ export default function ShortSurahsPage() {
                       
                       <button
                         onClick={startAyahASR}
-                        className={`h-10 px-4 rounded-lg text-white font-bold text-xs uppercase tracking-wider ${
-                          isRecording ? "bg-red-600 animate-pulse" : "bg-[#1e5e4a]"
+                        className={`h-10 px-4 rounded-lg text-white font-bold text-xs uppercase tracking-wider transition-all duration-300 ${
+                          isRecording ? "bg-[#8b1a1a] animate-pulse" : "bg-[#1e5e4a]"
                         }`}
                       >
-                        🎙️ Repeat Ayah
+                        {isRecording ? "Listening... tap to stop" : "🎙️ Tap to speak"}
                       </button>
                     </div>
 
@@ -621,6 +624,32 @@ export default function ShortSurahsPage() {
         )}
 
       </main>
+
+      {activePhase === 4 && (
+        <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 z-50 md:bottom-8 select-none flex flex-col items-center gap-2">
+          <div className="flex flex-col items-center gap-1.5">
+            <button
+              onClick={() => setListening(!isListening)}
+              className={`w-[72px] h-[72px] md:w-[80px] md:h-[80px] rounded-full flex items-center justify-center text-white shadow-2xl transition-all duration-300 transform hover:scale-105 active:scale-95 ${
+                !isListening
+                  ? "bg-[#1e5e4a] shadow-[0_4px_12px_rgba(30,94,74,0.3)]"
+                  : recitationState === "error" || recitationState === "correction"
+                  ? "bg-[#8b1a1a] shadow-[0_0_15px_rgba(139,26,26,0.5)] active:scale-95 animate-pulse"
+                  : "bg-[#1e5e4a] shadow-[0_0_15px_rgba(30,94,74,0.5)] active:scale-95 animate-pulse"
+              }`}
+            >
+              {!isListening ? (
+                <span className="text-2xl md:text-3xl">🎙️</span>
+              ) : (
+                <div className="w-5 h-5 bg-white rounded-full animate-ping" />
+              )}
+            </button>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 text-center">
+              {!isListening ? "Tap to speak" : "Listening... tap to stop"}
+            </span>
+          </div>
+        </div>
+      )}
 
       <BottomNav />
     </div>
