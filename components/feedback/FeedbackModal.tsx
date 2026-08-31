@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { trackEvent } from '@/lib/analytics/ga';
 
-type FeedbackType = 'bug' | 'suggestion' | 'praise' | 'other';
+type FeedbackType = 'error' | 'suggestion' | 'praise' | 'other';
 
 export function FeedbackModal({ onClose }: { onClose: () => void }) {
   const [type, setType] = useState<FeedbackType>('suggestion');
@@ -27,7 +27,6 @@ export function FeedbackModal({ onClose }: { onClose: () => void }) {
       formData.append('type', type);
       formData.append('message', message.trim());
       
-      // If email is provided, validate; if not, pass clean text or omit invalid formats
       const cleanEmail = email.trim();
       if (cleanEmail) {
         formData.append('email', cleanEmail);
@@ -86,7 +85,7 @@ export function FeedbackModal({ onClose }: { onClose: () => void }) {
         </div>
         
         <p className="feedback-modal__subtitle">
-          Found a bug? Have an idea? Tell me directly — 
+          Found an error or issue? Have an idea? Tell me directly — 
           I read every single message.
         </p>
 
@@ -94,10 +93,10 @@ export function FeedbackModal({ onClose }: { onClose: () => void }) {
           <div className="feedback-type-selector">
             <button
               type="button"
-              className={type === 'bug' ? 'active' : ''}
-              onClick={() => setType('bug')}
+              className={type === 'error' ? 'active' : ''}
+              onClick={() => setType('error')}
             >
-              🐛 Bug
+              ⚠️ Error / Issue
             </button>
             <button
               type="button"
@@ -127,8 +126,8 @@ export function FeedbackModal({ onClose }: { onClose: () => void }) {
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             placeholder={
-              type === 'bug' 
-                ? 'What went wrong? Which page, what happened...' 
+              type === 'error' 
+                ? 'What went wrong? Which page or surah, what happened...' 
                 : type === 'suggestion'
                 ? 'What would make Tilawah better for you?'
                 : "Tell me what's on your mind..."
@@ -158,7 +157,7 @@ export function FeedbackModal({ onClose }: { onClose: () => void }) {
             disabled={status === 'loading' || !message.trim()}
             className="feedback-submit"
           >
-            {status === 'loading' ? 'Sending...' : 'Send Feedback 🤲'}
+            {status === 'loading' ? 'Sending...' : 'Send Feedback'}
           </button>
         </form>
       </div>
