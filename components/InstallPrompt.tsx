@@ -15,6 +15,14 @@ export function InstallPrompt() {
     text: '',
   });
 
+  const checkIsStandalone = () => {
+    if (typeof window === 'undefined') return false;
+    return (
+      window.matchMedia('(display-mode: standalone)').matches ||
+      ('standalone' in window.navigator && Boolean((window.navigator as unknown as { standalone: boolean }).standalone))
+    );
+  };
+
   useEffect(() => {
     // Detect iOS
     const isIOSDevice =
@@ -23,38 +31,45 @@ export function InstallPrompt() {
         (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) &&
       !('MSStream' in window);
 
-    // Check if already in standalone mode (already installed)
-    const isStandalone =
-      typeof window !== 'undefined' &&
-      (window.matchMedia('(display-mode: standalone)').matches ||
-        ('standalone' in window.navigator && Boolean((window.navigator as unknown as { standalone: boolean }).standalone)));
-
-    if (isStandalone) {
-      return;
+    if (isIOSDevice) {
+      setIsIOS(true);
     }
 
     const dismissed = localStorage.getItem('install_prompt_dismissed');
+    const isInstalled = checkIsStandalone();
 
-    if (isIOSDevice) {
-      setIsIOS(true);
-      if (!dismissed) {
+    // Auto-prompt logic for first-time visitors (if not already running in standalone app)
+    if (!isInstalled && !dismissed) {
+      if (isIOSDevice) {
         const timer = setTimeout(() => setShowPrompt(true), 4000);
         return () => clearTimeout(timer);
       }
-      return;
     }
 
     const handler = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
 
-      if (!dismissed) {
+      if (!dismissed && !checkIsStandalone()) {
         setTimeout(() => setShowPrompt(true), 3000);
       }
     };
 
     const handleManualOpen = () => {
-      setShowPrompt(true);
+      const isStandaloneNow = checkIsStandalone();
+      if (isStandaloneNow) {
+        // App is currently running as installed standalone app
+        const isMobile = /Mobi|Android|iPhone/i.test(navigator.userAgent);
+        const msg = isMobile
+          ? 'Tilawah is already installed on your device! You are currently using the app.'
+          : 'Tilawah is already installed and running on your computer!';
+        
+        setInstalledToast({ show: true, text: msg });
+        setTimeout(() => setInstalledToast({ show: false, text: '' }), 3500);
+      } else {
+        // Not currently in standalone: prompt user to install
+        setShowPrompt(true);
+      }
     };
 
     const handleAppInstalled = () => {
@@ -82,7 +97,10 @@ export function InstallPrompt() {
   }, []);
 
   const handleInstall = async () => {
-    if (!deferredPrompt) return;
+    if (!deferredPrompt) {
+      setShowPrompt(false);
+      return;
+    }
     await deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
     if (outcome === 'accepted') {
@@ -107,10 +125,10 @@ export function InstallPrompt() {
 
   return (
     <>
-      {/* Post-installation feedback toast */}
+      {/* Toast Notification */}
       {installedToast.show && (
         <div className="fixed top-5 left-1/2 -translate-x-1/2 z-[100000] max-w-sm w-[90%] bg-[#1e5e4a] text-white px-5 py-3.5 rounded-2xl shadow-2xl border border-gold/40 flex items-center gap-3 animate-[slide-down_0.3s_ease-out]">
-          <span className="text-2xl">📱</span>
+          <span className="text-2xl flex-shrink-0">📱</span>
           <p className="text-xs font-bold leading-relaxed">{installedToast.text}</p>
         </div>
       )}

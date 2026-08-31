@@ -138,19 +138,19 @@ export default function Header({ onOpenSettings }: HeaderProps = {}) {
       <UserGuideModal isOpen={guideOpen} onClose={() => setGuideOpen(false)} />
       <SettingsDrawer isOpen={internalSettingsOpen} onClose={() => setInternalSettingsOpen(false)} />
 
-      <div className="max-w-6xl mx-auto flex justify-between items-center">
+      <div className="max-w-6xl mx-auto flex justify-between items-center gap-2 sm:gap-4">
         {/* Left: Brand Logo */}
-        <Link href="/" className="flex items-center gap-2 select-none group">
+        <Link href="/" className="flex items-center gap-1.5 sm:gap-2 select-none group flex-shrink-0 min-w-0">
           <Logo variant="horizontal" size="sm" className="group-hover:scale-105 transition-transform" />
         </Link>
 
         {/* Right: Desktop & Mobile Header Actions */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
           {/* User Guide Button */}
           {/* Install App Quick Action */}
           <button
             onClick={() => window.dispatchEvent(new CustomEvent('open-install-prompt'))}
-            className="px-2.5 py-1.5 rounded-xl text-xs font-extrabold text-white bg-[#1e5e4a] hover:bg-[#164738] border border-[#1e5e4a] transition-all flex items-center gap-1.5 shadow-xs cursor-pointer active:scale-95"
+            className="px-2 sm:px-2.5 py-1.5 rounded-xl text-xs font-extrabold text-white bg-[#1e5e4a] hover:bg-[#164738] border border-[#1e5e4a] transition-all flex items-center gap-1 shadow-xs cursor-pointer active:scale-95 flex-shrink-0"
             title="Install Tilawah App"
           >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4 text-emerald-200">
@@ -162,7 +162,7 @@ export default function Header({ onOpenSettings }: HeaderProps = {}) {
 
           <button
             onClick={() => setGuideOpen(true)}
-            className="px-2.5 py-1.5 rounded-xl text-xs font-extrabold text-[#c8993c] dark:text-[#e8c96a] bg-white/70 dark:bg-zinc-900/70 border border-[#c8993c]/30 hover:bg-[#c8993c]/15 transition-all flex items-center gap-1 shadow-xs"
+            className="px-2 sm:px-2.5 py-1.5 rounded-xl text-xs font-extrabold text-[#c8993c] dark:text-[#e8c96a] bg-white/70 dark:bg-zinc-900/70 border border-[#c8993c]/30 hover:bg-[#c8993c]/15 transition-all flex items-center gap-1 shadow-xs flex-shrink-0"
             title="How to Use Tilawah"
           >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
@@ -214,7 +214,7 @@ export default function Header({ onOpenSettings }: HeaderProps = {}) {
                 setShowPrompt(true);
               }
             }}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-xl border-2 border-[#c8993c]/50 hover:border-[#c8993c] bg-white/90 dark:bg-zinc-900/90 text-[#1a1208] dark:text-zinc-200 transition-all cursor-pointer select-none active:scale-95 shadow-xs hover:shadow-md"
+            className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-xl border-2 border-[#c8993c]/50 hover:border-[#c8993c] bg-white/90 dark:bg-zinc-900/90 text-[#1a1208] dark:text-zinc-200 transition-all cursor-pointer select-none active:scale-95 shadow-xs hover:shadow-md max-w-[105px] sm:max-w-none flex-shrink-0"
             title={user ? "View My Progress" : "Setup Profile"}
           >
             {user ? (
@@ -222,7 +222,7 @@ export default function Header({ onOpenSettings }: HeaderProps = {}) {
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-gold drop-shadow-sm animate-pulse">
                   <path fillRule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z" clipRule="evenodd" />
                 </svg>
-                <span className="text-xs font-black uppercase tracking-wider text-[#1e5e4a] dark:text-[#e8c96a]">
+                <span className="text-xs font-black uppercase tracking-wider text-[#1e5e4a] dark:text-[#e8c96a] truncate max-w-[55px] sm:max-w-none">
                   {user.username.split(" ")[0]}
                 </span>
               </div>
