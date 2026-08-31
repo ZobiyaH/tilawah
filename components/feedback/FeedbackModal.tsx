@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { trackEvent } from '@/lib/analytics/ga';
 
 type FeedbackType = 'bug' | 'suggestion' | 'praise' | 'other';
 
@@ -8,41 +9,56 @@ export function FeedbackModal({ onClose }: { onClose: () => void }) {
   const [message, setMessage] = useState('');
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [errorMessage, setErrorMessage] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!message.trim()) return;
 
     setStatus('loading');
+    setErrorMessage('');
 
-    const formspreeUrl = process.env.NEXT_PUBLIC_FEEDBACK_FORMSPREE_URL || 'https://formspree.io/f/xoeqeaon';
+    const formspreeUrl =
+      process.env.NEXT_PUBLIC_FEEDBACK_FORMSPREE_URL ||
+      'https://formspree.io/f/xoeqeaon';
 
     try {
+      const formData = new FormData();
+      formData.append('type', type);
+      formData.append('message', message.trim());
+      
+      // If email is provided, validate; if not, pass clean text or omit invalid formats
+      const cleanEmail = email.trim();
+      if (cleanEmail) {
+        formData.append('email', cleanEmail);
+      }
+      
+      formData.append('page', typeof window !== 'undefined' ? window.location.pathname : 'unknown');
+      formData.append('userAgent', typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown');
+      formData.append('submittedAt', new Date().toISOString());
 
       const response = await fetch(formspreeUrl, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
+          Accept: 'application/json',
         },
-        body: JSON.stringify({
-          type: type,
-          message: message,
-          email: email || 'Not provided',
-          page: typeof window !== 'undefined' ? window.location.pathname : '',
-          userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
-          submittedAt: new Date().toISOString(),
-        }),
+        body: formData,
       });
 
       if (response.ok) {
+        trackEvent('feedback_submitted', 'feedback', type);
         setStatus('success');
-        setTimeout(() => onClose(), 2000);
+        setTimeout(() => onClose(), 2200);
       } else {
+        const errorData = await response.json().catch(() => null);
+        console.error('Feedback Formspree error:', errorData);
         setStatus('error');
+        setErrorMessage('Could not send feedback. Please try again.');
       }
-    } catch {
+    } catch (err) {
+      console.error('Feedback network error:', err);
       setStatus('error');
+      setErrorMessage('Network error. Please check your connection and try again.');
     }
   };
 
@@ -52,7 +68,9 @@ export function FeedbackModal({ onClose }: { onClose: () => void }) {
         <div className="feedback-modal" onClick={(e) => e.stopPropagation()}>
           <div className="feedback-success">
             <span className="feedback-success__icon">🤲</span>
-            <p>JazakAllah Khair! Your feedback means a lot.</p>
+            <p className="font-bold text-base text-[#1e5e4a] dark:text-emerald-300">
+              JazakAllah Khair! Your feedback means a lot.
+            </p>
           </div>
         </div>
       </div>
@@ -105,6 +123,7 @@ export function FeedbackModal({ onClose }: { onClose: () => void }) {
           </div>
 
           <textarea
+            name="message"
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             placeholder={
@@ -120,6 +139,7 @@ export function FeedbackModal({ onClose }: { onClose: () => void }) {
           />
 
           <input
+            name="email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -129,7 +149,7 @@ export function FeedbackModal({ onClose }: { onClose: () => void }) {
 
           {status === 'error' && (
             <p className="feedback-error">
-              Something went wrong. Please try again.
+              {errorMessage || 'Something went wrong. Please try again.'}
             </p>
           )}
 
