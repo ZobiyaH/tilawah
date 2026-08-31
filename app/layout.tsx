@@ -1,9 +1,11 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Amiri_Quran, Lato } from "next/font/google";
 import { ToastProvider } from "@/components/UI/Toast";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import Footer from "@/components/Layout/Footer";
 import EmailCaptureModal from "@/components/UI/EmailCaptureModal";
+import { FeedbackButton } from "@/components/feedback/FeedbackButton";
+import { InstallPrompt } from "@/components/InstallPrompt";
 import { GA_ID } from "@/lib/analytics/ga";
 import "./globals.css";
 
@@ -21,7 +23,19 @@ const lato = Lato({
   display: "swap",
 });
 
+export const viewport: Viewport = {
+  themeColor: "#1e5e4a",
+  width: "device-width",
+  initialScale: 1,
+};
+
 export const metadata: Metadata = {
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Tilawah",
+  },
   title: "Tilawah - Free Quran Recitation Checker & Tajweed Teacher",
   description: "Learn to recite the Quran correctly with real-time Tajweed correction. Listen to verified Qari pronunciation, fix mistakes instantly, and learn from absolute basics - completely free.",
   keywords: [
@@ -66,6 +80,10 @@ export default function RootLayout({
     <html lang="en" dir="ltr" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         {/* Google Analytics Tag */}
         {GA_ID && (
           <>
@@ -107,6 +125,8 @@ export default function RootLayout({
               <Footer />
             </div>
             <EmailCaptureModal />
+            <FeedbackButton />
+            <InstallPrompt />
           </ToastProvider>
         </ThemeProvider>
       </body>

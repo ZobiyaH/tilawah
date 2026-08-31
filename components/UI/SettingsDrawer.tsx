@@ -49,8 +49,8 @@ export default function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps)
         onClick={onClose}
       />
 
-      <div className="absolute inset-y-0 right-0 max-w-full flex pl-10">
-        <div className="w-screen max-w-sm bg-parchment dark:bg-zinc-900 border-l border-gold/30 text-ink shadow-2xl flex flex-col h-full transform transition-all duration-300">
+      <div className="absolute inset-y-0 right-0 max-w-full flex pl-4 sm:pl-10">
+        <div className="w-screen max-w-[340px] sm:max-w-sm bg-parchment dark:bg-zinc-900 border-l border-gold/30 text-ink shadow-2xl flex flex-col h-full transform transition-all duration-300 overflow-x-hidden">
           
           {/* Header */}
           <div className="px-6 py-5 border-b border-gold/20 flex justify-between items-center bg-parchment-dark dark:bg-zinc-800/40">
@@ -163,15 +163,22 @@ export default function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps)
                   <span className="text-sm font-bold block">Recitation Level</span>
                   <span className="text-[10px] text-zinc-400">Sets pronunciation matching strictness</span>
                 </div>
-                <select
-                  value={recitationLevel}
-                  onChange={(e) => setRecitationLevel(e.target.value as "beginner" | "intermediate" | "advanced")}
-                  className="w-full mt-2 p-2 bg-parchment dark:bg-zinc-850 border border-gold/20 rounded-md text-xs font-bold focus:outline-none"
-                >
-                  <option value="beginner">Beginner (Very Lenient)</option>
-                  <option value="intermediate">Intermediate (Standard)</option>
-                  <option value="advanced">Advanced (Strict Tajweed)</option>
-                </select>
+                <div className="relative w-full mt-2">
+                  <select
+                    value={recitationLevel}
+                    onChange={(e) => setRecitationLevel(e.target.value as "beginner" | "intermediate" | "advanced")}
+                    className="w-full max-w-full p-2.5 pr-8 bg-white dark:bg-zinc-800 border border-gold/30 rounded-xl text-xs font-bold text-[#1a1208] dark:text-zinc-100 focus:outline-none focus:border-[#1e5e4a] appearance-none cursor-pointer shadow-2xs"
+                  >
+                    <option value="beginner" className="bg-white dark:bg-zinc-800 text-[#1a1208] dark:text-zinc-100 py-1">Beginner (Very Lenient)</option>
+                    <option value="intermediate" className="bg-white dark:bg-zinc-800 text-[#1a1208] dark:text-zinc-100 py-1">Intermediate (Standard)</option>
+                    <option value="advanced" className="bg-white dark:bg-zinc-800 text-[#1a1208] dark:text-zinc-100 py-1">Advanced (Strict Tajweed)</option>
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-zinc-400">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
               </div>
 
               {/* Confident Reciter Mode */}

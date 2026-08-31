@@ -2,7 +2,7 @@ import { SurahMetadata } from "../types";
 
 export const ALL_SURAHS: SurahMetadata[] = [
   { id: "1", number: 1, name: "الفاتحة", englishName: "Al-Fatiha", totalAyat: 7, isImplemented: true },
-  { id: "2_1", number: 2, name: "البقرة", englishName: "Al-Baqarah", totalAyat: 286, isImplemented: true },
+  { id: "2_1", number: 2, name: "البقرة", englishName: "Al-Baqarah", totalAyat: 286, isImplemented: false },
   { id: "3", number: 3, name: "آل عمران", englishName: "Ali 'Imran", totalAyat: 200, isImplemented: false },
   { id: "4", number: 4, name: "النساء", englishName: "An-Nisa", totalAyat: 176, isImplemented: false },
   { id: "5", number: 5, name: "المائدة", englishName: "Al-Ma'idah", totalAyat: 120, isImplemented: false },

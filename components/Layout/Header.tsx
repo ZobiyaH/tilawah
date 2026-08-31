@@ -147,6 +147,19 @@ export default function Header({ onOpenSettings }: HeaderProps = {}) {
         {/* Right: Desktop & Mobile Header Actions */}
         <div className="flex items-center gap-2">
           {/* User Guide Button */}
+          {/* Install App Quick Action */}
+          <button
+            onClick={() => window.dispatchEvent(new CustomEvent('open-install-prompt'))}
+            className="px-2.5 py-1.5 rounded-xl text-xs font-extrabold text-white bg-[#1e5e4a] hover:bg-[#164738] border border-[#1e5e4a] transition-all flex items-center gap-1.5 shadow-xs cursor-pointer active:scale-95"
+            title="Install Tilawah App"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4 text-emerald-200">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.5V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+            </svg>
+            <span className="hidden sm:inline uppercase tracking-wider text-[11px]">Install App</span>
+            <span className="sm:hidden uppercase tracking-wider text-[10px]">App</span>
+          </button>
+
           <button
             onClick={() => setGuideOpen(true)}
             className="px-2.5 py-1.5 rounded-xl text-xs font-extrabold text-[#c8993c] dark:text-[#e8c96a] bg-white/70 dark:bg-zinc-900/70 border border-[#c8993c]/30 hover:bg-[#c8993c]/15 transition-all flex items-center gap-1 shadow-xs"
