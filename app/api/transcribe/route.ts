@@ -52,17 +52,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const prompt = (formData.get('prompt') as string) || 'بسم الله الرحمن الرحيم الحمد لله رب العالمين';
+    const genericArabicPrompt = "القرآن الكريم تلاوة عربية فصيحة واضحة";
 
     const buffer = Buffer.from(await audioFile.arrayBuffer());
     const fileToUpload = await toFile(buffer, 'recording.webm', { type: 'audio/webm' });
 
-    console.log('[API] Sending continuous audio to Groq with prompt:', prompt);
+    console.log('[API] Transcribing audio with Whisper...');
     const transcription: any = await groq.audio.transcriptions.create({
       file: fileToUpload,
       model: 'whisper-large-v3',
       language: 'ar',
-      prompt: prompt,
+      prompt: genericArabicPrompt,
       response_format: 'verbose_json',
       temperature: 0.0,
     });

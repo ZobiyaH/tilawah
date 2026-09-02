@@ -185,8 +185,16 @@ export default function RecitationPage() {
 
       const correctWords = aligned.filter((w) => w.status === "correct" || w.status === "tajweed").length;
       const errorWords = aligned.length - correctWords;
+      const firstError = aligned.find((w) => w.status === "error");
 
-      // FIX 4: Only record scores on genuine real attempts
+      // Instantly play authentic Qari voice for the first mispronounced word
+      if (firstError) {
+        setTimeout(() => {
+          playQariWord(firstError.wordIdxInAyah);
+        }, 300);
+      }
+
+      // Record scores
       useRecitationStore.setState((state) => ({
         correctCount: state.correctCount + correctWords,
         errorCount: state.errorCount + errorWords,
