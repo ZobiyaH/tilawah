@@ -155,15 +155,23 @@ export default function RecitationPage() {
       const spokenWords = spokenTranscript.split(/\s+/).filter(Boolean);
       const expectedWords = currentWordToken.ayahData.words;
 
-      // Smart alignment: map each expected word to the best spoken match
+      // Strict sequential alignment: map each expected word to the corresponding spoken word or nearby window
       const aligned = expectedWords.map((expectedWord, idx) => {
         let bestMatch: { similarity: number; status: "correct" | "tajweed" | "error" } = { similarity: 0, status: "error" };
-        for (const spokenWord of spokenWords) {
+        
+        // Check exact corresponding spoken position and immediate adjacent tokens (±1)
+        const candidateIndices = [idx, idx - 1, idx + 1].filter(
+          (i) => i >= 0 && i < spokenWords.length
+        );
+
+        for (const cIdx of candidateIndices) {
+          const spokenWord = spokenWords[cIdx];
           const check = checkWord(spokenWord, expectedWord, recitationLevel, confidentReciterMode);
           if (check.similarity > bestMatch.similarity) {
             bestMatch = check;
           }
         }
+        
         return {
           word: expectedWord,
           status: bestMatch.status,

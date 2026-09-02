@@ -78,8 +78,8 @@ export interface CheckResult {
 }
 
 /**
- * Calculates a similarity score between 0.0 and 1.0 for two Arabic words.
- * Performs normalization before computing Levenshtein distance.
+ * Calculates a strict similarity score between 0.0 and 1.0 for two Arabic words.
+ * Performs normalization before computing exact Levenshtein distance.
  */
 export function arabicSimilarity(spoken: string, reference: string): number {
   const ns = normalizeArabic(spoken);
@@ -92,16 +92,11 @@ export function arabicSimilarity(spoken: string, reference: string): number {
     return 1.0;
   }
 
-  // Handle substring matching in continuous flow (e.g. compound tokens or prefix additions)
-  if (nr.length >= 3 && (ns.includes(nr) || nr.includes(ns))) {
-    return 0.95;
-  }
-
-  // Prefix handling: e.g. "والرحمن", "بالله", "فلله", "كالناس"
-  if (ns.length > nr.length && (ns.startsWith("و") || ns.startsWith("ف") || ns.startsWith("ب") || ns.startsWith("ل") || ns.startsWith("ك"))) {
+  // Prefix handling: only if stripped word matches reference closely
+  if (ns.length === nr.length + 1 && (ns.startsWith("و") || ns.startsWith("ف") || ns.startsWith("ب") || ns.startsWith("ل") || ns.startsWith("ك"))) {
     const strippedPrefix = ns.slice(1);
     if (strippedPrefix === nr || strippedPrefix.replace(/ا/g, "") === nr.replace(/ا/g, "")) {
-      return 0.95;
+      return 0.90;
     }
   }
 
@@ -114,7 +109,7 @@ export function arabicSimilarity(spoken: string, reference: string): number {
 
 /**
  * Align and compare spoken word alternatives against expected Quran word.
- * Also checks English ASR transliterations as a fallback.
+ * Requires high phonetic accuracy (0.75+ for intermediate, 0.65+ for beginner).
  */
 export function checkWord(
   spokenAlternatives: string | string[],
@@ -124,15 +119,15 @@ export function checkWord(
 ): CheckResult {
   const alternatives = Array.isArray(spokenAlternatives) ? spokenAlternatives : [spokenAlternatives];
   
-  let correctThreshold = 0.60;
-  let tajweedThreshold = 0.40;
+  let correctThreshold = 0.75;
+  let tajweedThreshold = 0.55;
 
   if (recitationLevel === 'beginner' || confidentReciterMode) {
-    correctThreshold = 0.50;
-    tajweedThreshold = 0.30;
+    correctThreshold = 0.65;
+    tajweedThreshold = 0.45;
   } else if (recitationLevel === 'advanced') {
-    correctThreshold = 0.70;
-    tajweedThreshold = 0.50;
+    correctThreshold = 0.85;
+    tajweedThreshold = 0.70;
   }
 
   let bestResult: CheckResult = { status: 'error', similarity: 0, tajweedIssue: null };
@@ -149,8 +144,11 @@ export function checkWord(
       const cleanSpoken = alt.toLowerCase().replace(/[^a-z]/g, "");
       for (const target of phoneticTargets) {
         const cleanTarget = target.toLowerCase().replace(/[^a-z]/g, "");
-        if (cleanSpoken.includes(cleanTarget) || cleanTarget.includes(cleanSpoken) || cleanSpoken === cleanTarget) {
+        if (cleanSpoken === cleanTarget) {
           similarity = 1.0;
+          break;
+        } else if (cleanSpoken.length >= 3 && cleanTarget.length >= 3 && (cleanSpoken.startsWith(cleanTarget) || cleanTarget.startsWith(cleanSpoken))) {
+          similarity = 0.85;
           break;
         }
       }
