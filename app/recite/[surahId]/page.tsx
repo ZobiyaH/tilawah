@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useRecitationStore } from "../../../lib/store/recitationStore";
-import { getSurahData } from "../../../lib/quran/quranData";
+import { getSurahData, ALL_SURAHS } from "../../../lib/quran/quranData";
 import { motion, AnimatePresence } from "framer-motion";
 import { preloadAudio, getWordAudio } from "../../../lib/audio/qariCDN";
 import { QariAudioManager } from "../../../lib/qariAudio";
@@ -11,6 +11,7 @@ import { trackEvent } from "../../../lib/analytics/ga";
 import { checkWord } from "../../../lib/arabic/similarity";
 import { transcribeAudio } from "../../../lib/speech/transcribe";
 import { AudioRecorder } from "../../../lib/speech/recorder";
+import { useContinuousASR } from "../../../lib/speech/useContinuousASR";
 
 import Header from "../../../components/Layout/Header";
 import SettingsDrawer from "../../../components/UI/SettingsDrawer";
@@ -23,8 +24,6 @@ import { useToast } from "../../../components/UI/Toast";
 import BottomNav from "../../../components/Layout/BottomNav";
 import MicCheckModal from "../../../components/Listening/MicCheckModal";
 
-
-
 export default function RecitationPage() {
   const params = useParams();
   const router = useRouter();
@@ -32,116 +31,129 @@ export default function RecitationPage() {
 
   const surahId = (params?.surahId as string) || "1";
   const surahData = getSurahData(surahId);
+  const surahMeta = ALL_SURAHS.find((s) => s.id === surahId);
 
   const loadSurah = useRecitationStore((state) => state.loadSurah);
   const resetSession = useRecitationStore((state) => state.resetSession);
   const saveSessionScore = useRecitationStore((state) => state.saveSessionScore);
-  
+
   const correctCount = useRecitationStore((state) => state.correctCount);
   const errorCount = useRecitationStore((state) => state.errorCount);
   const feedbackList = useRecitationStore((state) => state.feedbackList);
   const practiceWords = useRecitationStore((state) => state.practiceWords);
 
   const isListening = useRecitationStore((state) => state.isListening);
+  const setListening = useRecitationStore((state) => state.setListening);
   const wordIndex = useRecitationStore((state) => state.wordIndex);
   const allWords = useRecitationStore((state) => state.allWords);
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const [micCheckOpen, setMicCheckOpen] = useState(true);
-  const [statsOpen, setStatsOpen] = useState(false);
-  const quranDisplayRef = React.useRef<HTMLDivElement>(null);
 
-  // Local recording & verification states
-  const [recordingState, setRecordingState] = useState<'idle' | 'listening' | 'processing' | 'summary'>('idle');
-  const [alignedResults, setAlignedResults] = useState<{ word: string; status: 'correct' | 'tajweed' | 'error'; similarity: number; wordIdxInAyah: number }[]>([]);
-  const recorderRef = React.useRef<AudioRecorder | null>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [micCheckOpen, setMicCheckOpen] = useState(false);
+  const [statsOpen, setStatsOpen] = useState(false);
+  const [recitationMode, setRecitationMode] = useState<"continuous" | "verse">("continuous");
+
+  // Local verse recording & verification states
+  const [recordingState, setRecordingState] = useState<"idle" | "listening" | "processing" | "summary">("idle");
+  const [alignedResults, setAlignedResults] = useState<{ word: string; status: "correct" | "tajweed" | "error"; similarity: number; wordIdxInAyah: number }[]>([]);
+  const recorderRef = useRef<AudioRecorder | null>(null);
   const [showMuteToast, setShowMuteToast] = useState(false);
 
   const recitationLevel = useRecitationStore((state) => state.recitationLevel);
   const confidentReciterMode = useRecitationStore((state) => state.confidentReciterMode);
   const setLiveTranscript = useRecitationStore((state) => state.setLiveTranscript);
 
+  // Hook for Continuous Live ASR mode
+  useContinuousASR(recitationMode === "continuous" && isListening);
+
+  const currentWordToken = allWords[wordIndex];
+
+  // Advance to next verse (for Verse-by-Verse mode)
   const advanceAyah = () => {
     if (!currentWordToken) return;
-    const nextIdx = allWords.findIndex(w => w.ayahN === currentWordToken.ayahN + 1);
+    const nextIdx = allWords.findIndex((w) => w.ayahN === currentWordToken.ayahN + 1);
     if (nextIdx !== -1) {
       useRecitationStore.setState({ wordIndex: nextIdx });
     } else {
       useRecitationStore.setState({ wordIndex: allWords.length });
     }
-    setRecordingState('idle');
+    setRecordingState("idle");
     setAlignedResults([]);
   };
 
+  // Verse-by-verse recording start
   const startRecording = async () => {
     try {
       if (!recorderRef.current) {
         recorderRef.current = new AudioRecorder();
       }
-      
+
       const audioMgr = QariAudioManager.getInstance();
       audioMgr.stop();
-      
+
       setShowMuteToast(true);
       setTimeout(() => setShowMuteToast(false), 2500);
 
       await recorderRef.current.start();
-      setRecordingState('listening');
-      
+      setRecordingState("listening");
+
       let silenceMs = 0;
       const interval = setInterval(async () => {
         if (!recorderRef.current || !recorderRef.current.isRecording()) {
           clearInterval(interval);
           return;
         }
-        
+
         const volume = await recorderRef.current.getRMSLevel();
         if (volume < 0.02) {
           silenceMs += 100;
         } else {
           silenceMs = 0;
         }
-        
-        if (silenceMs >= 3000) {
+
+        if (silenceMs >= 3500) {
           clearInterval(interval);
           stopRecordingAndProcess();
         }
       }, 100);
-      
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to start microphone.";
       showToast(msg);
     }
   };
 
+  // Verse-by-verse recording stop and analyze
   const stopRecordingAndProcess = async () => {
     if (!recorderRef.current || !recorderRef.current.isRecording()) return;
-    setRecordingState('processing');
-    
+    setRecordingState("processing");
+
     try {
       const audioBlob = await recorderRef.current.stop();
       if (!currentWordToken) return;
       const promptText = currentWordToken.ayahData.words.join(" ");
-      
-      const result = await transcribeAudio(audioBlob, 'ayah', promptText);
+
+      const result = await transcribeAudio(audioBlob, "ayah", promptText);
       if (!result.success || !result.transcript) {
-        setRecordingState('summary');
-        setAlignedResults(currentWordToken.ayahData.words.map((w, idx) => ({
-          word: w,
-          status: 'error',
-          similarity: 0,
-          wordIdxInAyah: idx
-        })));
+        setRecordingState("summary");
+        setAlignedResults(
+          currentWordToken.ayahData.words.map((w, idx) => ({
+            word: w,
+            status: "error",
+            similarity: 0,
+            wordIdxInAyah: idx,
+          }))
+        );
         return;
       }
-      
+
       const spokenTranscript = result.transcript.trim();
       setLiveTranscript(spokenTranscript);
-      
+
       const spokenWords = spokenTranscript.split(/\s+/).filter(Boolean);
       const expectedWords = currentWordToken.ayahData.words;
-      
+
+      // Smart alignment: map each expected word to the best spoken match
       const aligned = expectedWords.map((expectedWord, idx) => {
-        let bestMatch: { similarity: number; status: 'correct' | 'tajweed' | 'error' } = { similarity: 0, status: 'error' };
+        let bestMatch: { similarity: number; status: "correct" | "tajweed" | "error" } = { similarity: 0, status: "error" };
         for (const spokenWord of spokenWords) {
           const check = checkWord(spokenWord, expectedWord, recitationLevel, confidentReciterMode);
           if (check.similarity > bestMatch.similarity) {
@@ -152,32 +164,36 @@ export default function RecitationPage() {
           word: expectedWord,
           status: bestMatch.status,
           similarity: bestMatch.similarity,
-          wordIdxInAyah: idx
+          wordIdxInAyah: idx,
         };
       });
-      
+
       setAlignedResults(aligned);
-      setRecordingState('summary');
-      
-      const correctWords = aligned.filter(w => w.status === 'correct' || w.status === 'tajweed').length;
+      setRecordingState("summary");
+
+      const correctWords = aligned.filter((w) => w.status === "correct" || w.status === "tajweed").length;
       const errorWords = aligned.length - correctWords;
-      
-      useRecitationStore.setState(state => ({
+
+      useRecitationStore.setState((state) => ({
         correctCount: state.correctCount + correctWords,
         errorCount: state.errorCount + errorWords,
       }));
-      
     } catch {
-      setRecordingState('idle');
+      setRecordingState("idle");
       showToast("Verification failed. Please try again.");
     }
   };
 
-  const toggleLocalRecording = () => {
-    if (recordingState === 'listening') {
-      stopRecordingAndProcess();
-    } else if (recordingState === 'idle') {
-      startRecording();
+  // Handle Main Mic Button Toggle
+  const handleMicToggle = () => {
+    if (recitationMode === "continuous") {
+      setListening(!isListening);
+    } else {
+      if (recordingState === "listening") {
+        stopRecordingAndProcess();
+      } else if (recordingState === "idle") {
+        startRecording();
+      }
     }
   };
 
@@ -188,35 +204,26 @@ export default function RecitationPage() {
     audio.play().catch(() => {});
   };
 
-
-
-  // Automatically switch/scroll to the Ayah text screen when user begins reciting
-  useEffect(() => {
-    if (isListening && quranDisplayRef.current) {
-      quranDisplayRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  }, [isListening]);
-
+  // Preload Surah Data
   useEffect(() => {
     if (surahData) {
       loadSurah(surahId, surahData.name, surahData.ayat);
       trackEvent("recitation_start", "engagement", `surah_${surahId}`);
     } else {
-      router.push("/");
+      router.push("/recite");
     }
   }, [surahId, surahData, loadSurah, router]);
 
-  // Preload first 3 words silently on page load/allWords load
+  // Preload audio files silently
   useEffect(() => {
     if (allWords && allWords.length > 0) {
-      allWords.slice(0, 3).forEach((w) => {
+      allWords.slice(0, 4).forEach((w) => {
         const url = getWordAudio(w.ayahData.surahId, w.ayahN, w.wordIdxInAyah + 1);
         preloadAudio(url);
       });
     }
   }, [allWords]);
 
-  // Preload next word silently in background when wordIndex changes
   useEffect(() => {
     const nextWord = allWords[wordIndex + 1];
     if (nextWord) {
@@ -229,16 +236,14 @@ export default function RecitationPage() {
     return null;
   }
 
-  // Calculate live score percentage
+  // Calculate Accuracy
   const totalChecked = correctCount + errorCount;
   const liveAccuracy = totalChecked > 0 ? Math.round((correctCount / totalChecked) * 100) : null;
 
-  const currentWordToken = allWords[wordIndex];
   const handleSave = async () => {
     trackEvent("surah_complete", "engagement", `surah_${surahId}`);
     await saveSessionScore();
-    
-    // Register local completed counter for progress popups
+
     if (typeof window !== "undefined") {
       const currentCompleted = Number(localStorage.getItem("tilawa_completed_count") || "0");
       localStorage.setItem("tilawa_completed_count", String(currentCompleted + 1));
@@ -248,12 +253,12 @@ export default function RecitationPage() {
 
       if (!emailCaptured && !dismissed) {
         window.dispatchEvent(
-          new CustomEvent("open-email-capture", { 
-            detail: { moment: "MomentC", surahName: surahData.name.split("-")[0] } 
+          new CustomEvent("open-email-capture", {
+            detail: { moment: "MomentC", surahName: surahData.name.split("-")[0] },
           })
         );
         const handleCloseEvent = () => {
-          router.push("/");
+          router.push("/recite");
           window.removeEventListener("tilawa-user-updated", handleCloseEvent);
           window.removeEventListener("email-popup-dismissed-event", handleCloseEvent);
         };
@@ -261,7 +266,7 @@ export default function RecitationPage() {
         window.addEventListener("email-popup-dismissed-event", handleCloseEvent);
       } else {
         showToast("💾 Recitation Score Synced Successfully!");
-        router.push("/");
+        router.push("/recite");
       }
     }
   };
@@ -272,162 +277,142 @@ export default function RecitationPage() {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.35 }}
-      className="min-h-screen flex flex-col pb-32 relative bg-[#faf6ee] text-[#1a1208] transition-colors duration-200"
+      className="min-h-screen flex flex-col pb-36 relative bg-[#faf6ee] text-[#1a1208] transition-colors duration-200"
     >
       <Header />
-      
+
       {/* Settings Panel Drawer */}
       <SettingsDrawer isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
 
-      {/* Correction Drawer popup */}
+      {/* Correction Overlay popup */}
       <CorrectionOverlay />
 
       {/* Mic Check Modal */}
       <MicCheckModal isOpen={micCheckOpen} onClose={() => setMicCheckOpen(false)} />
 
       {/* Recitation Main UI */}
-      <main className="flex-1 max-w-6xl mx-auto w-full px-6 mt-6 grid grid-cols-1 lg:grid-cols-12 gap-8 relative z-10">
+      <main className="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-6 mt-4 sm:mt-6 grid grid-cols-1 lg:grid-cols-12 gap-6 relative z-10">
         
-        {/* LEFT COLUMN: Practice word and Quran Display (8 cols) */}
-        <div className="lg:col-span-8 flex flex-col gap-6">
+        {/* LEFT COLUMN: Quran Mushaf Reading View & Active Verification (8 cols) */}
+        <div className="lg:col-span-8 flex flex-col gap-4 sm:gap-6">
           
-          {/* Status Bar */}
-          {currentWordToken && (
-            <div className="bg-white/80 border border-[#c8993c]/15 px-4 py-2.5 rounded-xl text-xs font-bold text-[#6b7280] tracking-wide shadow-sm flex items-center justify-between select-none">
-              <span>
-                Now reciting: <strong className="text-[#1e5e4a]">{surahData.name.split("-")[0]}</strong>
-              </span>
-              <div className="flex gap-2">
-                <span>Ayah {currentWordToken.ayahN} of {surahData.ayat.length}</span>
-                <span>•</span>
-                <span>Word {currentWordToken.wordIdxInAyah + 1} of {currentWordToken.ayahData.words.length}</span>
-              </div>
+          {/* Top Bar: Surah Info + Mode Switcher */}
+          <div className="bg-white/90 border border-[#c8993c]/20 px-4 py-3 rounded-2xl text-xs font-bold text-[#6b7280] shadow-xs flex flex-wrap items-center justify-between gap-3 select-none">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-black text-[#1e5e4a]">{surahData.name}</span>
+              {surahMeta?.englishName && (
+                <span className="text-[10px] text-zinc-400">({surahMeta.englishName})</span>
+              )}
             </div>
-          )}
 
-          {/* Focal Active Word Container (min-height 40% on mobile) */}
-          {currentWordToken ? (
-            recordingState === 'summary' ? (
-              <div className="card border-2 border-[#c8993c]/30 shadow-[0_4px_16px_rgba(200,153,60,0.1)] rounded-2xl flex flex-col justify-center items-center py-10 min-h-[40vh] bg-white relative overflow-hidden px-8">
-                <span className="text-[10px] text-[#6b7280] font-extrabold uppercase tracking-widest absolute top-4">
-                  Ayah Recitation Summary
-                </span>
-                
-                <div className="flex flex-wrap gap-x-2 gap-y-4 justify-center items-center my-6 select-text max-w-xl text-center">
-                  {alignedResults.map((w, idx) => {
-                    const isCorrect = w.status === 'correct';
-                    const isTajweed = w.status === 'tajweed';
-                    const isError = w.status === 'error';
-                    
-                    return (
-                      <div key={idx} className="flex flex-col items-center gap-1.5">
-                        <span
-                          className={`font-amiri text-4xl md:text-5xl leading-none px-1.5 py-1 rounded transition-colors duration-200 ${
-                            isCorrect ? "text-[#1e5e4a] bg-emerald-pale/40 font-bold" : ""
-                          } ${
-                            isTajweed ? "text-amber-700 bg-amber-50 font-bold" : ""
-                          } ${
-                            isError ? "text-[#8b1a1a] bg-red-50" : ""
-                          }`}
-                        >
-                          {w.word}
-                        </span>
-                        {isError && (
-                          <button
-                            onClick={() => playQariWord(w.wordIdxInAyah)}
-                            className="text-[10px] text-[#c8993c] hover:text-gold font-bold px-1.5 py-0.5 rounded border border-[#c8993c]/30 bg-[#faf6ee] active:scale-95 transition-all flex items-center gap-0.5"
-                            title="Listen to correct pronunciation"
+            {/* Mode Switcher Tabs */}
+            <div className="flex items-center gap-1 bg-[#faf6ee] p-1 rounded-xl border border-gold/20">
+              <button
+                onClick={() => {
+                  setRecitationMode("continuous");
+                  setRecordingState("idle");
+                }}
+                className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-all ${
+                  recitationMode === "continuous"
+                    ? "bg-[#1e5e4a] text-white shadow-xs"
+                    : "text-zinc-600 hover:text-ink"
+                }`}
+              >
+                🔴 Live Flow
+              </button>
+              <button
+                onClick={() => {
+                  setRecitationMode("verse");
+                  setListening(false);
+                }}
+                className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-all ${
+                  recitationMode === "verse"
+                    ? "bg-[#1e5e4a] text-white shadow-xs"
+                    : "text-zinc-600 hover:text-ink"
+                }`}
+              >
+                📖 Verse Check
+              </button>
+            </div>
+          </div>
+
+          {/* Verse-by-Verse Breakdown Card (Shown when in 'verse' mode) */}
+          {recitationMode === "verse" && currentWordToken && (
+            <div className="card border-2 border-[#c8993c]/30 shadow-md rounded-2xl flex flex-col justify-center items-center py-6 px-6 bg-white relative overflow-hidden animate-[slide-down_0.2s_ease-out]">
+              <span className="text-[10px] text-[#6b7280] font-extrabold uppercase tracking-widest absolute top-3">
+                {recordingState === "summary" ? "Ayah Verification Breakdown" : `Active Verse — Ayah ${currentWordToken.ayahN}`}
+              </span>
+
+              {recordingState === "summary" ? (
+                <div className="flex flex-col items-center gap-4 my-4 w-full">
+                  <div className="flex flex-wrap gap-x-3 gap-y-4 justify-center items-center select-text max-w-xl text-center" style={{ direction: "rtl" }}>
+                    {alignedResults.map((w, idx) => {
+                      const isCorrect = w.status === "correct";
+                      const isTajweed = w.status === "tajweed";
+                      const isError = w.status === "error";
+
+                      return (
+                        <div key={idx} className="flex flex-col items-center gap-1">
+                          <span
+                            className={`font-amiri text-3xl md:text-4xl leading-relaxed px-2 py-1 rounded-lg transition-all ${
+                              isCorrect ? "text-[#1e5e4a] bg-emerald-pale/50 font-bold border border-emerald/20" : ""
+                            } ${
+                              isTajweed ? "text-amber-800 bg-amber-50 font-bold border border-amber-300" : ""
+                            } ${
+                              isError ? "text-[#8b1a1a] bg-red-50 font-bold border border-red-200" : ""
+                            }`}
                           >
-                            🔊 Listen
-                          </button>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
+                            {w.word}
+                          </span>
+                          {isError && (
+                            <button
+                              onClick={() => playQariWord(w.wordIdxInAyah)}
+                              className="text-[10px] text-[#c8993c] hover:text-gold font-bold px-2 py-0.5 rounded border border-[#c8993c]/30 bg-[#faf6ee] active:scale-95 transition-all flex items-center gap-1"
+                              title="Listen to correct Qari voice"
+                            >
+                              🔊 Listen
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
 
-                {/* Navigation/Retry options */}
-                <div className="flex gap-4 mt-6">
-                  <button
-                    onClick={() => {
-                      setRecordingState('idle');
-                      setAlignedResults([]);
-                    }}
-                    className="px-5 py-2.5 rounded-xl border border-[#c8993c] bg-[#faf6ee] hover:bg-gold-pale/30 text-[#c8993c] font-bold text-xs uppercase tracking-widest transition-all active:scale-95 shadow-sm"
-                  >
-                    🔄 Retry Ayah
-                  </button>
-                  <button
-                    onClick={advanceAyah}
-                    className="px-5 py-2.5 rounded-xl bg-[#1e5e4a] text-white font-bold text-xs uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-emerald/10"
-                  >
-                    Next Ayah ➡️
-                  </button>
+                  <div className="flex gap-3 mt-2">
+                    <button
+                      onClick={() => {
+                        setRecordingState("idle");
+                        setAlignedResults([]);
+                      }}
+                      className="px-4 py-2 rounded-xl border border-[#c8993c] bg-[#faf6ee] text-[#c8993c] font-bold text-xs uppercase tracking-wider active:scale-95 transition-all shadow-xs"
+                    >
+                      🔄 Retry Verse
+                    </button>
+                    <button
+                      onClick={advanceAyah}
+                      className="px-5 py-2 rounded-xl bg-[#1e5e4a] text-white font-bold text-xs uppercase tracking-wider active:scale-95 transition-all shadow-md shadow-emerald/10"
+                    >
+                      Next Verse ➡️
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <div className="card border-2 border-[#c8993c]/30 shadow-[0_4px_16px_rgba(200,153,60,0.1)] rounded-2xl flex flex-col justify-center items-center py-10 min-h-[40vh] bg-white relative overflow-hidden px-8">
-                <span className="text-[10px] text-[#6b7280] font-extrabold uppercase tracking-widest absolute top-4">
-                  {recordingState === 'listening' ? "Reciting Active Verse" : "Active Verse"}
-                </span>
-                
-                <div className="font-amiri text-4xl md:text-5xl text-[#1e5e4a] leading-relaxed text-center my-6 max-w-xl">
-                  {currentWordToken ? currentWordToken.ayahData.words.join(" ") : ""}
-                </div>
-
-                {recordingState === 'idle' && (
+              ) : (
+                <div className="flex flex-col items-center my-4 text-center">
+                  <div className="font-amiri text-3xl md:text-4xl text-[#1e5e4a] leading-loose max-w-xl" style={{ direction: "rtl" }}>
+                    {currentWordToken.ayahData.words.join(" ")}
+                  </div>
                   <span className="text-xs text-[#6b7280] font-semibold mt-2">
-                    Press the mic button below and read the entire verse.
+                    {recordingState === "idle" && "Tap the microphone below, recite the verse, then tap stop."}
+                    {recordingState === "listening" && "🎙️ Voice active... reciting verse now."}
+                    {recordingState === "processing" && "Analyzing recitation accuracy..."}
                   </span>
-                )}
-
-                {recordingState === 'listening' && (
-                  <div className="flex flex-col items-center gap-2">
-                    <span className="text-xs text-[#8b1a1a] font-bold animate-pulse">
-                      🎙️ Voice active... speak now
-                    </span>
-                    {/* Local waveform indicator visual cue */}
-                    <div className="flex gap-1 mt-2 justify-center items-center h-4">
-                      {[1, 2, 3, 4, 5, 4, 3, 2, 1].map((h, i) => (
-                        <div
-                          key={i}
-                          className="w-1 bg-[#8b1a1a] rounded animate-pulse"
-                          style={{
-                            height: `${h * 4}px`,
-                            animationDelay: `${i * 0.1}s`
-                          }}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {recordingState === 'processing' && (
-                  <div className="flex flex-col items-center gap-3">
-                    <div className="w-6 h-6 border-2 border-gold border-t-transparent rounded-full animate-spin" />
-                    <span className="text-xs text-amber-600 font-bold">
-                      Analyzing recitation alignment...
-                    </span>
-                  </div>
-                )}
-              </div>
-            )
-          ) : (
-            <div className="card shadow-sm rounded-2xl flex flex-col justify-center items-center py-10 min-h-[300px] bg-white">
-              <span className="text-4xl mb-4">🎉</span>
-              <h3 className="font-bold text-lg text-[#1e5e4a]">Session Finished!</h3>
-              <p className="text-xs text-[#6b7280] mt-2">Save your recitation logs below.</p>
+                </div>
+              )}
             </div>
           )}
 
-          {/* Full Ayah List Display */}
-          <div ref={quranDisplayRef} className="flex flex-col gap-3 scroll-mt-20">
-            <span className="text-[10px] font-extrabold text-[#6b7280] uppercase tracking-widest select-none flex items-center justify-between">
-              <span>Full Verse Context</span>
-              <span className="text-[9px] text-[#1e5e4a] font-bold bg-[#faf6ee] px-2.5 py-0.5 rounded-full border border-[#c8993c]/20">
-                📖 Active Reading Screen
-              </span>
-            </span>
+          {/* Full Quran Mushaf Reading Panel */}
+          <div className="flex flex-col gap-2">
             <QuranDisplay />
           </div>
 
@@ -435,9 +420,9 @@ export default function RecitationPage() {
           <LiveTranscript />
         </div>
 
-        {/* RIGHT COLUMN: Performance and Logs Sidebar (4 cols - hidden on mobile) */}
+        {/* RIGHT COLUMN: Performance and Session Stats (4 cols - Desktop) */}
         <div className="hidden lg:flex lg:col-span-4 flex-col gap-6">
-          {/* Performance summary */}
+          {/* Performance Summary Ring */}
           <div className="card p-6 flex flex-col gap-4">
             <h3 className="text-[#6b7280] font-extrabold uppercase text-[10px] tracking-wider">
               Session Progress
@@ -460,7 +445,7 @@ export default function RecitationPage() {
             </div>
           </div>
 
-          {/* Feedback Timeline Logs */}
+          {/* Timeline Feedbacks */}
           <div className="card p-6 flex flex-col h-[280px]">
             <h3 className="text-[#6b7280] font-extrabold uppercase text-[10px] tracking-wider mb-4">
               Recitation Timeline
@@ -477,13 +462,13 @@ export default function RecitationPage() {
                     className="p-3 border rounded-xl flex flex-col gap-1 transition-all bg-white/40 text-left border-l-4"
                     style={{
                       borderLeftColor: isCorrect ? "#1e5e4a" : isError ? "#8b1a1a" : isTajweed ? "#1a3a5c" : "#c8993c",
-                      direction: "ltr"
+                      direction: "ltr",
                     }}
                   >
                     <span className="text-[9px] font-extrabold uppercase tracking-wider text-zinc-500">
                       {item.title}
                     </span>
-                    <p className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 leading-normal mt-0.5">
+                    <p className="text-xs font-semibold text-zinc-700 leading-normal mt-0.5">
                       {item.message}
                     </p>
                   </div>
@@ -492,71 +477,80 @@ export default function RecitationPage() {
             </div>
           </div>
 
-          {/* Action buttons */}
+          {/* Action Buttons */}
           <div className="flex flex-col gap-3">
-            <button
-              onClick={resetSession}
-              className="btn-secondary w-full text-center"
-            >
+            <button onClick={resetSession} className="btn-secondary w-full text-center">
               🔄 Restart Session
             </button>
-            <button
-              onClick={handleSave}
-              className="btn-primary w-full text-center"
-            >
+            <button onClick={handleSave} className="btn-primary w-full text-center">
               💾 Save Recitation
             </button>
           </div>
         </div>
-
       </main>
 
-      {/* Floating ASR Microphone Button (Positioned above mobile BottomNav) */}
+      {/* Floating Center Mic Button */}
       <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 z-50 md:bottom-8 select-none flex flex-col items-center gap-2">
         {showMuteToast && (
           <div className="bg-[#faf6ee] border border-[#c8993c]/35 text-[#8b1a1a] text-[11px] font-bold px-3 py-1.5 rounded-xl shadow-lg transition-all animate-bounce">
             🔇 Audio paused while listening
           </div>
         )}
+
         <button
-          onClick={toggleLocalRecording}
-          disabled={recordingState === 'processing'}
-          className={`w-[72px] h-[72px] md:w-[80px] md:h-[80px] rounded-full flex items-center justify-center text-white shadow-2xl transition-all duration-300 transform hover:scale-105 active:scale-95 ${
-            recordingState === 'idle'
-              ? "bg-[#1e5e4a] shadow-[0_4px_12px_rgba(30,94,74,0.3)]"
-              : recordingState === 'listening'
-              ? "bg-[#8b1a1a] shadow-[0_0_15px_rgba(139,26,26,0.5)] active:scale-95 animate-pulse"
-              : recordingState === 'processing'
+          onClick={handleMicToggle}
+          disabled={recordingState === "processing"}
+          className={`w-[70px] h-[70px] md:w-[76px] md:h-[76px] rounded-full flex items-center justify-center text-white shadow-2xl transition-all duration-300 transform hover:scale-105 active:scale-95 ${
+            recitationMode === "continuous"
+              ? isListening
+                ? "bg-[#8b1a1a] shadow-[0_0_20px_rgba(139,26,26,0.6)] animate-pulse"
+                : "bg-[#1e5e4a] shadow-[0_4px_16px_rgba(30,94,74,0.35)]"
+              : recordingState === "listening"
+              ? "bg-[#8b1a1a] shadow-[0_0_20px_rgba(139,26,26,0.6)] animate-pulse"
+              : recordingState === "processing"
               ? "bg-[#c8993c] cursor-wait"
-              : "bg-zinc-400"
+              : "bg-[#1e5e4a] shadow-[0_4px_16px_rgba(30,94,74,0.35)]"
           }`}
+          aria-label="Toggle Recitation Microphone"
         >
-          {recordingState === 'idle' && (
+          {recitationMode === "continuous" ? (
+            isListening ? (
+              <div className="w-5 h-5 bg-white rounded-md" />
+            ) : (
+              <span className="text-2xl md:text-3xl">🎙️</span>
+            )
+          ) : recordingState === "listening" ? (
+            <div className="w-5 h-5 bg-white rounded-md" />
+          ) : recordingState === "processing" ? (
+            <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          ) : recordingState === "summary" ? (
+            <span className="text-2xl">✓</span>
+          ) : (
             <span className="text-2xl md:text-3xl">🎙️</span>
           )}
-          {recordingState === 'listening' && (
-            <div className="w-5 h-5 bg-white rounded-full" />
-          )}
-          {recordingState === 'processing' && (
-            <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
-          )}
-          {recordingState === 'summary' && (
-            <span className="text-2xl md:text-3xl">✓</span>
-          )}
         </button>
-        <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 text-center">
-          {recordingState === 'idle' && "Tap to speak"}
-          {recordingState === 'listening' && "Listening... tap to stop"}
-          {recordingState === 'processing' && "Checking..."}
-          {recordingState === 'summary' && "Done"}
+
+        <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-600 bg-white/80 px-2.5 py-0.5 rounded-full shadow-xs border border-gold/15">
+          {recitationMode === "continuous"
+            ? isListening
+              ? "Listening live... tap to pause"
+              : "Tap to recite live"
+            : recordingState === "listening"
+            ? "Recording verse... tap to finish"
+            : recordingState === "processing"
+            ? "Verifying..."
+            : recordingState === "summary"
+            ? "Verse Checked"
+            : "Tap to record verse"}
         </span>
       </div>
 
-      {/* Stats Trigger overlay button on mobile view */}
-      <div className="fixed bottom-20 right-6 z-40 lg:hidden select-none">
+      {/* Mobile Stats Floating Trigger */}
+      <div className="fixed bottom-20 right-4 z-40 lg:hidden select-none">
         <button
           onClick={() => setStatsOpen(true)}
-          className="w-12 h-12 bg-white dark:bg-zinc-800 border border-[#c8993c]/30 rounded-full flex items-center justify-center shadow-lg text-lg hover:scale-105 active:scale-95"
+          className="w-12 h-12 bg-white border border-[#c8993c]/40 rounded-full flex items-center justify-center shadow-lg text-lg hover:scale-105 active:scale-95"
+          aria-label="Open Session Stats"
         >
           📊
         </button>
@@ -571,39 +565,39 @@ export default function RecitationPage() {
               animate={{ y: "0%" }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 220 }}
-              className="w-full bg-white dark:bg-zinc-950 rounded-t-3xl max-h-[85vh] overflow-y-auto px-6 py-8 flex flex-col gap-6 border-t border-gold/30 shadow-2xl"
+              className="w-full bg-white rounded-t-3xl max-h-[85vh] overflow-y-auto px-6 py-8 flex flex-col gap-6 border-t border-gold/30 shadow-2xl"
             >
               <div className="flex justify-between items-center">
-                <h3 className="font-bold text-lg text-[#1e5e4a] dark:text-emerald-400">Session Stats</h3>
+                <h3 className="font-bold text-lg text-[#1e5e4a]">Session Stats</h3>
                 <button
                   onClick={() => setStatsOpen(false)}
-                  className="w-8 h-8 rounded-full bg-[#faf6ee] dark:bg-zinc-800 border border-gold/15 flex items-center justify-center font-bold text-sm"
+                  className="w-8 h-8 rounded-full bg-[#faf6ee] border border-gold/15 flex items-center justify-center font-bold text-sm"
                 >
                   ✕
                 </button>
               </div>
 
-              {/* Progress summary */}
+              {/* Progress Summary */}
               <div className="flex flex-col items-center gap-4">
                 <ScoreRing score={liveAccuracy} />
 
                 <div className="grid grid-cols-3 gap-6 text-center w-full max-w-xs border-t border-[#c8993c]/10 pt-4 mt-2">
                   <div>
-                    <span className="text-[#6b7280] dark:text-zinc-500 font-bold uppercase block text-[10px]">Correct</span>
-                    <span className="text-base font-bold text-[#1e5e4a] dark:text-emerald-400">{correctCount}</span>
+                    <span className="text-[#6b7280] font-bold uppercase block text-[10px]">Correct</span>
+                    <span className="text-base font-bold text-[#1e5e4a]">{correctCount}</span>
                   </div>
                   <div>
-                    <span className="text-[#6b7280] dark:text-zinc-500 font-bold uppercase block text-[10px]">Errors</span>
-                    <span className="text-base font-bold text-[#8b1a1a] dark:text-red-400">{errorCount}</span>
+                    <span className="text-[#6b7280] font-bold uppercase block text-[10px]">Errors</span>
+                    <span className="text-base font-bold text-[#8b1a1a]">{errorCount}</span>
                   </div>
                   <div>
-                    <span className="text-[#6b7280] dark:text-zinc-500 font-bold uppercase block text-[10px]">Practice</span>
+                    <span className="text-[#6b7280] font-bold uppercase block text-[10px]">Practice</span>
                     <span className="text-base font-bold text-amber-600">{practiceWords.length}</span>
                   </div>
                 </div>
               </div>
 
-              {/* Mobile Logs */}
+              {/* Timeline Logs */}
               <div className="flex flex-col gap-3">
                 <h4 className="text-xs font-bold text-[#6b7280] uppercase tracking-wider">Recitation Logs</h4>
                 <div className="max-h-[180px] overflow-y-auto flex flex-col gap-2.5">
@@ -613,36 +607,33 @@ export default function RecitationPage() {
                       className="p-3 border rounded-xl flex flex-col gap-1 bg-white/40 text-left border-l-4"
                       style={{
                         borderLeftColor: item.type === "correct" ? "#1e5e4a" : item.type === "error" ? "#8b1a1a" : "#c8993c",
-                        direction: "ltr"
+                        direction: "ltr",
                       }}
                     >
                       <span className="text-[9px] font-extrabold uppercase tracking-wider text-zinc-500">
                         {item.title}
                       </span>
-                      <p className="text-xs font-semibold text-zinc-700 mt-0.5">
-                        {item.message}
-                      </p>
+                      <p className="text-xs font-semibold text-zinc-700 mt-0.5">{item.message}</p>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Mobile Actions controls */}
+              {/* Mobile Actions Controls */}
               <div className="flex flex-col gap-3 mt-2">
                 <button
-                  onClick={() => { resetSession(); setStatsOpen(false); }}
+                  onClick={() => {
+                    resetSession();
+                    setStatsOpen(false);
+                  }}
                   className="btn-secondary w-full"
                 >
                   🔄 Restart Session
                 </button>
-                <button
-                  onClick={handleSave}
-                  className="btn-primary w-full"
-                >
+                <button onClick={handleSave} className="btn-primary w-full">
                   💾 Save Recitation
                 </button>
               </div>
-
             </motion.div>
           </div>
         )}

@@ -81,7 +81,15 @@ export function arabicSimilarity(spoken: string, reference: string): number {
 
   // Handle substring matching in continuous flow (e.g. compound tokens or prefix additions)
   if (nr.length >= 3 && (ns.includes(nr) || nr.includes(ns))) {
-    return 0.90;
+    return 0.95;
+  }
+
+  // Prefix handling: e.g. "والرحمن", "بالله", "فلله", "كالناس"
+  if (ns.length > nr.length && (ns.startsWith("و") || ns.startsWith("ف") || ns.startsWith("ب") || ns.startsWith("ل") || ns.startsWith("ك"))) {
+    const strippedPrefix = ns.slice(1);
+    if (strippedPrefix === nr || strippedPrefix.replace(/ا/g, "") === nr.replace(/ا/g, "")) {
+      return 0.95;
+    }
   }
 
   const maxLen = Math.max(ns.length, nr.length);
@@ -103,15 +111,15 @@ export function checkWord(
 ): CheckResult {
   const alternatives = Array.isArray(spokenAlternatives) ? spokenAlternatives : [spokenAlternatives];
   
-  let correctThreshold = 0.65;
-  let tajweedThreshold = 0.45;
+  let correctThreshold = 0.60;
+  let tajweedThreshold = 0.40;
 
   if (recitationLevel === 'beginner' || confidentReciterMode) {
-    correctThreshold = 0.55;
-    tajweedThreshold = 0.35;
+    correctThreshold = 0.50;
+    tajweedThreshold = 0.30;
   } else if (recitationLevel === 'advanced') {
-    correctThreshold = 0.75;
-    tajweedThreshold = 0.55;
+    correctThreshold = 0.70;
+    tajweedThreshold = 0.50;
   }
 
   let bestResult: CheckResult = { status: 'error', similarity: 0, tajweedIssue: null };
@@ -121,12 +129,12 @@ export function checkWord(
     let status: 'correct' | 'tajweed' | 'error' = 'error';
     let tajweedIssue = null;
     
-    // Check if the ASR output is Latin/English text representing a transliteration (e.g. "Maliki")
+    // Check if the ASR output is Latin/English text representing a transliteration (e.g. "Maliki", "Bismi", "Allah")
     const cleanExpected = normalizeArabic(expectedWord);
     const phoneticTarget = PHONETIC_DICT[cleanExpected];
-    if (phoneticTarget && /[a-zA-Z]/.test(alt)) {
+    if (/[a-zA-Z]/.test(alt)) {
       const cleanSpoken = alt.toLowerCase().replace(/[^a-z]/g, "");
-      if (cleanSpoken.includes(phoneticTarget) || phoneticTarget.includes(cleanSpoken) || cleanSpoken === "maliki" || cleanSpoken === "malik") {
+      if (phoneticTarget && (cleanSpoken.includes(phoneticTarget) || phoneticTarget.includes(cleanSpoken) || cleanSpoken === "maliki" || cleanSpoken === "malik")) {
         similarity = 1.0;
       }
     }
