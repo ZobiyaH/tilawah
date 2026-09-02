@@ -65,9 +65,9 @@ export function useContinuousASR(isListening: boolean) {
     let vadAnalyser: AnalyserNode | null = null;
     let vadDataArray: Uint8Array | null = null;
 
-    // FIX 1: Exact Silence Detection Timings
-    const SILENCE_THRESHOLD = 0.008; // RMS energy threshold
-    const END_OF_SPEECH_MS = 2500; // True end of speech - user has finished utterance
+    // FIX 1: Exact Silence Detection Timings with High Sensitivity
+    const SILENCE_THRESHOLD = 0.0025; // Highly responsive RMS energy threshold
+    const END_OF_SPEECH_MS = 2200; // Natural pause completion - user finished utterance
     const MAX_UTTERANCE_MS = 14000; // Safety cap for complete multi-verse utterances
 
     let silenceStartTime: number | null = null;
@@ -106,7 +106,7 @@ export function useContinuousASR(isListening: boolean) {
 
           const source = audioContext.createMediaStreamSource(localStream);
           const gainNode = audioContext.createGain();
-          gainNode.gain.setValueAtTime(3.5, audioContext.currentTime); // 3.5x gain for reliable Arabic quiet speech
+          gainNode.gain.setValueAtTime(4.0, audioContext.currentTime); // 4x gain for reliable Arabic voice pickup
           source.connect(gainNode);
           gainNode.connect(vadAnalyser);
 
@@ -142,8 +142,8 @@ export function useContinuousASR(isListening: boolean) {
             const hadSpeech = speechDetectedInUtterance;
             speechDetectedInUtterance = false;
 
-            // If utterance was totally silent without voice energy, skip without advancing
-            if (!hadSpeech || audioBlob.size < 2500) {
+            // If utterance was totally silent or tiny, skip without advancing
+            if (!hadSpeech || audioBlob.size < 600) {
               console.log("[ContinuousASR] Skipping silent background buffer:", audioBlob.size, "bytes");
               isProcessingUtterance = false;
               return;
@@ -175,7 +175,7 @@ export function useContinuousASR(isListening: boolean) {
                   // FIX 3: Background noise / no speech handler
                   if (data.decision === "no_speech" || !data.transcript || !data.success) {
                     console.log("[ContinuousASR] No speech detected or background noise — holding position");
-                    setLiveTranscriptRef.current("… (No clear speech detected)");
+                    setLiveTranscriptRef.current("… (Listening...)");
                   } else {
                     const transcriptText = data.transcript.trim();
                     const hasArabic = /[\u0600-\u06FF]/.test(transcriptText);

@@ -43,7 +43,13 @@ export function useAudioStream(isListening: boolean) {
     async function initStream() {
       try {
         const audioStream = await navigator.mediaDevices.getUserMedia({
-          audio: true
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: false,
+            autoGainControl: true,
+            channelCount: 1,
+            sampleRate: 16000,
+          }
         });
         if (!active) {
           audioStream.getTracks().forEach((track) => track.stop());

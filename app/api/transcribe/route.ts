@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Reject if too small — definitely silence/noise
-    if (audioFile.size < 2000) {
+    if (audioFile.size < 800) {
       console.warn('[API] Audio too short / silent — size:', audioFile.size);
       return NextResponse.json(
         { 
@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
 
     // FIX 3: Background noise / low confidence / non-Arabic speech detection
     const hasArabic = /[\u0600-\u06FF]/.test(transcript);
-    if (!transcript || transcript.length < 2 || !hasArabic || (avgLogprob !== 0 && avgLogprob < -1.2)) {
+    if (!transcript || transcript.length < 1 || !hasArabic || (avgLogprob !== 0 && avgLogprob < -1.8)) {
       console.warn('[API] Unclear or noisy audio detected:', { transcript, avgLogprob });
       return NextResponse.json({
         decision: 'no_speech',
