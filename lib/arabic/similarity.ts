@@ -3,59 +3,72 @@ import { arabicLevenshtein } from "./levenshtein";
 import { detectTajweedIssue } from "./tajweed";
 
 // Phonetic transliteration dictionary for short Surahs to support English speech recognition transcripts
-const PHONETIC_DICT: Record<string, string> = {
-  "بسم": "bismi",
-  "الله": "allah",
-  "الرحمن": "rahman",
-  "الرحيم": "rahim",
-  "الحمد": "hamdu",
-  "لله": "lillah",
-  "رب": "rabbi",
-  "العالمين": "alameen",
-  "مالك": "maliki",
-  "ملك": "maliki",
-  "يوم": "yawmi",
-  "الدين": "deen",
-  "اياك": "iyyaka",
-  "نعبد": "nabudu",
-  "واياك": "waiyyaka",
-  "نستعين": "nastaeen",
-  "اهدنا": "ihdina",
-  "الصراط": "siraat",
-  "المستقيم": "mustaqeem",
-  "صراط": "siraat",
-  "الذين": "allatheena",
-  "انعمت": "anamta",
-  "عليهم": "alayhim",
-  "غير": "ghayri",
-  "المغضوب": "maghdoobi",
-  "ولا": "walaa",
-  "الضالين": "dalleen",
-  "قل": "qul",
-  "اعوذ": "aouthu",
-  "برب": "birabbi",
-  "الفلق": "falaq",
-  "من": "min",
-  "شر": "sharri",
-  "ما": "maa",
-  "خلق": "khalaq",
-  "ومن": "wamin",
-  "غاسق": "ghasiq",
-  "اذا": "itha",
-  "وقب": "waqab",
-  "النفاثات": "naffathati",
-  "في": "fee",
-  "العقد": "uqad",
-  "حاسد": "hasid",
-  "حسد": "hasad",
-  "الناس": "naas",
-  "اله": "ilah",
-  "الوسواس": "waswas",
-  "الخناس": "khannas",
-  "الذي": "allathee",
-  "يوسوس": "yuwaswisu",
-  "صدور": "sudoor",
-  "الجنة": "jinnati"
+const PHONETIC_DICT: Record<string, string[]> = {
+  // Al-Fatiha
+  "بسم": ["bismi", "bism", "besm", "bismillah"],
+  "الله": ["allah", "llah", "allahu", "allahi", "lillah", "lillahi"],
+  "الرحمن": ["rahman", "arrahman", "alrahman", "rehman", "arrehman"],
+  "الرحيم": ["rahim", "arrahim", "alrahim", "raheem", "arraheem"],
+  "الحمد": ["hamd", "alhamd", "elhamd", "alhamdu"],
+  "لله": ["lillah", "lillahi", "allah", "allahi"],
+  "رب": ["rabb", "rab", "rabbi", "rabbal", "rabba"],
+  "العالمين": ["alameen", "alalamin", "al-alamin", "alamein", "alamin"],
+  "مالك": ["malik", "maliki", "maalik", "maaliki", "malki"],
+  "ملك": ["malik", "maliki", "maalik", "maaliki"],
+  "يوم": ["yawm", "yawmi", "yom", "yomi", "yawmid"],
+  "الدين": ["deen", "addeen", "aldeen", "ad-deen"],
+  "اياك": ["iyyak", "iyyaka", "eyak", "eyaka", "iyaka"],
+  "نعبد": ["nabud", "nabudu", "naabudu", "nabudo"],
+  "واياك": ["waiyyak", "waiyyaka", "wa-iyyaka", "weyak"],
+  "نستعين": ["nastaeen", "nasta'een", "nasta'in", "nastain", "nasteen"],
+  "اهدنا": ["ihdina", "ehdina", "ahdina", "ihdena"],
+  "الصراط": "as-siraat siraat sirat assirat assiraat".split(" "),
+  "المستقيم": "al-mustaqeem mustaqeem mustaqim almustaqim".split(" "),
+  "صراط": "siraat sirat serat".split(" "),
+  "الذين": "allatheena allazina allatheen allazeena".split(" "),
+  "انعمت": "an'amta anamta an'amte anamte".split(" "),
+  "عليهم": "alayhim alaihim aleyhim alayhum".split(" "),
+  "غير": "ghayr ghayri ghaire ghair".split(" "),
+  "المغضوب": "al-maghdoob maghdoob almaghdoobi maghdoobi".split(" "),
+  "ولا": "wala walaa wa-laa".split(" "),
+  "الضالين": "ad-daalleen dalleen daalleen addaalleen addaleen".split(" "),
+  // Short Surahs & common words
+  "قل": ["qul", "qool", "kul"],
+  "هو": ["huwa", "hoo", "howa"],
+  "احد": ["ahad", "ahadun", "ehad"],
+  "الصمد": ["as-samad", "assamad", "samad"],
+  "لم": ["lam", "lem"],
+  "يلد": ["yalid", "yeled"],
+  "ولم": ["walam", "wa-lam"],
+  "يولد": ["yoolad", "yulad"],
+  "يكن": ["yakun", "yekun"],
+  "له": ["lahu", "lahoo"],
+  "كفوا": ["kufuwan", "kufwan"],
+  "اعوذ": ["a'oodhu", "a'udhu", "aouthu", "aoodhu"],
+  "برب": ["birabbi", "bi-rabbi", "birab"],
+  "الفلق": ["al-falaq", "alfalaq", "falaq"],
+  "من": ["min", "men"],
+  "شر": ["sharri", "sharr", "shar"],
+  "ما": ["maa", "ma"],
+  "خلق": ["khalaq", "khalaqa"],
+  "ومن": ["wamin", "wa-min"],
+  "غاسق": ["ghaasiq", "ghasiq"],
+  "اذا": ["idha", "itha", "eza"],
+  "وقب": ["waqab", "waqaba"],
+  "النفاثات": ["an-naffaathaat", "naffathat"],
+  "في": ["fee", "fi"],
+  "العقد": ["al-uqad", "uqad"],
+  "حاسد": ["haasid", "hasid"],
+  "حسد": ["hasad", "hasada"],
+  "الناس": ["an-naas", "al-naas", "naas", "annas"],
+  "ملك الناس": ["malikin-naas", "malik annas"],
+  "اله": ["ilaah", "ilah", "ilaahi"],
+  "الوسواس": ["al-waswaas", "waswas", "alwaswas"],
+  "الخناس": ["al-khannaas", "khannas", "alkhannas"],
+  "الذي": ["alladhee", "allathee", "allazi"],
+  "يوسوس": ["yuwaswisu", "yuwaswis"],
+  "صدور": ["sudoor", "sudur"],
+  "الجنة": ["al-jinnah", "jinnati", "aljinnah"]
 };
 
 export interface CheckResult {
@@ -123,19 +136,23 @@ export function checkWord(
   }
 
   let bestResult: CheckResult = { status: 'error', similarity: 0, tajweedIssue: null };
-  
+  const cleanExpected = normalizeArabic(expectedWord);
+  const phoneticTargets = PHONETIC_DICT[cleanExpected] || [];
+
   for (const alt of alternatives) {
     let similarity = arabicSimilarity(alt, expectedWord);
     let status: 'correct' | 'tajweed' | 'error' = 'error';
     let tajweedIssue = null;
     
-    // Check if the ASR output is Latin/English text representing a transliteration (e.g. "Maliki", "Bismi", "Allah")
-    const cleanExpected = normalizeArabic(expectedWord);
-    const phoneticTarget = PHONETIC_DICT[cleanExpected];
+    // Check if the ASR output is Latin/English text representing a transliteration
     if (/[a-zA-Z]/.test(alt)) {
       const cleanSpoken = alt.toLowerCase().replace(/[^a-z]/g, "");
-      if (phoneticTarget && (cleanSpoken.includes(phoneticTarget) || phoneticTarget.includes(cleanSpoken) || cleanSpoken === "maliki" || cleanSpoken === "malik")) {
-        similarity = 1.0;
+      for (const target of phoneticTargets) {
+        const cleanTarget = target.toLowerCase().replace(/[^a-z]/g, "");
+        if (cleanSpoken.includes(cleanTarget) || cleanTarget.includes(cleanSpoken) || cleanSpoken === cleanTarget) {
+          similarity = 1.0;
+          break;
+        }
       }
     }
     

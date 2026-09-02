@@ -48,7 +48,7 @@ export default function RecitationPage() {
   const allWords = useRecitationStore((state) => state.allWords);
 
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [micCheckOpen, setMicCheckOpen] = useState(false);
+  const [micCheckOpen, setMicCheckOpen] = useState(true);
   const [statsOpen, setStatsOpen] = useState(false);
   const [recitationMode, setRecitationMode] = useState<"continuous" | "verse">("continuous");
 

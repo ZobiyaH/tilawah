@@ -3,7 +3,7 @@ import { Ayah, WordToken, FeedbackItem, SessionResult } from "../../types";
 import { checkWord } from "../arabic/similarity";
 import { stripDiacritics } from "../arabic/normalize";
 import { speakArabicWord, playCorrectionChime, playSuccessChime } from "../speech/tts";
-import { QariAudioManager } from "../qariAudio";
+import { preloadAudio, getWordAudio } from "../audio/qariCDN";
 
 interface RecitationState {
   currentSurahId: string;
@@ -157,7 +157,7 @@ export const useRecitationStore = create<RecitationState>((set, get) => {
     },
 
     processSpeech: (spokenAlternatives) => {
-      const { allWords, wordIndex, mode, recitationState, correctWord, retryCount, isAudioPlaying, recitationLevel, confidentReciterMode } = get();
+      const { allWords, wordIndex, recitationState, correctWord, retryCount, isAudioPlaying, recitationLevel, confidentReciterMode } = get();
       if (wordIndex >= allWords.length) return;
       if (isAudioPlaying) return;
 
@@ -240,7 +240,7 @@ export const useRecitationStore = create<RecitationState>((set, get) => {
         return;
       }
 
-      // 2. Normal listening flow (also runs in error state to allow seamless self-correction)
+      // 2. Normal listening flow
       if (recitationState === "listening" || recitationState === "error") {
         interface MatchResult {
           status: "correct" | "tajweed" | "error";
@@ -253,7 +253,7 @@ export const useRecitationStore = create<RecitationState>((set, get) => {
         let bestAltWordsMatched = 0;
         let bestMatchResults: MatchResult[] = [];
 
-        // Try alignment starting up to 2 words before the current expected word index
+        // Check starting from up to 3 words prior to allow continuous fluid recitations
         const minStart = Math.max(0, wordIndex - 2);
         for (let expectedStart = minStart; expectedStart <= wordIndex; expectedStart++) {
           for (let a = 0; a < spokenAlternatives.length; a++) {
@@ -264,9 +264,9 @@ export const useRecitationStore = create<RecitationState>((set, get) => {
             let matchedCount = 0;
             const tempResults: MatchResult[] = [];
 
-            // Find the best starting index in spokenWords that matches the chosen expected start word
+            // Find starting spoken word index that matches expectedStart
             let startSpokenIdx = 0;
-            for (let i = 0; i < Math.min(spokenWords.length, 3); i++) {
+            for (let i = 0; i < Math.min(spokenWords.length, 4); i++) {
               const check = checkWord(spokenWords[i], allWords[expectedStart].arabic, recitationLevel, confidentReciterMode);
               if (check.status === "correct" || check.status === "tajweed") {
                 startSpokenIdx = i;
@@ -331,14 +331,12 @@ export const useRecitationStore = create<RecitationState>((set, get) => {
                   expectedWordIndex: tempExpectedIdx,
                   spokenWordText: sWord,
                 });
-                // If we already matched at least one word in flow, don't break immediately; try next spoken word
                 if (matchedCount === 0) {
                   break;
                 }
               }
             }
 
-            // We prefer the start offset matching the most spoken words
             if (matchedCount > bestAltWordsMatched || (matchedCount === bestAltWordsMatched && expectedStart > bestExpectedStart)) {
               bestAltWordsMatched = matchedCount;
               bestExpectedStart = expectedStart;
@@ -347,12 +345,12 @@ export const useRecitationStore = create<RecitationState>((set, get) => {
           }
         }
 
+        // Apply matches ONLY if genuine correct words were detected
         if (bestAltWordsMatched > 0) {
           let correctIncrement = 0;
           let errorDecrement = 0;
           let wordIdxIncrement = 0;
           let tajweedIncrement = 0;
-          let firstErrorResult: MatchResult | null = null;
 
           for (const res of bestMatchResults) {
             if (res.status === "correct" || res.status === "tajweed") {
@@ -360,7 +358,6 @@ export const useRecitationStore = create<RecitationState>((set, get) => {
               correctIncrement++;
               wordIdxIncrement++;
               if (res.expectedWordIndex < wordIndex) {
-                // Correcting a previously wrong word
                 errorDecrement++;
               }
               if (res.status === "tajweed") {
@@ -375,67 +372,34 @@ export const useRecitationStore = create<RecitationState>((set, get) => {
                 get().addFeedback("correct", "✓ Correct", `"${expected.arabic}" - well done!`);
               }
             } else {
-              firstErrorResult = res;
               break;
             }
           }
 
-          set((state) => ({
-            correctCount: state.correctCount + correctIncrement,
-            errorCount: Math.max(0, state.errorCount - errorDecrement),
-            wordIndex: Math.max(state.wordIndex, bestExpectedStart + wordIdxIncrement),
-            tajweedHits: state.tajweedHits + tajweedIncrement,
-            recitationState: "listening", // Reset to listening state upon correct matching
-          }));
-
-          if (firstErrorResult && mode === "guided") {
-            const expected = allWords[firstErrorResult.expectedWordIndex];
-            set((state) => ({ errorCount: state.errorCount + 1 }));
-            const annotation = expected.ayahData.tajweedMap?.[expected.wordIdxInAyah]?.[0];
-            const tipText = annotation
-              ? `${annotation.rule}: ${annotation.description}`
-              : `The correct word is "${expected.arabic}".`;
-
-            set({
-              recitationState: "error", // Turn red
-              correctionOverlayOpen: false, // DO NOT open overlay!
-              wrongWord: firstErrorResult.spokenWordText,
-              correctWord: expected.arabic,
-              tajweedTipText: tipText,
-              retryCount: 0,
-            });
-            get().addFeedback("error", `❌ Mismatch - Ayah ${expected.ayahN}`, `You said: "${firstErrorResult.spokenWordText}" → Expected: "${expected.arabic}"`);
-            const sNum = Number(get().currentSurahId || "1");
-            QariAudioManager.getInstance().playWord(expected.arabic, sNum).catch(() => {});
-            playCorrectionChime();
-          } else if (firstErrorResult && mode !== "guided") {
-            const expected = allWords[firstErrorResult.expectedWordIndex];
-            set((state) => ({ errorCount: state.errorCount + 1, wordIndex: state.wordIndex + 1 }));
-            get().addFeedback("error", `❌ Mismatch - Ayah ${expected.ayahN}`, `Spoken: "${firstErrorResult.spokenWordText}" → Expected: "${expected.arabic}"`);
+          if (wordIdxIncrement > 0) {
+            set((state) => ({
+              correctCount: state.correctCount + correctIncrement,
+              errorCount: Math.max(0, state.errorCount - errorDecrement),
+              wordIndex: Math.max(state.wordIndex, bestExpectedStart + wordIdxIncrement),
+              tajweedHits: state.tajweedHits + tajweedIncrement,
+              recitationState: "listening",
+            }));
           }
         } else {
-          const firstErr = bestMatchResults[0];
+          // No match detected — DO NOT advance the wordIndex forward automatically
           const expected = allWords[wordIndex];
-          const spokenErrWord = firstErr?.spokenWordText || spokenAlternatives[0].split(/\s+/)[0] || "(unclear)";
-          if (mode === "guided") {
-            set((state) => ({ errorCount: state.errorCount + 1 }));
-            const annotation = expected.ayahData.tajweedMap?.[expected.wordIdxInAyah]?.[0];
-            const tipText = annotation ? `${annotation.rule}: ${annotation.description}` : `The correct word is "${expected.arabic}".`;
+          const spokenErrWord = spokenAlternatives[0]?.split(/\s+/)[0] || "(unclear)";
+          
+          if (spokenErrWord && spokenErrWord !== "(unclear)") {
             set({
-              recitationState: "error", // Turn red
-              correctionOverlayOpen: false, // DO NOT open overlay!
+              recitationState: "error",
               wrongWord: spokenErrWord,
-              correctWord: expected.arabic,
-              tajweedTipText: tipText,
+              correctWord: expected ? expected.arabic : "",
               retryCount: 0,
             });
-            get().addFeedback("error", `❌ Mismatch - Ayah ${expected.ayahN}`, `You said: "${spokenErrWord}" → Expected: "${expected.arabic}"`);
-            const sNum = Number(get().currentSurahId || "1");
-            QariAudioManager.getInstance().playWord(expected.arabic, sNum).catch(() => {});
-            playCorrectionChime();
-          } else {
-            set((state) => ({ errorCount: state.errorCount + 1, wordIndex: state.wordIndex + 1 }));
-            get().addFeedback("error", `❌ Mismatch - Ayah ${expected.ayahN}`, `Spoken: "${spokenErrWord}" → Expected: "${expected.arabic}"`);
+            if (expected) {
+              get().addFeedback("error", `❌ Mismatch - Ayah ${expected.ayahN}`, `Spoken: "${spokenErrWord}" → Expected: "${expected.arabic}"`);
+            }
           }
         }
       }
@@ -461,114 +425,120 @@ export const useRecitationStore = create<RecitationState>((set, get) => {
     },
 
     startRetryMode: () => {
-      set({ recitationState: "retry", correctionOverlayOpen: false });
+      const { allWords, wordIndex } = get();
+      const current = allWords[wordIndex];
+      set({
+        correctionOverlayOpen: false,
+        recitationState: "retry",
+        correctWord: current ? current.arabic : "",
+        retryCount: 0,
+      });
+      get().addFeedback("hint", "🔄 Repeating Current Word", "Recite the target word clearly into your mic.");
     },
 
     retryOnceMore: () => {
-      set({ recitationState: "retry", correctionOverlayOpen: false, retryCount: 0 });
+      set((state) => ({
+        correctionOverlayOpen: false,
+        recitationState: "retry",
+        retryCount: state.retryCount,
+      }));
     },
 
     markForPracticeAndSkip: () => {
-      const { wordIndex, practiceWords, allWords } = get();
-      if (wordIndex >= allWords.length) return;
-      const newPractice = [...practiceWords];
-      if (!newPractice.includes(wordIndex)) newPractice.push(wordIndex);
-      get().addFeedback("hint", "⏭ Marked for Practice", `Skipped "${allWords[wordIndex].arabic}" and marked for practice.`);
-      set((state) => ({
-        practiceWords: newPractice,
-        wordIndex: state.wordIndex + 1,
-        correctionOverlayOpen: false,
-        recitationState: "listening",
-        retryCount: 0,
-      }));
+      get().skipWord();
     },
 
     addFeedback: (type, title, message) => {
       set((state) => {
-        const nextFeed = [...state.feedbackList];
-        if (nextFeed.length >= 6) nextFeed.shift();
+        const item: FeedbackItem = {
+          id: Math.random().toString(),
+          type,
+          title,
+          message,
+          timestamp: Date.now(),
+        };
+        const nextList = [item, ...state.feedbackList];
         return {
-          feedbackList: [
-            ...nextFeed,
-            { id: Math.random().toString(), type, title, message, timestamp: Date.now() },
-          ],
+          feedbackList: nextList.slice(0, 50),
         };
       });
     },
 
     saveSessionScore: async () => {
-      const { correctCount, errorCount, tajweedHits, sessionStart, currentSurahId, surahName } = get();
-      const total = correctCount + errorCount;
-      if (total === 0) return;
-      const accuracy = Math.round((correctCount / total) * 100);
-      const tajweed = Math.max(0, Math.round(100 - (tajweedHits / Math.max(total, 1)) * 30));
-      const elapsed = sessionStart ? (Date.now() - sessionStart) / 60000 : 1;
-      const fluency = Math.min(100, Math.round((correctCount / Math.max(elapsed, 0.1)) * 5));
-      const overall = Math.round(accuracy * 0.5 + tajweed * 0.3 + fluency * 0.2);
-      const sessionObj: SessionResult = {
+      const { currentSurahId, surahName, correctCount, errorCount, tajweedHits, allWords } = get();
+      const totalChecked = correctCount + errorCount;
+      const accuracy = totalChecked > 0 ? Math.round((correctCount / totalChecked) * 100) : 100;
+      const tajweedScore = Math.max(0, 100 - tajweedHits * 5);
+      const fluency = Math.min(100, Math.max(50, 100 - errorCount * 4));
+      const overall = Math.round(accuracy * 0.5 + tajweedScore * 0.3 + fluency * 0.2);
+
+      const result: SessionResult = {
         id: Math.random().toString(),
         surahId: currentSurahId,
-        surahName,
+        surahName: surahName || `Surah ${currentSurahId}`,
         timestamp: Date.now(),
         accuracy,
-        tajweed,
+        tajweed: tajweedScore,
         fluency,
         overall,
         correctWords: correctCount,
-        totalWords: total,
+        totalWords: allWords.length,
       };
-      try {
+
+      if (typeof window !== "undefined") {
         const existing = localStorage.getItem("tilawa_sessions");
-        const list = existing ? JSON.parse(existing) : [];
-        list.push(sessionObj);
+        const list: SessionResult[] = existing ? JSON.parse(existing) : [];
+        list.push(result);
         localStorage.setItem("tilawa_sessions", JSON.stringify(list));
-        await fetch("/api/session", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(sessionObj) });
-      } catch (err) {
-        console.warn("Failed to sync session score:", err);
       }
     },
 
     setFontScale: (scale) => set({ fontScale: scale }),
     setMicGain: (gain) => {
-      localStorage.setItem("tilawa_mic_gain", String(gain));
       set({ micGain: gain });
+      if (typeof window !== 'undefined') localStorage.setItem('tilawa_mic_gain', String(gain));
     },
     setRecitationLevel: (level) => {
-      localStorage.setItem("tilawa_recitation_level", level);
       set({ recitationLevel: level });
+      if (typeof window !== 'undefined') localStorage.setItem('tilawa_recitation_level', level);
     },
     setConfidentReciterMode: (mode) => {
-      localStorage.setItem("tilawa_confident_reciter", String(mode));
       set({ confidentReciterMode: mode });
+      if (typeof window !== 'undefined') localStorage.setItem('tilawa_confident_reciter', String(mode));
     },
-    setAudioPlaying: (playing) => set({ isAudioPlaying: playing }),
     toggleTransliteration: () => set((state) => ({ showTransliteration: !state.showTransliteration })),
     toggleTranslation: () => set((state) => ({ showTranslation: !state.showTranslation })),
     toggleTajweedColors: () => set((state) => ({ showTajweedColors: !state.showTajweedColors })),
+    setAudioPlaying: (playing) => set({ isAudioPlaying: playing }),
 
     resetSession: () => {
-      const { surahName } = get();
+      const { surahName, allWords } = get();
       set({
         wordIndex: 0,
         correctCount: 0,
         errorCount: 0,
         tajweedHits: 0,
         sessionStart: Date.now(),
+        recitationState: "listening",
+        correctionOverlayOpen: false,
+        practiceWords: [],
         feedbackList: [
           {
             id: Math.random().toString(),
             type: "hint",
-            title: "🔄 Session Restarted",
-            message: `Ready to recite ${surahName} from the beginning.`,
+            title: "🔄 Reset",
+            message: `Session restarted for ${surahName || "Surah"}. Begin from Ayah 1.`,
             timestamp: Date.now(),
           },
         ],
-        correctionOverlayOpen: false,
-        retryCount: 0,
-        recitationState: "listening",
-        practiceWords: [],
-        successFeedback: "",
       });
+      // Preload first words on reset
+      if (allWords && allWords.length > 0) {
+        allWords.slice(0, 3).forEach((w) => {
+          const url = getWordAudio(w.ayahData.surahId, w.ayahN, w.wordIdxInAyah + 1);
+          preloadAudio(url);
+        });
+      }
     },
   };
 });
