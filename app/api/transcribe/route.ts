@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     const key = process.env.GROQ_API_KEY;
     if (!key) {
       return NextResponse.json(
-        { error: 'Groq not configured', fallback: true },
+        { error: 'Groq not configured', fallback: true, decision: 'no_speech' },
         { status: 503 }
       );
     }
@@ -33,64 +33,61 @@ export async function POST(request: NextRequest) {
 
     if (!audioFile) {
       return NextResponse.json(
-        { error: 'No audio file', fallback: true },
+        { error: 'No audio file', fallback: true, decision: 'no_speech' },
         { status: 400 }
       );
     }
 
-    // Log for debugging
-    console.log('[API] Received audio:', {
-      size: audioFile.size,
-      type: audioFile.type,
-      name: audioFile.name,
-    });
-
-    // Reject if too small — definitely silence
-    if (audioFile.size < 3000) {
-      console.warn('[API] Audio too short — size:', audioFile.size);
+    // Reject if too small — definitely silence/noise
+    if (audioFile.size < 2000) {
+      console.warn('[API] Audio too short / silent — size:', audioFile.size);
       return NextResponse.json(
         { 
           error: 'Audio too short — no speech detected',
-          fallback: true,
+          decision: 'no_speech',
+          transcript: '',
+          success: false,
         },
-        { status: 400 }
+        { status: 200 }
       );
     }
 
-    const prompt = formData.get('prompt') as string || 'بسم الله الرحمن الرحيم الحمد لله';
+    const prompt = (formData.get('prompt') as string) || 'بسم الله الرحمن الرحيم الحمد لله رب العالمين';
 
     const buffer = Buffer.from(await audioFile.arrayBuffer());
     const fileToUpload = await toFile(buffer, 'recording.webm', { type: 'audio/webm' });
 
-    console.log('[API] Sending to Groq with prompt:', prompt);
-    const transcription = await groq.audio.transcriptions.create({
+    console.log('[API] Sending continuous audio to Groq with prompt:', prompt);
+    const transcription: any = await groq.audio.transcriptions.create({
       file: fileToUpload,
       model: 'whisper-large-v3',
       language: 'ar',
       prompt: prompt,
-      response_format: 'json',
+      response_format: 'verbose_json',
       temperature: 0.0,
     });
 
-    const transcript = transcription.text.trim();
-    console.log('[API] Groq returned:', transcript);
+    const transcript = (transcription.text || '').trim();
+    const avgLogprob = typeof transcription.avg_logprob === 'number' ? transcription.avg_logprob : 0;
+    console.log('[API] Groq verbose returned:', { transcript, avgLogprob });
 
-    // Check if transcript has Arabic
+    // FIX 3: Background noise / low confidence / non-Arabic speech detection
     const hasArabic = /[\u0600-\u06FF]/.test(transcript);
-    if (!hasArabic || transcript.length < 2) {
-      console.warn('[API] Non-Arabic or empty transcript returned:', transcript);
-      return NextResponse.json(
-        { 
-          error: 'No Arabic speech detected',
-          transcript: '',
-          success: false,
-        }
-      );
+    if (!transcript || transcript.length < 2 || !hasArabic || (avgLogprob !== 0 && avgLogprob < -1.2)) {
+      console.warn('[API] Unclear or noisy audio detected:', { transcript, avgLogprob });
+      return NextResponse.json({
+        decision: 'no_speech',
+        transcript: '',
+        message: "We couldn't hear you clearly. Check your microphone and try again.",
+        success: false,
+      });
     }
 
     return NextResponse.json({
       transcript,
+      avgLogprob,
       success: true,
+      decision: 'speech_detected',
     });
 
   } catch (error: any) {
@@ -99,6 +96,7 @@ export async function POST(request: NextRequest) {
       { 
         error: error.message,
         fallback: true,
+        decision: 'no_speech',
       },
       { status: 500 }
     );

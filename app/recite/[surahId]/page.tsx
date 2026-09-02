@@ -80,7 +80,7 @@ export default function RecitationPage() {
     setAlignedResults([]);
   };
 
-  // Verse-by-verse recording start
+  // Verse-by-verse recording start with FIX 1 exact RMS silence detection
   const startRecording = async () => {
     try {
       if (!recorderRef.current) {
@@ -96,32 +96,39 @@ export default function RecitationPage() {
       await recorderRef.current.start();
       setRecordingState("listening");
 
-      let silenceMs = 0;
+      const SILENCE_THRESHOLD = 0.008;
+      const END_OF_SPEECH_MS = 2500;
+      let silenceStartTime: number | null = null;
+      let speechDetected = false;
+
       const interval = setInterval(async () => {
         if (!recorderRef.current || !recorderRef.current.isRecording()) {
           clearInterval(interval);
           return;
         }
 
-        const volume = await recorderRef.current.getRMSLevel();
-        if (volume < 0.02) {
-          silenceMs += 100;
+        const rms = await recorderRef.current.getRMSLevel();
+        if (rms < SILENCE_THRESHOLD) {
+          if (speechDetected) {
+            silenceStartTime = silenceStartTime || Date.now();
+            const silenceDuration = Date.now() - silenceStartTime;
+            if (silenceDuration >= END_OF_SPEECH_MS) {
+              clearInterval(interval);
+              stopRecordingAndProcess();
+            }
+          }
         } else {
-          silenceMs = 0;
+          speechDetected = true;
+          silenceStartTime = null; // reset during active words/natural pauses
         }
-
-        if (silenceMs >= 3500) {
-          clearInterval(interval);
-          stopRecordingAndProcess();
-        }
-      }, 100);
+      }, 60);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to start microphone.";
       showToast(msg);
     }
   };
 
-  // Verse-by-verse recording stop and analyze
+  // Verse-by-verse recording stop and analyze with strict FIX 2 & FIX 3 enforcement
   const stopRecordingAndProcess = async () => {
     if (!recorderRef.current || !recorderRef.current.isRecording()) return;
     setRecordingState("processing");
@@ -129,19 +136,16 @@ export default function RecitationPage() {
     try {
       const audioBlob = await recorderRef.current.stop();
       if (!currentWordToken) return;
-      const promptText = currentWordToken.ayahData.words.join(" ");
+      
+      // Full expected Ayah text as Whisper prompt
+      const promptText = currentWordToken.ayahData.words.join(" ") || currentWordToken.ayahData.arabic;
 
       const result = await transcribeAudio(audioBlob, "ayah", promptText);
-      if (!result.success || !result.transcript) {
-        setRecordingState("summary");
-        setAlignedResults(
-          currentWordToken.ayahData.words.map((w, idx) => ({
-            word: w,
-            status: "error",
-            similarity: 0,
-            wordIdxInAyah: idx,
-          }))
-        );
+      
+      // FIX 2 & FIX 3: Silence or noise handling — NEVER advance
+      if (!result.success || !result.transcript || result.transcript.trim().length === 0) {
+        setRecordingState("idle");
+        showToast("⚠️ We couldn't hear you clearly. Check your mic and recite again.");
         return;
       }
 
@@ -174,6 +178,7 @@ export default function RecitationPage() {
       const correctWords = aligned.filter((w) => w.status === "correct" || w.status === "tajweed").length;
       const errorWords = aligned.length - correctWords;
 
+      // FIX 4: Only record scores on genuine real attempts
       useRecitationStore.setState((state) => ({
         correctCount: state.correctCount + correctWords,
         errorCount: state.errorCount + errorWords,

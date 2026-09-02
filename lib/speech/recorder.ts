@@ -5,13 +5,12 @@ export class AudioRecorder {
   private stream: MediaStream | null = null;
   private hasAudio: boolean = false;
   private audioContext: AudioContext | null = null;
+  private analyserNode: AnalyserNode | null = null;
+  private dataArray: Uint8Array | null = null;
 
   async start(): Promise<void> {
     console.log('[Recorder] Starting mic...');
     try {
-      // CRITICAL: Request mic with exact constraints
-      // noiseSuppression: false because it kills quiet Arabic
-      // autoGainControl: true to boost quiet voices
       this.stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: true,
@@ -22,9 +21,6 @@ export class AudioRecorder {
         }
       });
 
-      // CRITICAL: Create and immediately resume AudioContext
-      // Chrome suspends AudioContext by default
-      // Must resume it on user gesture (button tap)
       const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
       this.audioContext = new AudioContextClass();
       
@@ -34,7 +30,6 @@ export class AudioRecorder {
 
       console.log('[Recorder] AudioContext state:', this.audioContext.state);
 
-      // Check AudioContext is actually running
       if (this.audioContext.state !== 'running') {
         throw new Error(
           'AudioContext could not start. ' +
@@ -42,20 +37,23 @@ export class AudioRecorder {
         );
       }
 
-      // Verify we are actually getting audio signal by checking stream tracks
       const tracks = this.stream.getAudioTracks();
-      console.log('[Recorder] Stream tracks:', tracks.length);
       if (tracks.length === 0) {
         throw new Error('No audio track found');
       }
 
       const track = tracks[0];
-      console.log('[Recorder] Mic track settings:', track.getSettings());
-      console.log('[Recorder] Mic track state:', track.readyState);
-
       if (track.readyState !== 'live') {
         throw new Error('Mic track is not live');
       }
+
+      // Pre-create and keep persistent analyser node connected for fast continuous RMS VAD
+      const analyser = this.audioContext.createAnalyser();
+      analyser.fftSize = 256;
+      const source = this.audioContext.createMediaStreamSource(this.stream);
+      source.connect(analyser);
+      this.analyserNode = analyser;
+      this.dataArray = new Uint8Array(analyser.frequencyBinCount);
 
       // Setup MediaRecorder
       let mimeType = 'audio/webm;codecs=opus';
@@ -82,21 +80,16 @@ export class AudioRecorder {
         if (event.data && event.data.size > 0) {
           this.audioChunks.push(event.data);
           this.hasAudio = true;
-          console.log(
-            '[Recorder] Chunk received:', 
-            event.data.size, 'bytes'
-          );
         }
       };
 
-      // Collect data every 100ms for better detection
+      // Collect data every 100ms
       this.mediaRecorder.start(100);
       console.log('[Recorder] Recording started. MimeType:', mimeType);
 
     } catch (err: any) {
       console.error('[Recorder] Mic start error:', err);
       
-      // Give user friendly error messages
       if (err.name === 'NotAllowedError') {
         throw new Error(
           'Microphone permission denied. ' +
@@ -128,31 +121,27 @@ export class AudioRecorder {
       }
 
       this.mediaRecorder.onstop = () => {
-        // Stop all tracks to release microphone
         this.stream?.getTracks().forEach(t => t.stop());
         
-        // Close AudioContext
-        this.audioContext?.close();
+        if (this.audioContext && this.audioContext.state !== 'closed') {
+          this.audioContext.close().catch(() => {});
+        }
         this.audioContext = null;
+        this.analyserNode = null;
+        this.dataArray = null;
 
         if (!this.hasAudio || this.audioChunks.length === 0) {
           reject(new Error('NO_AUDIO_DETECTED'));
           return;
         }
 
-        const mimeType = 
-          this.mediaRecorder?.mimeType || 'audio/webm';
+        const mimeType = this.mediaRecorder?.mimeType || 'audio/webm';
         const blob = new Blob(this.audioChunks, { 
           type: mimeType 
         });
 
-        console.log(
-          '[Recorder] Final blob:', 
-          blob.size, 'bytes'
-        );
+        console.log('[Recorder] Final continuous blob:', blob.size, 'bytes');
 
-        // CRITICAL: Check blob is not too small
-        // Less than 1000 bytes = silence = reject it
         if (blob.size < 1000) {
           reject(new Error('NO_AUDIO_DETECTED'));
           return;
@@ -165,33 +154,18 @@ export class AudioRecorder {
     });
   }
 
-  // Check if recording contains actual voice
-  // Uses Web Audio API to measure volume
+  // Measure real-time volume RMS using Web Audio API
   async getRMSLevel(): Promise<number> {
-    if (!this.audioContext || !this.stream) return 0;
+    if (!this.analyserNode || !this.dataArray) return 0;
     
-    const analyser = this.audioContext.createAnalyser();
-    const source = this.audioContext.createMediaStreamSource(
-      this.stream
-    );
-    source.connect(analyser);
+    this.analyserNode.getByteTimeDomainData(this.dataArray as unknown as Uint8Array<ArrayBuffer>);
     
-    analyser.fftSize = 256;
-    const dataArray = new Uint8Array(
-      analyser.frequencyBinCount
-    );
-    analyser.getByteTimeDomainData(dataArray);
-    
-    // Calculate RMS (volume level)
     let sum = 0;
-    for (let i = 0; i < dataArray.length; i++) {
-      const val = (dataArray[i] - 128) / 128;
+    for (let i = 0; i < this.dataArray.length; i++) {
+      const val = (this.dataArray[i] - 128) / 128;
       sum += val * val;
     }
-    const rms = Math.sqrt(sum / dataArray.length);
-    
-    source.disconnect();
-    return rms;
+    return Math.sqrt(sum / this.dataArray.length);
   }
 
   isRecording(): boolean {
