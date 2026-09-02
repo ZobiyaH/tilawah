@@ -12,7 +12,6 @@ interface WindowWithSpeech extends Window {
 // Global state trackers across re-renders
 let globalStream: MediaStream | null = null;
 let globalRecorder: MediaRecorder | null = null;
-let globalUseWhisper = true;
 let isRecognitionRunning = false;
 
 export function getRecognitionRunning() {
@@ -65,200 +64,34 @@ export function useContinuousASR(isListening: boolean) {
     let vadAnalyser: AnalyserNode | null = null;
     let vadDataArray: Uint8Array | null = null;
 
-    // FIX 1: Exact Silence Detection Timings with High Sensitivity
+    // Silence detection & utterance timings
     const SILENCE_THRESHOLD = 0.0025; // Highly responsive RMS energy threshold
-    const END_OF_SPEECH_MS = 2200; // Natural pause completion - user finished utterance
+    const END_OF_SPEECH_MS = 2000; // Natural pause completion - user finished utterance
     const MAX_UTTERANCE_MS = 14000; // Safety cap for complete multi-verse utterances
 
     let silenceStartTime: number | null = null;
     let utteranceStartTime: number = Date.now();
     let speechDetectedInUtterance = false;
-    let chunks: Blob[] = [];
+    let currentChunks: Blob[] = [];
     let isProcessingUtterance = false;
+    let mimeType = "audio/webm;codecs=opus";
 
-    async function startContinuousASR() {
-      if (!activeRef.current) return;
+    // 1. Dual Real-time Web Speech Recognition Stream (for instantaneous visual live feedback & rapid matching)
+    const win = typeof window !== "undefined" ? (window as WindowWithSpeech) : null;
+    const SpeechRecognitionClass = win?.SpeechRecognition || win?.webkitSpeechRecognition;
 
-      // 1. Primary: Groq Whisper Engine with RMS-based Voice Activity Detection
-      if (globalUseWhisper) {
-        try {
-          console.log("[ContinuousASR] Initializing High-Precision Continuous Stream...");
-          localStream = await navigator.mediaDevices.getUserMedia({
-            audio: {
-              echoCancellation: true,
-              noiseSuppression: false,
-              autoGainControl: true,
-              channelCount: 1,
-              sampleRate: 16000,
-            },
-          });
-          globalStream = localStream;
+    const startWebSpeechLive = () => {
+      if (!SpeechRecognitionClass || !activeRef.current) return;
 
-          const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-          audioContext = new AudioContextClass();
-          if (audioContext.state === "suspended") {
-            await audioContext.resume();
-          }
-
-          vadAnalyser = audioContext.createAnalyser();
-          vadAnalyser.fftSize = 256;
-          vadDataArray = new Uint8Array(vadAnalyser.frequencyBinCount);
-
-          const source = audioContext.createMediaStreamSource(localStream);
-          const gainNode = audioContext.createGain();
-          gainNode.gain.setValueAtTime(4.0, audioContext.currentTime); // 4x gain for reliable Arabic voice pickup
-          source.connect(gainNode);
-          gainNode.connect(vadAnalyser);
-
-          let mimeType = "audio/webm;codecs=opus";
-          if (!MediaRecorder.isTypeSupported(mimeType)) mimeType = "audio/webm";
-          if (!MediaRecorder.isTypeSupported(mimeType)) mimeType = "";
-
-          const recorder = new MediaRecorder(localStream, mimeType ? { mimeType } : {});
-          localRecorder = recorder;
-          globalRecorder = recorder;
-          setRecognitionRunning(true);
-
-          chunks = [];
-          utteranceStartTime = Date.now();
-          silenceStartTime = null;
-          speechDetectedInUtterance = false;
-          isProcessingUtterance = false;
-
-          recorder.ondataavailable = (e) => {
-            if (e.data && e.data.size > 0) {
-              chunks.push(e.data);
-            }
-          };
-
-          const finishUtteranceAndSend = async () => {
-            if (isProcessingUtterance || chunks.length === 0 || !activeRef.current) return;
-            isProcessingUtterance = true;
-
-            const audioBlob = new Blob(chunks, { type: mimeType || "audio/webm" });
-            chunks = [];
-            utteranceStartTime = Date.now();
-            silenceStartTime = null;
-            const hadSpeech = speechDetectedInUtterance;
-            speechDetectedInUtterance = false;
-
-            // If utterance was totally silent or tiny, skip without advancing
-            if (!hadSpeech || audioBlob.size < 600) {
-              console.log("[ContinuousASR] Skipping silent background buffer:", audioBlob.size, "bytes");
-              isProcessingUtterance = false;
-              return;
-            }
-
-            const isPlaying = useRecitationStore.getState().isAudioPlaying;
-            if (!isPlaying && activeRef.current) {
-              try {
-                console.log("[ContinuousASR] Transmitting complete utterance to Groq:", audioBlob.size, "bytes");
-                const currentWordIndex = useRecitationStore.getState().wordIndex;
-                const wordsList = useRecitationStore.getState().allWords;
-                
-                // Use FULL Ayah text as Whisper prompt for highest accuracy
-                const promptText = wordsList[currentWordIndex]?.ayahData.words.join(" ") || wordsList[currentWordIndex]?.ayahData.arabic || "بسم الله الرحمن الرحيم";
-
-                const formData = new FormData();
-                formData.append("audio", audioBlob);
-                formData.append("prompt", promptText);
-
-                const res = await fetch("/api/transcribe", {
-                  method: "POST",
-                  body: formData,
-                });
-
-                if (res.ok && activeRef.current && !useRecitationStore.getState().isAudioPlaying) {
-                  const data = await res.json();
-                  console.log("[ContinuousASR] Groq response:", data);
-
-                  // FIX 3: Background noise / no speech handler
-                  if (data.decision === "no_speech" || !data.transcript || !data.success) {
-                    console.log("[ContinuousASR] No speech detected or background noise — holding position");
-                    setLiveTranscriptRef.current("… (Listening...)");
-                  } else {
-                    const transcriptText = data.transcript.trim();
-                    const hasArabic = /[\u0600-\u06FF]/.test(transcriptText);
-                    if (hasArabic) {
-                      setLiveTranscriptRef.current(transcriptText);
-                      const words = transcriptText.split(/\s+/).filter(Boolean);
-                      processSpeechRef.current(words);
-                    }
-                  }
-                }
-              } catch (err) {
-                console.warn("[ContinuousASR] Whisper request failed; fallback to web speech:", err);
-                setUseWhisper(false);
-                globalUseWhisper = false;
-              }
-            }
-            isProcessingUtterance = false;
-          };
-
-          recorder.start(100);
-
-          // Real-time RMS-based Voice Activity Detection loop (Runs every 60ms)
-          checkInterval = setInterval(() => {
-            if (!activeRef.current || !vadAnalyser || !vadDataArray || !localRecorder) return;
-
-            vadAnalyser.getByteTimeDomainData(vadDataArray as unknown as Uint8Array<ArrayBuffer>);
-            let sum = 0;
-            for (let i = 0; i < vadDataArray.length; i++) {
-              const val = (vadDataArray[i] - 128) / 128;
-              sum += val * val;
-            }
-            const rms = Math.sqrt(sum / vadDataArray.length);
-
-            const elapsed = Date.now() - utteranceStartTime;
-
-            if (rms < SILENCE_THRESHOLD) {
-              if (speechDetectedInUtterance) {
-                silenceStartTime = silenceStartTime || Date.now();
-                const silenceDuration = Date.now() - silenceStartTime;
-
-                // Stop & process ONLY after END_OF_SPEECH_MS of true silence following speech
-                if (silenceDuration >= END_OF_SPEECH_MS || elapsed >= MAX_UTTERANCE_MS) {
-                  finishUtteranceAndSend();
-                }
-                // (Natural pauses < END_OF_SPEECH_MS are preserved seamlessly)
-              } else {
-                // Background silence before user starts speaking: clear small buffers
-                if (elapsed > 4000) {
-                  chunks = [];
-                  utteranceStartTime = Date.now();
-                }
-              }
-            } else {
-              // Voice energy detected!
-              speechDetectedInUtterance = true;
-              silenceStartTime = null; // Reset silence tracker during natural speech
-            }
-          }, 60);
-
-        } catch (err) {
-          console.warn("[ContinuousASR] Failed to initialize MediaRecorder; fallback to Web Speech:", err);
-          setUseWhisper(false);
-          globalUseWhisper = false;
-        }
-      }
-      // 2. Browser Web Speech fallback mode
-      else {
-        const win = window as WindowWithSpeech;
-        const SpeechRecognition = win.SpeechRecognition || win.webkitSpeechRecognition;
-
-        if (!SpeechRecognition) {
-          setBrowserSupport(false);
-          return;
-        }
-
-        const rec = new SpeechRecognition();
+      try {
+        const rec = new SpeechRecognitionClass();
         rec.lang = "ar-SA";
         rec.continuous = true;
         rec.interimResults = true;
         rec.maxAlternatives = 5;
 
         rec.onresult = (event: any) => {
-          if (useRecitationStore.getState().isAudioPlaying) return;
+          if (useRecitationStore.getState().isAudioPlaying || !activeRef.current) return;
 
           let interim = "";
           let finalAlternatives: string[] = [];
@@ -272,51 +105,230 @@ export function useContinuousASR(isListening: boolean) {
               }
               finalAlternatives = alts;
             } else {
-              interim = resultList[0].transcript;
+              interim = resultList[0]?.transcript || "";
             }
           }
 
           const display = finalAlternatives[0] || interim;
-          if (display) {
+          if (display && display.trim().length > 0) {
             setLiveTranscriptRef.current(display);
           }
 
+          // If final alternative detected, pass to processSpeech
           if (finalAlternatives.length > 0) {
             processSpeechRef.current(finalAlternatives);
           }
         };
 
-        const onASRRestart = () => {
-          if (useRecitationStore.getState().isListening && recognitionRef.current && !globalUseWhisper) {
-            setTimeout(() => {
-              try {
-                if (useRecitationStore.getState().isListening && !getRecognitionRunning() && !globalUseWhisper && recognitionRef.current) {
-                  recognitionRef.current.start();
-                  setRecognitionRunning(true);
-                }
-              } catch {}
-            }, 300);
-          }
-        };
-
         rec.onend = () => {
-          setRecognitionRunning(false);
-          onASRRestart();
+          if (activeRef.current && isRecognitionRunning) {
+            setTimeout(() => {
+              if (activeRef.current && isRecognitionRunning && recognitionRef.current) {
+                try {
+                  recognitionRef.current.start();
+                } catch {}
+              }
+            }, 250);
+          }
         };
 
         rec.onerror = (e: any) => {
-          if (e.error !== "no-speech") {
-            console.warn("Continuous Web Speech error:", e.error);
+          if (e.error !== "no-speech" && e.error !== "aborted") {
+            console.warn("[ContinuousASR] Web Speech error:", e.error);
           }
         };
 
-        try {
-          rec.start();
-          setRecognitionRunning(true);
-          recognitionRef.current = rec;
-        } catch (e) {
-          console.warn("Could not start Web Speech Recognition:", e);
+        rec.start();
+        recognitionRef.current = rec;
+      } catch (e) {
+        console.warn("[ContinuousASR] Web Speech not active in background:", e);
+      }
+    };
+
+    // 2. High-Accuracy Whisper Utterance Processor with proper MediaRecorder container cycling
+    async function startContinuousASR() {
+      if (!activeRef.current) return;
+      setRecognitionRunning(true);
+
+      // Start live web speech for 0ms visual display
+      startWebSpeechLive();
+
+      try {
+        console.log("[ContinuousASR] Initializing Audio Stream & MediaRecorder...");
+        localStream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: false,
+            autoGainControl: true,
+            channelCount: 1,
+            sampleRate: 16000,
+          },
+        });
+        globalStream = localStream;
+
+        const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+        audioContext = new AudioContextClass();
+        if (audioContext.state === "suspended") {
+          await audioContext.resume();
         }
+
+        vadAnalyser = audioContext.createAnalyser();
+        vadAnalyser.fftSize = 256;
+        vadDataArray = new Uint8Array(vadAnalyser.frequencyBinCount);
+
+        const source = audioContext.createMediaStreamSource(localStream);
+        const gainNode = audioContext.createGain();
+        gainNode.gain.setValueAtTime(4.0, audioContext.currentTime); // 4x gain for reliable Arabic voice pickup
+        source.connect(gainNode);
+        gainNode.connect(vadAnalyser);
+
+        if (!MediaRecorder.isTypeSupported(mimeType)) mimeType = "audio/webm";
+        if (!MediaRecorder.isTypeSupported(mimeType)) mimeType = "";
+
+        // Function to create a fresh MediaRecorder instance for each utterance cycle
+        // Ensuring EVERY audio chunk collection has complete WebM EBML headers
+        const startNewRecorderCycle = () => {
+          if (!localStream || !activeRef.current) return null;
+          
+          currentChunks = [];
+          utteranceStartTime = Date.now();
+          silenceStartTime = null;
+          speechDetectedInUtterance = false;
+
+          const rec = new MediaRecorder(localStream, mimeType ? { mimeType } : {});
+          rec.ondataavailable = (e) => {
+            if (e.data && e.data.size > 0) {
+              currentChunks.push(e.data);
+            }
+          };
+          rec.start(100);
+          localRecorder = rec;
+          globalRecorder = rec;
+          return rec;
+        };
+
+        startNewRecorderCycle();
+
+        const finishUtteranceAndSend = async () => {
+          if (isProcessingUtterance || !localRecorder || !activeRef.current) return;
+          isProcessingUtterance = true;
+
+          const hadSpeech = speechDetectedInUtterance;
+          const recorderToStop = localRecorder;
+
+          // Stop active recorder to finalize and gather complete container Blob
+          const finalizeBlobPromise = new Promise<Blob | null>((resolve) => {
+            recorderToStop.onstop = () => {
+              if (currentChunks.length > 0) {
+                const completeBlob = new Blob(currentChunks, { type: mimeType || "audio/webm" });
+                resolve(completeBlob);
+              } else {
+                resolve(null);
+              }
+            };
+            try {
+              if (recorderToStop.state === "recording") {
+                recorderToStop.stop();
+              } else {
+                resolve(null);
+              }
+            } catch {
+              resolve(null);
+            }
+          });
+
+          // Immediately start next recorder cycle so no speech is missed
+          startNewRecorderCycle();
+
+          const audioBlob = await finalizeBlobPromise;
+
+          // If utterance was totally silent or tiny, skip without advancing
+          if (!hadSpeech || !audioBlob || audioBlob.size < 800) {
+            isProcessingUtterance = false;
+            return;
+          }
+
+          const isPlaying = useRecitationStore.getState().isAudioPlaying;
+          if (!isPlaying && activeRef.current) {
+            try {
+              console.log("[ContinuousASR] Transmitting complete container utterance to Groq:", audioBlob.size, "bytes");
+              const currentWordIndex = useRecitationStore.getState().wordIndex;
+              const wordsList = useRecitationStore.getState().allWords;
+              
+              // Use FULL Ayah text as Whisper prompt for highest accuracy
+              const promptText = wordsList[currentWordIndex]?.ayahData.words.join(" ") || wordsList[currentWordIndex]?.ayahData.arabic || "بسم الله الرحمن الرحيم";
+
+              const formData = new FormData();
+              formData.append("audio", audioBlob);
+              formData.append("prompt", promptText);
+
+              const res = await fetch("/api/transcribe", {
+                method: "POST",
+                body: formData,
+              });
+
+              if (res.ok && activeRef.current && !useRecitationStore.getState().isAudioPlaying) {
+                const data = await res.json();
+                console.log("[ContinuousASR] Groq response:", data);
+
+                if (data.decision === "no_speech" || !data.transcript || !data.success) {
+                  console.log("[ContinuousASR] No speech detected or background noise — holding position");
+                } else {
+                  const transcriptText = data.transcript.trim();
+                  const hasArabic = /[\u0600-\u06FF]/.test(transcriptText);
+                  if (hasArabic) {
+                    setLiveTranscriptRef.current(transcriptText);
+                    const words = transcriptText.split(/\s+/).filter(Boolean);
+                    processSpeechRef.current(words);
+                  }
+                }
+              }
+            } catch (err) {
+              console.warn("[ContinuousASR] Whisper request failed:", err);
+            }
+          }
+          isProcessingUtterance = false;
+        };
+
+        // Real-time RMS-based Voice Activity Detection loop (Runs every 60ms)
+        checkInterval = setInterval(() => {
+          if (!activeRef.current || !vadAnalyser || !vadDataArray || !localRecorder) return;
+
+          vadAnalyser.getByteTimeDomainData(vadDataArray as unknown as Uint8Array<ArrayBuffer>);
+          let sum = 0;
+          for (let i = 0; i < vadDataArray.length; i++) {
+            const val = (vadDataArray[i] - 128) / 128;
+            sum += val * val;
+          }
+          const rms = Math.sqrt(sum / vadDataArray.length);
+
+          const elapsed = Date.now() - utteranceStartTime;
+
+          if (rms < SILENCE_THRESHOLD) {
+            if (speechDetectedInUtterance) {
+              silenceStartTime = silenceStartTime || Date.now();
+              const silenceDuration = Date.now() - silenceStartTime;
+
+              // Stop & process ONLY after END_OF_SPEECH_MS of true silence following speech
+              if (silenceDuration >= END_OF_SPEECH_MS || elapsed >= MAX_UTTERANCE_MS) {
+                finishUtteranceAndSend();
+              }
+            } else {
+              // Background silence before user starts speaking: cycle small buffers after 5s
+              if (elapsed > 5000 && !isProcessingUtterance) {
+                startNewRecorderCycle();
+              }
+            }
+          } else {
+            // Voice energy detected!
+            speechDetectedInUtterance = true;
+            silenceStartTime = null; // Reset silence tracker during natural speech
+          }
+        }, 60);
+
+      } catch (err) {
+        console.warn("[ContinuousASR] Failed to initialize MediaRecorder; Web Speech is running:", err);
+        setBrowserSupport(true);
       }
     }
 
@@ -350,8 +362,16 @@ export function useContinuousASR(isListening: boolean) {
         try { recognitionRef.current.stop(); } catch {}
         recognitionRef.current = null;
       }
+      if (audioContext && audioContext.state !== "closed") {
+        audioContext.close().catch(() => {});
+      }
     };
-  }, [isListening, useWhisper]);
+  }, [isListening]);
 
-  return { useWhisper, setUseWhisper, browserSupport };
+  return {
+    isListening,
+    browserSupport,
+    useWhisper,
+    setUseWhisper,
+  };
 }

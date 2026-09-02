@@ -292,8 +292,14 @@ export default function RecitationPage() {
       {/* Correction Overlay popup */}
       <CorrectionOverlay />
 
-      {/* Mic Check Modal */}
-      <MicCheckModal isOpen={micCheckOpen} onClose={() => setMicCheckOpen(false)} />
+      {/* Mic Check Modal - Automatically activates listening upon start */}
+      <MicCheckModal
+        isOpen={micCheckOpen}
+        onClose={() => {
+          setMicCheckOpen(false);
+          setListening(true);
+        }}
+      />
 
       {/* Recitation Main UI */}
       <main className="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-6 mt-4 sm:mt-6 grid grid-cols-1 lg:grid-cols-12 gap-6 relative z-10">

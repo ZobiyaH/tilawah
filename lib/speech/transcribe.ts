@@ -26,8 +26,8 @@ export async function transcribeAudio(
   }
 
   // CRITICAL: Reject silence before sending to Groq
-  // Blob under 3000 bytes = silence = do not send
-  if (lessonType !== 'letter' && audioBlob.size < 3000) {
+  // Reject only if audio buffer is genuinely empty/uninitialized (<800 bytes)
+  if (lessonType !== 'letter' && audioBlob.size < 800) {
     console.warn(
       '[Transcribe] Audio blob too small:', 
       audioBlob.size, 
