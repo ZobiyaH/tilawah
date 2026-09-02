@@ -218,11 +218,27 @@ export default function RecitationPage() {
     }
   };
 
-  const playQariWord = (wordIdx: number) => {
+  const playQariWord = async (wordIdx: number) => {
     if (!currentWordToken) return;
-    const url = getWordAudio(currentWordToken.ayahData.surahId, currentWordToken.ayahN, wordIdx + 1);
-    const audio = new Audio(url);
-    audio.play().catch(() => {});
+    try {
+      const audioMgr = QariAudioManager.getInstance();
+      const wordText = currentWordToken.ayahData.words[wordIdx] || "";
+      const surahIdNum = Number(currentWordToken.ayahData.surahId) || 1;
+      const ayahNum = Number(currentWordToken.ayahN) || 1;
+      
+      const cdnUrl = getWordAudio(surahIdNum, ayahNum, wordIdx + 1);
+      
+      // Try playing authentic Qari CDN audio with fallback
+      try {
+        await audioMgr.play(cdnUrl);
+      } catch {
+        if (wordText) {
+          await audioMgr.playWord(wordText, surahIdNum);
+        }
+      }
+    } catch (err) {
+      console.warn("Audio playback error:", err);
+    }
   };
 
   // Preload Surah Data
