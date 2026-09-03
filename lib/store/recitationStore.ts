@@ -386,20 +386,27 @@ export const useRecitationStore = create<RecitationState>((set, get) => {
             }));
           }
         } else {
-          // No match detected — DO NOT advance the wordIndex forward automatically
+          // No match detected — mistake made by user
           const expected = allWords[wordIndex];
           const spokenErrWord = spokenAlternatives[0]?.split(/\s+/)[0] || "(unclear)";
           
-          if (spokenErrWord && spokenErrWord !== "(unclear)") {
-            set({
+          if (spokenErrWord && spokenErrWord !== "(unclear)" && expected) {
+            set((state) => ({
               recitationState: "error",
               wrongWord: spokenErrWord,
-              correctWord: expected ? expected.arabic : "",
+              correctWord: expected.arabic,
+              errorCount: state.errorCount + 1,
               retryCount: 0,
-            });
-            if (expected) {
-              get().addFeedback("error", `❌ Mismatch - Ayah ${expected.ayahN}`, `Spoken: "${spokenErrWord}" → Expected: "${expected.arabic}"`);
-            }
+            }));
+            
+            get().addFeedback(
+              "error",
+              `❌ Mismatch - Ayah ${expected.ayahN}`,
+              `Spoken: "${spokenErrWord}" → Expected: "${expected.arabic}"`
+            );
+
+            // Play authentic Qari voice pronunciation instantly
+            speakArabicWord(expected.arabic, expected);
           }
         }
       }
