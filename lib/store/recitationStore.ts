@@ -260,14 +260,15 @@ export const useRecitationStore = create<RecitationState>((set, get) => {
             const spokenText = spokenAlternatives[a];
             const spokenWords = spokenText.trim().split(/\s+/).filter(Boolean);
             
-            let tempExpectedIdx = expectedStart;
+            // Evaluate strictly starting from the current active wordIndex
+            let tempExpectedIdx = wordIndex;
             let matchedCount = 0;
             const tempResults: MatchResult[] = [];
 
-            // Find starting spoken word index that matches expectedStart
+            // Find best alignment between spoken tokens and expected word sequence starting at wordIndex
             let startSpokenIdx = 0;
-            for (let i = 0; i < Math.min(spokenWords.length, 4); i++) {
-              const check = checkWord(spokenWords[i], allWords[expectedStart].arabic, recitationLevel, confidentReciterMode);
+            for (let i = 0; i < Math.min(spokenWords.length, 3); i++) {
+              const check = checkWord(spokenWords[i], allWords[wordIndex].arabic, recitationLevel, confidentReciterMode);
               if (check.status === "correct" || check.status === "tajweed") {
                 startSpokenIdx = i;
                 break;
@@ -290,24 +291,7 @@ export const useRecitationStore = create<RecitationState>((set, get) => {
                 });
                 tempExpectedIdx++;
               } else {
-                // Try checking if sWord matches tempExpectedIdx + 1 (user skipped a particle or slight ASR gap)
-                if (tempExpectedIdx + 1 < allWords.length) {
-                  const nextExpected = allWords[tempExpectedIdx + 1];
-                  const nextCheck = checkWord(sWord, nextExpected.arabic, recitationLevel, confidentReciterMode);
-                  if (nextCheck.status === "correct" || nextCheck.status === "tajweed") {
-                    matchedCount++;
-                    tempResults.push({
-                      status: nextCheck.status,
-                      similarity: nextCheck.similarity,
-                      expectedWordIndex: tempExpectedIdx + 1,
-                      spokenWordText: sWord,
-                    });
-                    tempExpectedIdx += 2;
-                    continue;
-                  }
-                }
-
-                // Or check if sWord + sNext combined matches expected.arabic (ASR split 1 Arabic word into 2 tokens)
+                // Check if sWord + sNext combined matches expected.arabic (e.g. ASR split into 2 tokens)
                 if (s + 1 < spokenWords.length) {
                   const combined = sWord + spokenWords[s + 1];
                   const combCheck = checkWord(combined, expected.arabic, recitationLevel, confidentReciterMode);
@@ -331,15 +315,13 @@ export const useRecitationStore = create<RecitationState>((set, get) => {
                   expectedWordIndex: tempExpectedIdx,
                   spokenWordText: sWord,
                 });
-                if (matchedCount === 0) {
-                  break;
-                }
+                break;
               }
             }
 
-            if (matchedCount > bestAltWordsMatched || (matchedCount === bestAltWordsMatched && expectedStart > bestExpectedStart)) {
+            if (matchedCount > bestAltWordsMatched) {
               bestAltWordsMatched = matchedCount;
-              bestExpectedStart = expectedStart;
+              bestExpectedStart = wordIndex;
               bestMatchResults = tempResults;
             }
           }
