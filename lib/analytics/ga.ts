@@ -9,15 +9,24 @@ export function pageview(url: string) {
   }
 }
 
+export function setUserProperties(properties: Record<string, any>) {
+  if (typeof window !== 'undefined' && (window as any).gtag) {
+    (window as any).gtag('set', 'user_properties', properties);
+  }
+}
+
 export function trackEvent(
   action: string,
   category: string,
-  label?: string
+  label?: string,
+  extraParams?: Record<string, any>
 ) {
   if (typeof window !== 'undefined' && (window as any).gtag) {
     (window as any).gtag('event', action, {
       event_category: category,
       event_label: label,
+      ...extraParams,
     });
   }
 }
+
