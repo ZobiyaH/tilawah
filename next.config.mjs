@@ -1,4 +1,4 @@
-import { createRequire } from 'module';
+﻿import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 
 const withPWA = require('next-pwa')({
@@ -16,6 +16,21 @@ const withPWA = require('next-pwa')({
         expiration: {
           maxEntries: 500,
           maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+        },
+        cacheableResponse: {
+          statuses: [0, 200],
+        },
+      },
+    },
+    {
+      // Cache Google Analytics and Tag Manager scripts for offline execution
+      urlPattern: /^https:\/\/(www\.googletagmanager\.com|www\.google-analytics\.com)\/(gtag\/js|analytics\.js|gtm\.js).*/i,
+      handler: 'StaleWhileRevalidate',
+      options: {
+        cacheName: 'google-analytics-scripts',
+        expiration: {
+          maxEntries: 10,
+          maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days
         },
         cacheableResponse: {
           statuses: [0, 200],
