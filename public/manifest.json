@@ -1,7 +1,7 @@
 {
   "name": "Tilawah - Quran Recitation Checker",
   "short_name": "Tilawah",
-  "description": "Free Quran recitation checker with real Qari voice correction",
+  "description": "Learn, practice, and check your Quran recitation with instant AI feedback and Tajweed rules.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#faf6ee",
@@ -37,5 +37,21 @@
     "education",
     "lifestyle"
   ],
-  "screenshots": []
+  "screenshots": [
+    {
+      "src": "/screenshots/desktop-1.png",
+      "sizes": "1920x1080",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Tilawah Quran Recitation & Tajweed Practice on Desktop"
+    },
+    {
+      "src": "/screenshots/mobile-1.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Tilawah Instant Recitation Feedback on Mobile"
+    }
+  ],
+  "prefer_related_applications": false
 }
