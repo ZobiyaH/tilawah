@@ -145,7 +145,8 @@ export default function RecitationPage() {
       // FIX 2 & FIX 3: Silence or noise handling — NEVER advance
       if (!result.success || !result.transcript || result.transcript.trim().length === 0) {
         setRecordingState("idle");
-        showToast("⚠️ We couldn't hear you clearly. Check your mic and recite again.");
+        const isMob = typeof navigator !== 'undefined' && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+        showToast(isMob ? "⚠️ Voice signal was quiet or unclear. Speak closer to your microphone and try again." : "⚠️ We couldn't hear you clearly. Check your mic and recite again.");
         return;
       }
 

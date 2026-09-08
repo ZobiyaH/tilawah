@@ -11,28 +11,18 @@ export async function transcribeAudio(
   lessonType: 'letter' | 'word' | 'phrase' | 'ayah' = 'word',
   prompt: string = ''
 ): Promise<TranscriptResult> {
+  const isMobile = typeof navigator !== 'undefined' && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+  const MIN_BLOB_SIZE = isMobile ? 500 : 1200;
 
-  console.log('[Transcribe] Blob size:', audioBlob.size, 'bytes, type:', lessonType);
+  console.log('[Transcribe] Audio blob details:', {
+    size: audioBlob.size,
+    type: audioBlob.type,
+    platform: isMobile ? 'mobile' : 'desktop',
+    lessonType,
+  });
 
-  // For letters: reject audio blobs under 2000 bytes (too short/silent)
-  if (lessonType === 'letter' && audioBlob.size < 2000) {
-    console.warn('[Transcribe] Letter audio too short:', audioBlob.size);
-    return {
-      transcript: '',
-      method: 'groq',
-      success: false,
-      error: 'TOO_SHORT',
-    };
-  }
-
-  // CRITICAL: Reject silence before sending to Groq
-  // Reject only if audio buffer is genuinely empty/uninitialized (<800 bytes)
-  if (lessonType !== 'letter' && audioBlob.size < 800) {
-    console.warn(
-      '[Transcribe] Audio blob too small:', 
-      audioBlob.size, 
-      'bytes — likely silence'
-    );
+  if (audioBlob.size < MIN_BLOB_SIZE) {
+    console.warn('[Transcribe] Blob too small:', audioBlob.size, 'bytes');
     return {
       transcript: '',
       method: 'groq',
@@ -41,15 +31,10 @@ export async function transcribeAudio(
     };
   }
 
-  console.log('[Transcribe] Sending to Groq:', audioBlob.size, 'bytes');
-
   try {
     const formData = new FormData();
-    formData.append(
-      'audio', 
-      audioBlob, 
-      'recording.webm'
-    );
+    const ext = audioBlob.type && audioBlob.type.includes('mp4') ? 'recording.mp4' : 'recording.webm';
+    formData.append('audio', audioBlob, ext);
     if (prompt) {
       formData.append('prompt', prompt);
     }
@@ -64,111 +49,15 @@ export async function transcribeAudio(
     console.log('[Transcribe] Groq response:', data);
 
     if (response.ok && data.transcript) {
-      // CRITICAL: Validate transcript is real Arabic
-      // Groq hallucinates when audio is silent
-      // Real speech will have Arabic characters
-      const hasArabic = /[\u0600-\u06FF]/.test(
-        data.transcript
-      );
-      
-      console.log('[Transcribe] Has Arabic:', hasArabic);
-
+      const hasArabic = /[\u0600-\u06FF]/.test(data.transcript);
       if (!hasArabic) {
-        console.warn(
-          '[Transcribe] Groq returned non-Arabic text:', 
-          data.transcript,
-          '— likely hallucination from silence'
-        );
-        return {
-          transcript: '',
-          method: 'groq',
-          success: false,
-          error: 'HALLUCINATION_DETECTED',
-        };
+        return { transcript: '', method: 'groq', success: false, error: 'HALLUCINATION_DETECTED' };
       }
-
-      console.log('[Transcribe] Final transcript:', data.transcript);
-
-      return {
-        transcript: data.transcript,
-        method: 'groq',
-        success: true,
-      };
+      return { transcript: data.transcript, method: 'groq', success: true };
     }
   } catch (err) {
     console.warn('[Transcribe] Groq failed:', err);
   }
 
-  // Fallback to browser ASR
-  try {
-    const transcript = await browserSpeechRecognition();
-    if (transcript) {
-      console.log('[Transcribe] Browser ASR transcript:', transcript);
-      return {
-        transcript,
-        method: 'browser',
-        success: true,
-      };
-    }
-  } catch (err) {
-    console.warn('[Transcribe] Browser ASR failed:', err);
-  }
-
-  return {
-    transcript: '',
-    method: 'browser',
-    success: false,
-    error: 'BOTH_METHODS_FAILED',
-  };
-}
-
-function browserSpeechRecognition(): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const SR =
-      (window as any).SpeechRecognition ||
-      (window as any).webkitSpeechRecognition;
-
-    if (!SR) {
-      reject(new Error('Not supported'));
-      return;
-    }
-
-    const recognition = new SR();
-    recognition.lang = 'ar-SA';
-    recognition.continuous = false;
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 5;
-
-    let resolved = false;
-
-    recognition.onresult = (event: any) => {
-      if (resolved) return;
-      resolved = true;
-
-      const results: string[] = [];
-      for (let i = 0; i < event.results[0].length; i++) {
-        results.push(
-          event.results[0][i].transcript.trim()
-        );
-      }
-      
-      console.log('[Transcribe] Browser ASR alternatives:', results);
-      resolve(results[0]);
-    };
-
-    recognition.onerror = (e: any) => {
-      if (resolved) return;
-      resolved = true;
-      reject(new Error(e.error));
-    };
-
-    recognition.onend = () => {
-      if (!resolved) {
-        resolved = true;
-        reject(new Error('No speech detected'));
-      }
-    };
-
-    recognition.start();
-  });
+  return { transcript: '', method: 'browser', success: false, error: 'BOTH_METHODS_FAILED' };
 }

@@ -2,6 +2,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+
 import { useRecitationStore } from "../store/recitationStore";
 
 interface WindowWithSpeech extends Window {
@@ -63,9 +64,12 @@ export function useContinuousASR(isListening: boolean) {
     let audioContext: AudioContext | null = null;
     let vadAnalyser: AnalyserNode | null = null;
     let vadDataArray: Uint8Array | null = null;
+    let destinationNode: MediaStreamAudioDestinationNode | null = null;
 
     // Silence detection & utterance timings
-    const SILENCE_THRESHOLD = 0.0018; // Highly responsive RMS energy threshold
+    const isMobile = typeof navigator !== 'undefined' && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+    const SILENCE_THRESHOLD = isMobile ? 0.0015 : 0.0020;
+     // Highly responsive RMS energy threshold
     const END_OF_SPEECH_MS = 2000; // Natural pause completion - user finished utterance
     const MAX_UTTERANCE_MS = 14000; // Safety cap for complete multi-verse utterances
 
@@ -177,7 +181,7 @@ export function useContinuousASR(isListening: boolean) {
 
         const source = audioContext.createMediaStreamSource(localStream);
         const gainNode = audioContext.createGain();
-        gainNode.gain.setValueAtTime(4.0, audioContext.currentTime); // 4x gain for reliable Arabic voice pickup
+        gainNode.gain.setValueAtTime(isMobile ? 3.5 : 2.0, audioContext.currentTime); const dest = audioContext.createMediaStreamDestination(); gainNode.connect(dest); destinationNode = dest; // 4x gain for reliable Arabic voice pickup
         source.connect(gainNode);
         gainNode.connect(vadAnalyser);
 
@@ -194,7 +198,7 @@ export function useContinuousASR(isListening: boolean) {
           silenceStartTime = null;
           speechDetectedInUtterance = false;
 
-          const rec = new MediaRecorder(localStream, mimeType ? { mimeType } : {});
+          const recordStream = destinationNode ? destinationNode.stream : localStream; const rec = new MediaRecorder(recordStream, mimeType ? { mimeType } : {});
           rec.ondataavailable = (e) => {
             if (e.data && e.data.size > 0) {
               currentChunks.push(e.data);
@@ -242,7 +246,7 @@ export function useContinuousASR(isListening: boolean) {
           const audioBlob = await finalizeBlobPromise;
 
           // If utterance was totally silent or tiny, skip without advancing
-          if (!hadSpeech || !audioBlob || audioBlob.size < 500) {
+          if (!hadSpeech || !audioBlob || audioBlob.size < (isMobile ? 500 : 1200)) {
             isProcessingUtterance = false;
             return;
           }

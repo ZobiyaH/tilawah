@@ -1,4 +1,31 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+
+export function getSupportedMimeType(): string {
+  const types = [
+    'audio/webm;codecs=opus',
+    'audio/webm',
+    'audio/mp4',
+    'audio/mp4;codecs=mp4a.40.2',
+    'audio/aac',
+    'audio/ogg;codecs=opus',
+    'audio/wav',
+  ];
+
+  if (typeof MediaRecorder === 'undefined') {
+    return '';
+  }
+
+  for (const type of types) {
+    if (MediaRecorder.isTypeSupported(type)) {
+      console.log('[AudioRecorder] Using supported mimeType:', type);
+      return type;
+    }
+  }
+
+  console.warn('[AudioRecorder] No preferred mimeType supported, using browser default');
+  return '';
+}
+
 export class AudioRecorder {
   private mediaRecorder: MediaRecorder | null = null;
   private audioChunks: Blob[] = [];
@@ -7,17 +34,42 @@ export class AudioRecorder {
   private audioContext: AudioContext | null = null;
   private analyserNode: AnalyserNode | null = null;
   private dataArray: Uint8Array | null = null;
+  private destinationNode: MediaStreamAudioDestinationNode | null = null;
+  private activeMimeType: string = '';
 
   async start(): Promise<void> {
+    const isMobile = typeof navigator !== 'undefined' && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+    console.log('[AudioRecorder] Starting mic on:', isMobile ? 'Mobile' : 'Desktop');
+    console.log('[AudioRecorder] Supported mimeTypes check:', {
+      webmOpus: typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported('audio/webm;codecs=opus'),
+      webm: typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported('audio/webm'),
+      mp4: typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported('audio/mp4'),
+      mp4a: typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported('audio/mp4;codecs=mp4a.40.2'),
+      aac: typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported('audio/aac'),
+      ogg: typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported('audio/ogg'),
+    });
+    console.log('[AudioRecorder] User Agent:', typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown');
+
     try {
-      // Mobile-friendly constraints: avoid rigid sampleRate: 16000 which throws OverconstrainedError on iOS/Android
+      // FIX 2: Mobile-specific mic constraints (44.1kHz vs 16kHz)
+      const audioConstraints: MediaTrackConstraints = isMobile
+        ? {
+            echoCancellation: true,
+            noiseSuppression: false,
+            autoGainControl: true,
+            channelCount: 1,
+            sampleRate: 44100,
+          }
+        : {
+            echoCancellation: true,
+            noiseSuppression: false,
+            autoGainControl: true,
+            channelCount: 1,
+            sampleRate: 16000,
+          };
+
       this.stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: false,
-          autoGainControl: true,
-          channelCount: 1,
-        }
+        audio: audioConstraints
       });
 
       const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
@@ -27,12 +79,22 @@ export class AudioRecorder {
           await this.audioContext.resume();
         }
 
+        const source = this.audioContext.createMediaStreamSource(this.stream);
+        
+        // FIX 3: Actually boost the recorded audio stream for mobile via GainNode + MediaStreamDestination
+        const gainNode = this.audioContext.createGain();
+        gainNode.gain.setValueAtTime(isMobile ? 3.5 : 1.5, this.audioContext.currentTime);
+
         const analyser = this.audioContext.createAnalyser();
         analyser.fftSize = 256;
-        const source = this.audioContext.createMediaStreamSource(this.stream);
-        source.connect(analyser);
+        source.connect(gainNode);
+        gainNode.connect(analyser);
         this.analyserNode = analyser;
         this.dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+        // Connect boosted gainNode to recording destination
+        this.destinationNode = this.audioContext.createMediaStreamDestination();
+        gainNode.connect(this.destinationNode);
       }
 
       const tracks = this.stream.getAudioTracks();
@@ -45,25 +107,14 @@ export class AudioRecorder {
         throw new Error('Mic track is not live');
       }
 
-      // Setup MediaRecorder with cross-platform mobile fallback (WebM -> MP4 -> AAC -> default)
-      let mimeType = '';
-      const candidateTypes = [
-        'audio/webm;codecs=opus',
-        'audio/webm',
-        'audio/mp4',
-        'audio/aac',
-        'audio/ogg'
-      ];
+      // FIX 1: Robust mimeType fallback chain
+      this.activeMimeType = getSupportedMimeType();
+      const options = this.activeMimeType ? { mimeType: this.activeMimeType } : {};
 
-      for (const type of candidateTypes) {
-        if (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported(type)) {
-          mimeType = type;
-          break;
-        }
-      }
+      const recordStream = this.destinationNode ? this.destinationNode.stream : this.stream;
+      this.mediaRecorder = new MediaRecorder(recordStream, options);
+      console.log('[AudioRecorder] Selected mediaRecorder.mimeType:', this.mediaRecorder.mimeType);
 
-      const options = mimeType ? { mimeType } : {};
-      this.mediaRecorder = new MediaRecorder(this.stream, options);
       this.audioChunks = [];
       this.hasAudio = false;
 
@@ -77,7 +128,7 @@ export class AudioRecorder {
       this.mediaRecorder.start(100);
 
     } catch (err: any) {
-      console.error('Mic start error:', err);
+      console.error('[AudioRecorder] Mic start error:', err);
       
       if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
         throw new Error(
@@ -103,6 +154,9 @@ export class AudioRecorder {
 
   stop(): Promise<Blob> {
     return new Promise((resolve, reject) => {
+      const isMobile = typeof navigator !== 'undefined' && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+      const MIN_BLOB_SIZE = isMobile ? 500 : 1200;
+
       if (!this.mediaRecorder) {
         reject(new Error('Not recording'));
         return;
@@ -110,25 +164,36 @@ export class AudioRecorder {
 
       this.mediaRecorder.onstop = () => {
         this.stream?.getTracks().forEach(t => t.stop());
+        this.destinationNode?.stream?.getTracks().forEach(t => t.stop());
         
         if (this.audioContext && this.audioContext.state !== 'closed') {
           this.audioContext.close().catch(() => {});
         }
         this.audioContext = null;
         this.analyserNode = null;
+        this.destinationNode = null;
         this.dataArray = null;
 
         if (!this.hasAudio || this.audioChunks.length === 0) {
+          console.warn('[AudioRecorder] Stop finished with 0 chunks/no audio');
           reject(new Error('NO_AUDIO_DETECTED'));
           return;
         }
 
-        const mimeType = this.mediaRecorder?.mimeType || 'audio/webm';
+        const mimeType = this.mediaRecorder?.mimeType || this.activeMimeType || 'audio/webm';
         const blob = new Blob(this.audioChunks, {
           type: mimeType
         });
 
-        if (blob.size < 500) {
+        console.log('[AudioRecorder] Final blob details:', {
+          size: blob.size,
+          type: blob.type,
+          platform: isMobile ? 'mobile' : 'desktop',
+          chunksCount: this.audioChunks.length
+        });
+
+        if (blob.size < MIN_BLOB_SIZE) {
+          console.warn('[AudioRecorder] Blob too small:', blob.size, 'bytes (min:', MIN_BLOB_SIZE, ')');
           reject(new Error('NO_AUDIO_DETECTED'));
           return;
         }
@@ -137,7 +202,11 @@ export class AudioRecorder {
       };
 
       try {
-        this.mediaRecorder.stop();
+        if (this.mediaRecorder.state === 'recording') {
+          this.mediaRecorder.stop();
+        } else {
+          resolve(new Blob(this.audioChunks));
+        }
       } catch {
         resolve(new Blob(this.audioChunks));
       }
