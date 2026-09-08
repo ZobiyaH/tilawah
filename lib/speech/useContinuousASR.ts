@@ -4,6 +4,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import { useRecitationStore } from "../store/recitationStore";
+import { getSupportedMimeType } from "./recorder";
 
 interface WindowWithSpeech extends Window {
   SpeechRecognition?: any;
@@ -184,11 +185,10 @@ export function useContinuousASR(isListening: boolean) {
         source.connect(gainNode);
         gainNode.connect(vadAnalyser);
 
-        if (!MediaRecorder.isTypeSupported(mimeType)) mimeType = "audio/webm";
-        if (!MediaRecorder.isTypeSupported(mimeType)) mimeType = "";
+        mimeType = getSupportedMimeType();
 
         // Function to create a fresh MediaRecorder instance for each utterance cycle
-        // Ensuring EVERY audio chunk collection has complete WebM EBML headers
+        // Ensuring EVERY audio chunk collection has complete container headers
         const startNewRecorderCycle = () => {
           if (!localStream || !activeRef.current) return null;
           
@@ -203,7 +203,7 @@ export function useContinuousASR(isListening: boolean) {
               currentChunks.push(e.data);
             }
           };
-          rec.start(100);
+          rec.start();
           localRecorder = rec;
           globalRecorder = rec;
           return rec;
@@ -244,8 +244,8 @@ export function useContinuousASR(isListening: boolean) {
 
           const audioBlob = await finalizeBlobPromise;
 
-          // If utterance was totally silent or tiny, skip without advancing
-          if (!hadSpeech || !audioBlob || audioBlob.size < (isMobile ? 500 : 1200)) {
+          // If utterance was totally silent or tiny (< 2000 bytes = header only), skip without sending
+          if (!hadSpeech || !audioBlob || audioBlob.size < 2000) {
             isProcessingUtterance = false;
             return;
           }

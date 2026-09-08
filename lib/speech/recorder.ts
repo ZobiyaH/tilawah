@@ -136,8 +136,7 @@ export class AudioRecorder {
 
   stop(): Promise<Blob> {
     return new Promise((resolve, reject) => {
-      const isMobile = typeof navigator !== 'undefined' && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
-      const MIN_BLOB_SIZE = isMobile ? 500 : 1200;
+      const MIN_BLOB_SIZE = 2000;
 
       if (!this.mediaRecorder) {
         reject(new Error('Not recording'));
@@ -165,6 +164,7 @@ export class AudioRecorder {
           type: mimeType
         });
 
+        const isMobile = typeof navigator !== 'undefined' && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
         console.log('[AudioRecorder] Final blob details:', {
           size: blob.size,
           type: blob.type,

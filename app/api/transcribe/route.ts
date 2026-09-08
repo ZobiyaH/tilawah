@@ -49,9 +49,10 @@ export async function POST(request: NextRequest) {
       type: audioFile.type,
     });
 
-    if (audioFile.size < 300) {
+    if (audioFile.size < 2000) {
+      console.log('[API] Audio blob too small for decodable audio frames:', audioFile.size, 'bytes');
       return NextResponse.json({
-        error: 'Audio too short',
+        error: 'Audio too short or header-only blob',
         decision: 'no_speech',
         transcript: '',
         success: false,
@@ -118,12 +119,19 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error: any) {
-    console.error('[API] Transcribe uncaught handler error:', error?.message || error);
+    const errorMsg = error?.message || String(error);
+    if (errorMsg.includes('invalid_media_file') || errorMsg.includes('could not process file')) {
+      console.warn('[API] Transcribe media container unreadable by Groq (quiet/header-only):', errorMsg);
+    } else {
+      console.error('[API] Transcribe API error:', errorMsg);
+    }
     return NextResponse.json(
       {
-        error: error?.message || 'Internal transcription error',
+        error: 'Media decoding issue or quiet voice',
         fallback: true,
         decision: 'no_speech',
+        success: false,
+        transcript: '',
       },
       { status: 200 }
     );

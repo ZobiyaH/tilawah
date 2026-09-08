@@ -12,7 +12,7 @@ export async function transcribeAudio(
   prompt: string = ''
 ): Promise<TranscriptResult> {
   const isMobile = typeof navigator !== 'undefined' && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
-  const MIN_BLOB_SIZE = isMobile ? 500 : 1200;
+  const MIN_BLOB_SIZE = 2000;
 
   console.log('[Transcribe] Audio blob details:', {
     size: audioBlob.size,
