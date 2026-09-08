@@ -2,62 +2,84 @@
 import Groq, { toFile } from 'groq-sdk';
 import { NextRequest, NextResponse } from 'next/server';
 
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   const key = process.env.GROQ_API_KEY;
-  console.log('[API] Transcribe GET healthcheck. Key configured:', !!key, key ? `(Starts with: ${key.substring(0, 8)})` : '');
+  console.log('[API] Transcribe GET healthcheck. Key configured:', Boolean(key));
   if (!key) {
     return NextResponse.json(
-      { status: 'offline', fallback: true, error: 'API not configured' },
+      { status: 'offline', fallback: true, error: 'GROQ_API_KEY environment variable is not configured in Vercel/Production' },
       { status: 503 }
     );
   }
-  return NextResponse.json({ status: 'online' });
+  return NextResponse.json({ status: 'online', keyConfigured: true });
 }
 
 export async function POST(request: NextRequest) {
   try {
     const key = process.env.GROQ_API_KEY;
     if (!key) {
+      console.error('[API] Transcription failed: GROQ_API_KEY is missing from process.env');
       return NextResponse.json(
-        { error: 'Groq not configured', fallback: true, decision: 'no_speech' },
-        { status: 503 }
-      );
-    }
-
-    const groq = new Groq({
-      apiKey: key,
-    });
-
-    const formData = await request.formData();
-    const audioFile = formData.get('audio') as File;
-
-    if (!audioFile) {
-      return NextResponse.json(
-        { error: 'No audio file', fallback: true, decision: 'no_speech' },
-        { status: 400 }
-      );
-    }
-
-    // Reject if too small — definitely silence/noise
-    if (audioFile.size < 350) {
-      console.warn('[API] Audio too short / silent — size:', audioFile.size);
-      return NextResponse.json(
-        { 
-          error: 'Audio too short — no speech detected',
-          decision: 'no_speech',
-          transcript: '',
-          success: false,
-        },
+        { error: 'Groq API key not configured on server', fallback: true, decision: 'no_speech' },
         { status: 200 }
       );
     }
 
-    const clientPrompt = (formData.get('prompt') as string) || ''; const genericArabicPrompt = clientPrompt ||  "القرآن الكريم تلاوة عربية فصيحة واضحة";
+    const groq = new Groq({ apiKey: key });
+
+    let formData: FormData;
+    try {
+      formData = await request.formData();
+    } catch (e: any) {
+      console.error('[API] Failed to parse formData:', e);
+      return NextResponse.json({ error: 'Invalid form data', decision: 'no_speech' }, { status: 200 });
+    }
+
+    const audioFile = formData.get('audio') as File | null;
+    if (!audioFile) {
+      return NextResponse.json({ error: 'No audio file uploaded', decision: 'no_speech' }, { status: 200 });
+    }
+
+    console.log('[API] Received audio file:', {
+      name: audioFile.name,
+      size: audioFile.size,
+      type: audioFile.type,
+    });
+
+    if (audioFile.size < 300) {
+      return NextResponse.json({
+        error: 'Audio too short',
+        decision: 'no_speech',
+        transcript: '',
+        success: false,
+      }, { status: 200 });
+    }
+
+    const clientPrompt = (formData.get('prompt') as string) || '';
+    const genericArabicPrompt = clientPrompt || 'القرآن الكريم تلاوة عربية فصيحة واضحة';
 
     const buffer = Buffer.from(await audioFile.arrayBuffer());
-    const mimeType = audioFile.type || 'audio/webm'; const fileName = audioFile.name || 'recording.webm'; const fileToUpload = await toFile(buffer, fileName, { type: mimeType });
+    
+    // Safe file name and MIME determination for Groq Whisper
+    let fileName = audioFile.name || 'recording.webm';
+    let mimeType = audioFile.type || 'audio/webm';
+    if (mimeType.includes('mp4') || fileName.endsWith('.mp4')) {
+      fileName = 'recording.mp4';
+      mimeType = 'audio/mp4';
+    } else if (mimeType.includes('aac') || fileName.endsWith('.aac')) {
+      fileName = 'recording.m4a';
+      mimeType = 'audio/m4a';
+    } else {
+      fileName = 'recording.webm';
+      mimeType = 'audio/webm';
+    }
 
-    console.log('[API] Transcribing audio with Whisper...');
+    const fileToUpload = await toFile(buffer, fileName, { type: mimeType });
+
+    console.log('[API] Sending to Groq Whisper:', { fileName, mimeType, size: buffer.length });
     const transcription: any = await groq.audio.transcriptions.create({
       file: fileToUpload,
       model: 'whisper-large-v3',
@@ -69,16 +91,14 @@ export async function POST(request: NextRequest) {
 
     const transcript = (transcription.text || '').trim();
     const avgLogprob = typeof transcription.avg_logprob === 'number' ? transcription.avg_logprob : 0;
-    console.log('[API] Groq verbose returned:', { transcript, avgLogprob });
+    console.log('[API] Groq response transcript:', transcript, 'avgLogprob:', avgLogprob);
 
-    // FIX 3: Background noise / low confidence / non-Arabic speech detection
     const hasArabic = /[\u0600-\u06FF]/.test(transcript);
-    if (!transcript || transcript.length < 1 || !hasArabic || (avgLogprob !== 0 && avgLogprob < -2.5)) {
-      console.warn('[API] Unclear or noisy audio detected:', { transcript, avgLogprob });
+    if (!transcript || transcript.length < 1 || !hasArabic || (avgLogprob !== 0 && avgLogprob < -2.8)) {
       return NextResponse.json({
         decision: 'no_speech',
         transcript: '',
-        message: "We couldn't hear you clearly. Check your microphone and try again.",
+        message: 'Unclear voice signal',
         success: false,
       });
     }
@@ -91,14 +111,14 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error: any) {
-    console.error('[API] Transcription error:', error);
+    console.error('[API] Transcribe uncaught handler error:', error?.message || error);
     return NextResponse.json(
-      { 
-        error: error.message,
+      {
+        error: error?.message || 'Internal transcription error',
         fallback: true,
         decision: 'no_speech',
       },
-      { status: 500 }
+      { status: 200 }
     );
   }
 }
