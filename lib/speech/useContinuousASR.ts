@@ -65,7 +65,7 @@ export function useContinuousASR(isListening: boolean) {
     let vadDataArray: Uint8Array | null = null;
 
     // Silence detection & utterance timings
-    const SILENCE_THRESHOLD = 0.0025; // Highly responsive RMS energy threshold
+    const SILENCE_THRESHOLD = 0.0018; // Highly responsive RMS energy threshold
     const END_OF_SPEECH_MS = 2000; // Natural pause completion - user finished utterance
     const MAX_UTTERANCE_MS = 14000; // Safety cap for complete multi-verse utterances
 
@@ -161,8 +161,7 @@ export function useContinuousASR(isListening: boolean) {
             noiseSuppression: false,
             autoGainControl: true,
             channelCount: 1,
-            sampleRate: 16000,
-          },
+                      },
         });
         globalStream = localStream;
 
@@ -243,7 +242,7 @@ export function useContinuousASR(isListening: boolean) {
           const audioBlob = await finalizeBlobPromise;
 
           // If utterance was totally silent or tiny, skip without advancing
-          if (!hadSpeech || !audioBlob || audioBlob.size < 800) {
+          if (!hadSpeech || !audioBlob || audioBlob.size < 500) {
             isProcessingUtterance = false;
             return;
           }

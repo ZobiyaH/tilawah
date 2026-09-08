@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
     const genericArabicPrompt = "القرآن الكريم تلاوة عربية فصيحة واضحة";
 
     const buffer = Buffer.from(await audioFile.arrayBuffer());
-    const fileToUpload = await toFile(buffer, 'recording.webm', { type: 'audio/webm' });
+    const mimeType = audioFile.type || 'audio/webm'; const fileName = audioFile.name || 'recording.webm'; const fileToUpload = await toFile(buffer, fileName, { type: mimeType });
 
     console.log('[API] Transcribing audio with Whisper...');
     const transcription: any = await groq.audio.transcriptions.create({

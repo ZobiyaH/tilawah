@@ -9,32 +9,30 @@ export class AudioRecorder {
   private dataArray: Uint8Array | null = null;
 
   async start(): Promise<void> {
-    console.log('[Recorder] Starting mic...');
     try {
+      // Mobile-friendly constraints: avoid rigid sampleRate: 16000 which throws OverconstrainedError on iOS/Android
       this.stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: true,
           noiseSuppression: false,
           autoGainControl: true,
           channelCount: 1,
-          sampleRate: 16000,
         }
       });
 
       const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-      this.audioContext = new AudioContextClass();
-      
-      if (this.audioContext.state === 'suspended') {
-        await this.audioContext.resume();
-      }
+      if (AudioContextClass) {
+        this.audioContext = new AudioContextClass();
+        if (this.audioContext.state === 'suspended') {
+          await this.audioContext.resume();
+        }
 
-      console.log('[Recorder] AudioContext state:', this.audioContext.state);
-
-      if (this.audioContext.state !== 'running') {
-        throw new Error(
-          'AudioContext could not start. ' +
-          'Please tap the mic button to begin.'
-        );
+        const analyser = this.audioContext.createAnalyser();
+        analyser.fftSize = 256;
+        const source = this.audioContext.createMediaStreamSource(this.stream);
+        source.connect(analyser);
+        this.analyserNode = analyser;
+        this.dataArray = new Uint8Array(analyser.frequencyBinCount);
       }
 
       const tracks = this.stream.getAudioTracks();
@@ -47,32 +45,25 @@ export class AudioRecorder {
         throw new Error('Mic track is not live');
       }
 
-      // Pre-create and keep persistent analyser node connected for fast continuous RMS VAD
-      const analyser = this.audioContext.createAnalyser();
-      analyser.fftSize = 256;
-      const source = this.audioContext.createMediaStreamSource(this.stream);
-      source.connect(analyser);
-      this.analyserNode = analyser;
-      this.dataArray = new Uint8Array(analyser.frequencyBinCount);
+      // Setup MediaRecorder with cross-platform mobile fallback (WebM -> MP4 -> AAC -> default)
+      let mimeType = '';
+      const candidateTypes = [
+        'audio/webm;codecs=opus',
+        'audio/webm',
+        'audio/mp4',
+        'audio/aac',
+        'audio/ogg'
+      ];
 
-      // Setup MediaRecorder
-      let mimeType = 'audio/webm;codecs=opus';
-      if (!MediaRecorder.isTypeSupported(mimeType)) {
-        mimeType = 'audio/webm';
-      }
-      if (!MediaRecorder.isTypeSupported(mimeType)) {
-        mimeType = 'audio/mp4';
-      }
-      if (!MediaRecorder.isTypeSupported(mimeType)) {
-        mimeType = '';
+      for (const type of candidateTypes) {
+        if (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported(type)) {
+          mimeType = type;
+          break;
+        }
       }
 
       const options = mimeType ? { mimeType } : {};
-      this.mediaRecorder = new MediaRecorder(
-        this.stream,
-        options
-      );
-
+      this.mediaRecorder = new MediaRecorder(this.stream, options);
       this.audioChunks = [];
       this.hasAudio = false;
 
@@ -83,30 +74,27 @@ export class AudioRecorder {
         }
       };
 
-      // Collect data every 100ms
       this.mediaRecorder.start(100);
-      console.log('[Recorder] Recording started. MimeType:', mimeType);
 
     } catch (err: any) {
-      console.error('[Recorder] Mic start error:', err);
+      console.error('Mic start error:', err);
       
-      if (err.name === 'NotAllowedError') {
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
         throw new Error(
           'Microphone permission denied. ' +
-          'Click the lock icon in your browser ' +
-          'address bar and allow microphone access.'
+          'Please allow microphone access in your browser or phone settings.'
         );
       }
-      if (err.name === 'NotFoundError') {
+      if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
         throw new Error(
           'No microphone found. ' +
-          'Please connect a microphone and try again.'
+          'Please connect or enable a microphone and try again.'
         );
       }
-      if (err.name === 'NotReadableError') {
+      if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
         throw new Error(
           'Microphone is being used by another app. ' +
-          'Close other apps and try again.'
+          'Close other apps using audio and try again.'
         );
       }
       throw new Error(err.message || 'Could not access microphone');
@@ -136,13 +124,11 @@ export class AudioRecorder {
         }
 
         const mimeType = this.mediaRecorder?.mimeType || 'audio/webm';
-        const blob = new Blob(this.audioChunks, { 
-          type: mimeType 
+        const blob = new Blob(this.audioChunks, {
+          type: mimeType
         });
 
-        console.log('[Recorder] Final continuous blob:', blob.size, 'bytes');
-
-        if (blob.size < 1000) {
+        if (blob.size < 500) {
           reject(new Error('NO_AUDIO_DETECTED'));
           return;
         }
@@ -150,11 +136,14 @@ export class AudioRecorder {
         resolve(blob);
       };
 
-      this.mediaRecorder.stop();
+      try {
+        this.mediaRecorder.stop();
+      } catch {
+        resolve(new Blob(this.audioChunks));
+      }
     });
   }
 
-  // Measure real-time volume RMS using Web Audio API
   async getRMSLevel(): Promise<number> {
     if (!this.analyserNode || !this.dataArray) return 0;
     
