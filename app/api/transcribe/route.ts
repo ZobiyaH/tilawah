@@ -64,14 +64,21 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(await audioFile.arrayBuffer());
     
     // Safe file name and MIME determination for Groq Whisper
-    let fileName = audioFile.name || 'recording.webm';
-    let mimeType = audioFile.type || 'audio/webm';
-    if (mimeType.includes('mp4') || fileName.endsWith('.mp4')) {
+    const rawType = (audioFile.type || '').toLowerCase();
+    let fileName = 'recording.webm';
+    let mimeType = 'audio/webm';
+    if (rawType.includes('mp4') || (audioFile.name && audioFile.name.endsWith('.mp4'))) {
       fileName = 'recording.mp4';
       mimeType = 'audio/mp4';
-    } else if (mimeType.includes('aac') || fileName.endsWith('.aac')) {
+    } else if (rawType.includes('aac') || rawType.includes('m4a')) {
       fileName = 'recording.m4a';
       mimeType = 'audio/m4a';
+    } else if (rawType.includes('ogg')) {
+      fileName = 'recording.ogg';
+      mimeType = 'audio/ogg';
+    } else if (rawType.includes('wav')) {
+      fileName = 'recording.wav';
+      mimeType = 'audio/wav';
     } else {
       fileName = 'recording.webm';
       mimeType = 'audio/webm';

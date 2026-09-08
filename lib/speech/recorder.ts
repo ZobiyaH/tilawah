@@ -34,38 +34,26 @@ export class AudioRecorder {
   private audioContext: AudioContext | null = null;
   private analyserNode: AnalyserNode | null = null;
   private dataArray: Uint8Array | null = null;
-  private destinationNode: MediaStreamAudioDestinationNode | null = null;
   private activeMimeType: string = '';
 
   async start(): Promise<void> {
     const isMobile = typeof navigator !== 'undefined' && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
     console.log('[AudioRecorder] Starting mic on:', isMobile ? 'Mobile' : 'Desktop');
-    console.log('[AudioRecorder] Supported mimeTypes check:', {
-      webmOpus: typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported('audio/webm;codecs=opus'),
-      webm: typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported('audio/webm'),
-      mp4: typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported('audio/mp4'),
-      mp4a: typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported('audio/mp4;codecs=mp4a.40.2'),
-      aac: typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported('audio/aac'),
-      ogg: typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported('audio/ogg'),
-    });
-    console.log('[AudioRecorder] User Agent:', typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown');
 
     try {
-      // FIX 2: Mobile-specific mic constraints (44.1kHz vs 16kHz)
+      // Mobile-friendly constraints without strict sampleRate
       const audioConstraints: MediaTrackConstraints = isMobile
         ? {
             echoCancellation: true,
             noiseSuppression: false,
             autoGainControl: true,
             channelCount: 1,
-            sampleRate: 44100,
           }
         : {
             echoCancellation: true,
             noiseSuppression: false,
             autoGainControl: true,
             channelCount: 1,
-            sampleRate: 16000,
           };
 
       this.stream = await navigator.mediaDevices.getUserMedia({
@@ -80,10 +68,8 @@ export class AudioRecorder {
         }
 
         const source = this.audioContext.createMediaStreamSource(this.stream);
-        
-        // FIX 3: Actually boost the recorded audio stream for mobile via GainNode + MediaStreamDestination
         const gainNode = this.audioContext.createGain();
-        gainNode.gain.setValueAtTime(isMobile ? 3.5 : 1.5, this.audioContext.currentTime);
+        gainNode.gain.setValueAtTime(isMobile ? 3.0 : 1.5, this.audioContext.currentTime);
 
         const analyser = this.audioContext.createAnalyser();
         analyser.fftSize = 256;
@@ -91,10 +77,6 @@ export class AudioRecorder {
         gainNode.connect(analyser);
         this.analyserNode = analyser;
         this.dataArray = new Uint8Array(analyser.frequencyBinCount);
-
-        // Connect boosted gainNode to recording destination
-        this.destinationNode = this.audioContext.createMediaStreamDestination();
-        gainNode.connect(this.destinationNode);
       }
 
       const tracks = this.stream.getAudioTracks();
@@ -107,13 +89,12 @@ export class AudioRecorder {
         throw new Error('Mic track is not live');
       }
 
-      // FIX 1: Robust mimeType fallback chain
       this.activeMimeType = getSupportedMimeType();
       const options = this.activeMimeType ? { mimeType: this.activeMimeType } : {};
 
-      const recordStream = this.destinationNode ? this.destinationNode.stream : this.stream;
-      this.mediaRecorder = new MediaRecorder(recordStream, options);
-      console.log('[AudioRecorder] Selected mediaRecorder.mimeType:', this.mediaRecorder.mimeType);
+      // Record directly from genuine hardware MediaStream for valid EBML / MP4 containers
+      this.mediaRecorder = new MediaRecorder(this.stream, options);
+      console.log('[AudioRecorder] MediaRecorder initialized with mimeType:', this.mediaRecorder.mimeType);
 
       this.audioChunks = [];
       this.hasAudio = false;
@@ -125,7 +106,8 @@ export class AudioRecorder {
         }
       };
 
-      this.mediaRecorder.start(100);
+      // Do not use timeslice intervals on mobile to ensure single contiguous header and container
+      this.mediaRecorder.start();
 
     } catch (err: any) {
       console.error('[AudioRecorder] Mic start error:', err);
@@ -164,14 +146,12 @@ export class AudioRecorder {
 
       this.mediaRecorder.onstop = () => {
         this.stream?.getTracks().forEach(t => t.stop());
-        this.destinationNode?.stream?.getTracks().forEach(t => t.stop());
         
         if (this.audioContext && this.audioContext.state !== 'closed') {
           this.audioContext.close().catch(() => {});
         }
         this.audioContext = null;
         this.analyserNode = null;
-        this.destinationNode = null;
         this.dataArray = null;
 
         if (!this.hasAudio || this.audioChunks.length === 0) {
