@@ -1,3 +1,13 @@
+declare const self: any;
+
+self.addEventListener('install', () => {
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', (event: any) => {
+  event.waitUntil(self.clients.claim());
+});
+
 ﻿/// <reference lib="webworker" />
 import * as googleAnalytics from 'workbox-google-analytics';
 

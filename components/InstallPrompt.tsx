@@ -24,6 +24,32 @@ export function InstallPrompt() {
   };
 
   useEffect(() => {
+    // Auto-update Service Worker for existing PWA app users
+    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+      const checkUpdate = () => {
+        navigator.serviceWorker.getRegistration().then((reg) => {
+          if (reg) {
+            reg.update().catch(() => {});
+          }
+        });
+      };
+      checkUpdate();
+      const handleVisibilityChange = () => {
+        if (document.visibilityState === 'visible') {
+          checkUpdate();
+        }
+      };
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+      let refreshing = false;
+      const handleControllerChange = () => {
+        if (!refreshing) {
+          refreshing = true;
+          console.log('[PWA] Service Worker updated. Auto-refreshing app...');
+          window.location.reload();
+        }
+      };
+      navigator.serviceWorker.addEventListener('controllerchange', handleControllerChange);
+    }
     // Detect iOS
     const isIOSDevice =
       typeof navigator !== 'undefined' &&
