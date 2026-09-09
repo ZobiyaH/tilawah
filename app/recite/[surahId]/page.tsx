@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { preloadAudio, getWordAudio } from "../../../lib/audio/qariCDN";
 import { QariAudioManager } from "../../../lib/qariAudio";
 import { trackEvent } from "../../../lib/analytics/ga";
-import { checkWord } from "../../../lib/arabic/similarity";
+import { checkWord, normalizeArabic } from "../../../lib/arabic/similarity";
 import { transcribeAudio } from "../../../lib/speech/transcribe";
 import { AudioRecorder } from "../../../lib/speech/recorder";
 import { useContinuousASR } from "../../../lib/speech/useContinuousASR";
@@ -153,26 +153,50 @@ export default function RecitationPage() {
       const spokenTranscript = result.transcript.trim();
       setLiveTranscript(spokenTranscript);
 
-      const spokenWords = spokenTranscript.split(/\s+/).filter(Boolean);
+      let spokenWords = spokenTranscript.split(/\s+/).filter(Boolean);
       const expectedWords = currentWordToken.ayahData.words;
 
-      // Strict sequential alignment: map each expected word to the corresponding spoken word or nearby window
-      const aligned = expectedWords.map((expectedWord, idx) => {
-        let bestMatch: { similarity: number; status: "correct" | "tajweed" | "error" } = { similarity: 0, status: "error" };
-        
-        // Check exact corresponding spoken position and immediate adjacent tokens (±1)
-        const candidateIndices = [idx, idx - 1, idx + 1].filter(
-          (i) => i >= 0 && i < spokenWords.length
-        );
-
-        for (const cIdx of candidateIndices) {
-          const spokenWord = spokenWords[cIdx];
-          const check = checkWord(spokenWord, expectedWord, recitationLevel, confidentReciterMode);
-          if (check.similarity > bestMatch.similarity) {
-            bestMatch = check;
+      // Trim opening Bismillah/Ta'awwudh if spoken before an Ayah that doesn't start with it
+      if (spokenWords.length > expectedWords.length && expectedWords.length > 0) {
+        const normExp0 = normalizeArabic(expectedWords[0]);
+        if (normExp0 !== "بسم" && normExp0 !== "اعوذ") {
+          const matchStart = spokenWords.findIndex((sw) => checkWord(sw, expectedWords[0], recitationLevel, confidentReciterMode).status !== "error");
+          if (matchStart > 0) {
+            spokenWords = spokenWords.slice(matchStart);
           }
         }
-        
+      }
+
+      // Robust monotonic alignment
+      let lastSpokenIdx = 0;
+      const aligned = expectedWords.map((expectedWord, idx) => {
+        let bestMatch: { similarity: number; status: "correct" | "tajweed" | "error"; spokenIdx: number } = {
+          similarity: 0,
+          status: "error",
+          spokenIdx: -1,
+        };
+
+        const maxSearch = Math.min(spokenWords.length, lastSpokenIdx + 5);
+        for (let sIdx = lastSpokenIdx; sIdx < maxSearch; sIdx++) {
+          const check = checkWord(spokenWords[sIdx], expectedWord, recitationLevel, confidentReciterMode);
+          if (check.similarity > bestMatch.similarity) {
+            bestMatch = { ...check, spokenIdx: sIdx };
+          }
+        }
+
+        if (bestMatch.status === "error" && spokenWords.length > 0) {
+          for (let sIdx = 0; sIdx < spokenWords.length; sIdx++) {
+            const check = checkWord(spokenWords[sIdx], expectedWord, recitationLevel, confidentReciterMode);
+            if (check.status !== "error" && check.similarity > bestMatch.similarity) {
+              bestMatch = { ...check, spokenIdx: sIdx };
+            }
+          }
+        }
+
+        if (bestMatch.status !== "error" && bestMatch.spokenIdx >= 0) {
+          lastSpokenIdx = bestMatch.spokenIdx + 1;
+        }
+
         return {
           word: expectedWord,
           status: bestMatch.status,

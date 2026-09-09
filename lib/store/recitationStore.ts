@@ -291,7 +291,7 @@ export const useRecitationStore = create<RecitationState>((set, get) => {
                 });
                 tempExpectedIdx++;
               } else {
-                // Check if sWord + sNext combined matches expected.arabic (e.g. ASR split into 2 tokens)
+                // 1. Check combined adjacent tokens (e.g. ASR split word)
                 if (s + 1 < spokenWords.length) {
                   const combined = sWord + spokenWords[s + 1];
                   const combCheck = checkWord(combined, expected.arabic, recitationLevel, confidentReciterMode);
@@ -304,18 +304,35 @@ export const useRecitationStore = create<RecitationState>((set, get) => {
                       spokenWordText: combined,
                     });
                     tempExpectedIdx++;
-                    s++; // skip next spoken word
+                    s++;
                     continue;
                   }
                 }
 
+                // 2. Check if sWord matches next expected word (e.g. user skipped 1 word)
+                if (tempExpectedIdx + 1 < allWords.length) {
+                  const nextExpected = allWords[tempExpectedIdx + 1];
+                  const nextCheck = checkWord(sWord, nextExpected.arabic, recitationLevel, confidentReciterMode);
+                  if (nextCheck.status === "correct" || nextCheck.status === "tajweed") {
+                    matchedCount++;
+                    tempExpectedIdx += 2;
+                    tempResults.push({
+                      status: nextCheck.status,
+                      similarity: nextCheck.similarity,
+                      expectedWordIndex: tempExpectedIdx - 1,
+                      spokenWordText: sWord,
+                    });
+                    continue;
+                  }
+                }
+
+                // If token is a minor filler, allow 1 skip before stopping
                 tempResults.push({
                   status: "error",
                   similarity: check.similarity,
                   expectedWordIndex: tempExpectedIdx,
                   spokenWordText: sWord,
                 });
-                break;
               }
             }
 

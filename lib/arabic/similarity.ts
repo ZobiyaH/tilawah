@@ -1,4 +1,5 @@
 import { normalizeArabic } from "./normalize";
+export { normalizeArabic };
 import { arabicLevenshtein } from "./levenshtein";
 import { detectTajweedIssue } from "./tajweed";
 
@@ -78,8 +79,8 @@ export interface CheckResult {
 }
 
 /**
- * Calculates a strict similarity score between 0.0 and 1.0 for two Arabic words.
- * Performs normalization before computing exact Levenshtein distance.
+ * Calculates similarity score between 0.0 and 1.0 for two Arabic words.
+ * Handles Uthmani variations, prefixes (al-, wal-, bil-), and sub-word matches.
  */
 export function arabicSimilarity(spoken: string, reference: string): number {
   const ns = normalizeArabic(spoken);
@@ -87,16 +88,30 @@ export function arabicSimilarity(spoken: string, reference: string): number {
   if (!ns || !nr) return 0;
   if (ns === nr) return 1.0;
 
-  // Handle written vs unwritten Alif spelling variations (e.g., maliki vs malk, rahman vs rahmn)
-  if (ns.length > 2 && nr.length > 2 && ns.replace(/ا/g, "") === nr.replace(/ا/g, "")) {
-    return 1.0;
+  // Substring or root match (e.g., al-rahman in rahman)
+  if (ns.length >= 3 && nr.length >= 3) {
+    if (ns === nr || ns.includes(nr) || nr.includes(ns)) {
+      return 0.90;
+    }
+    if (ns.replace(/\u0627/g, "") === nr.replace(/\u0627/g, "")) {
+      return 0.95;
+    }
   }
 
-  // Prefix handling: only if stripped word matches reference closely
-  if (ns.length === nr.length + 1 && (ns.startsWith("و") || ns.startsWith("ف") || ns.startsWith("ب") || ns.startsWith("ل") || ns.startsWith("ك"))) {
-    const strippedPrefix = ns.slice(1);
-    if (strippedPrefix === nr || strippedPrefix.replace(/ا/g, "") === nr.replace(/ا/g, "")) {
-      return 0.90;
+  // Prefix handling (al-, wal-, bil-, fal-, kal-, lil-, etc.)
+  const prefixes = ["وال", "بال", "فال", "كال", "لل", "ال", "و", "ف", "ب", "ل", "ك"];
+  for (const p of prefixes) {
+    if (ns.startsWith(p) && !nr.startsWith(p)) {
+      const sub = ns.slice(p.length);
+      if (sub === nr || (sub.length >= 2 && nr.length >= 2 && sub.replace(/\u0627/g, "") === nr.replace(/\u0627/g, ""))) {
+        return 0.90;
+      }
+    }
+    if (nr.startsWith(p) && !ns.startsWith(p)) {
+      const sub = nr.slice(p.length);
+      if (sub === ns || (sub.length >= 2 && ns.length >= 2 && sub.replace(/\u0627/g, "") === ns.replace(/\u0627/g, ""))) {
+        return 0.90;
+      }
     }
   }
 
@@ -109,7 +124,6 @@ export function arabicSimilarity(spoken: string, reference: string): number {
 
 /**
  * Align and compare spoken word alternatives against expected Quran word.
- * Requires high phonetic accuracy (0.75+ for intermediate, 0.65+ for beginner).
  */
 export function checkWord(
   spokenAlternatives: string | string[],
@@ -119,15 +133,15 @@ export function checkWord(
 ): CheckResult {
   const alternatives = Array.isArray(spokenAlternatives) ? spokenAlternatives : [spokenAlternatives];
   
-  let correctThreshold = 0.75;
-  let tajweedThreshold = 0.55;
+  let correctThreshold = 0.55;
+  let tajweedThreshold = 0.40;
 
   if (recitationLevel === 'beginner' || confidentReciterMode) {
-    correctThreshold = 0.65;
-    tajweedThreshold = 0.45;
+    correctThreshold = 0.48;
+    tajweedThreshold = 0.35;
   } else if (recitationLevel === 'advanced') {
-    correctThreshold = 0.85;
-    tajweedThreshold = 0.70;
+    correctThreshold = 0.70;
+    tajweedThreshold = 0.55;
   }
 
   let bestResult: CheckResult = { status: 'error', similarity: 0, tajweedIssue: null };
