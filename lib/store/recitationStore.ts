@@ -239,7 +239,7 @@ export const useRecitationStore = create<RecitationState>((set, get) => {
         return;
       }
 
-      // 2. Normal listening flow - Robust Monotonic Word Advancement
+      // 2. Normal listening flow - Strict Sequential Verification from current wordIndex
       if (recitationState === "listening" || recitationState === "error") {
         interface MatchResult {
           status: "correct" | "tajweed" | "error";
@@ -274,11 +274,13 @@ export const useRecitationStore = create<RecitationState>((set, get) => {
           let matchedCount = 0;
           const tempResults: MatchResult[] = [];
 
-          // Find start anchor: check if any of first 3 spoken words matches current expected word
-          for (let i = 0; i < Math.min(spokenWords.length, 3); i++) {
+          // Find start anchor: strict check of first 2 spoken words against current word
+          let foundAnchor = false;
+          for (let i = 0; i < Math.min(spokenWords.length, 2); i++) {
             const check = checkWord(spokenWords[i], allWords[tempExpectedIdx].arabic, recitationLevel, confidentReciterMode);
             if (check.status === "correct" || check.status === "tajweed") {
               s = i;
+              foundAnchor = true;
               break;
             }
             if (i + 1 < spokenWords.length) {
@@ -286,12 +288,18 @@ export const useRecitationStore = create<RecitationState>((set, get) => {
               const combCheck = checkWord(combined, allWords[tempExpectedIdx].arabic, recitationLevel, confidentReciterMode);
               if (combCheck.status === "correct" || combCheck.status === "tajweed") {
                 s = i;
+                foundAnchor = true;
                 break;
               }
             }
           }
 
-          // Advance through expected words monotonically
+          if (!foundAnchor) {
+            // Did not match the current required word: DO NOT skip words forward
+            continue;
+          }
+
+          // Advance strictly sequentially through words
           while (s < spokenWords.length && tempExpectedIdx < allWords.length) {
             const sWord = spokenWords[s];
             const expected = allWords[tempExpectedIdx];
@@ -328,7 +336,7 @@ export const useRecitationStore = create<RecitationState>((set, get) => {
               }
             }
 
-            // Check if next spoken word matches (handles stutter, particle, filler)
+            // Check if next spoken word matches (handles particle or filler)
             if (s + 1 < spokenWords.length) {
               const nextSWord = spokenWords[s + 1];
               const nextSCheck = checkWord(nextSWord, expected.arabic, recitationLevel, confidentReciterMode);
@@ -346,32 +354,8 @@ export const useRecitationStore = create<RecitationState>((set, get) => {
               }
             }
 
-            // Lookahead 1 word: check if user already said next expected word
-            if (tempExpectedIdx + 1 < allWords.length) {
-              const nextExpected = allWords[tempExpectedIdx + 1];
-              const nextExpCheck = checkWord(sWord, nextExpected.arabic, recitationLevel, confidentReciterMode);
-              if (nextExpCheck.status === "correct" || nextExpCheck.status === "tajweed") {
-                // Count current word as skipped / auto-verified and match next
-                matchedCount += 2;
-                tempResults.push({
-                  status: "correct",
-                  similarity: 0.9,
-                  expectedWordIndex: tempExpectedIdx,
-                  spokenWordText: expected.arabic,
-                });
-                tempResults.push({
-                  status: nextExpCheck.status,
-                  similarity: nextExpCheck.similarity,
-                  expectedWordIndex: tempExpectedIdx + 1,
-                  spokenWordText: sWord,
-                });
-                tempExpectedIdx += 2;
-                s++;
-                continue;
-              }
-            }
-
-            s++;
+            // Stop here: strict sequential requirement prevents verse jumping
+            break;
           }
 
           if (matchedCount > bestAltWordsMatched) {

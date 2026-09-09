@@ -72,8 +72,8 @@ export function useContinuousASR(isListening: boolean) {
 
     const isMobile = typeof navigator !== "undefined" && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
     const SILENCE_THRESHOLD = isMobile ? 0.0016 : 0.0020;
-    const END_OF_SPEECH_MS = 220; // Rapid turnaround on word pauses
-    const MAX_CHUNK_MS = 3800; // Fast rolling window for Groq Whisper
+    const END_OF_SPEECH_MS = 250;
+    const MAX_CHUNK_MS = 4000;
 
     let silenceStartTime: number | null = null;
     let utteranceStartTime: number = Date.now();
@@ -82,7 +82,7 @@ export function useContinuousASR(isListening: boolean) {
     let isProcessingUtterance = false;
     let mimeType = "audio/webm;codecs=opus";
 
-    // 1. Dual Real-time Web Speech Recognition Stream (for instant interim feedback if supported)
+    // 1. Web Speech live interim text display (DISPLAY ONLY - does not advance pointer blindly)
     const win = typeof window !== "undefined" ? (window as WindowWithSpeech) : null;
     const SpeechRecognitionClass = win?.SpeechRecognition || win?.webkitSpeechRecognition;
 
@@ -94,35 +94,27 @@ export function useContinuousASR(isListening: boolean) {
         rec.lang = "ar-SA";
         rec.continuous = true;
         rec.interimResults = true;
-        rec.maxAlternatives = 4;
+        rec.maxAlternatives = 3;
 
         rec.onresult = (event: any) => {
           if (useRecitationStore.getState().isAudioPlaying || !activeRef.current) return;
 
           let interim = "";
-          const altsList: string[] = [];
+          let latestFinal = "";
 
           for (let i = event.resultIndex; i < event.results.length; i++) {
             const resultList = event.results[i];
-            for (let k = 0; k < Math.min(resultList.length, 4); k++) {
-              const text = resultList[k]?.transcript?.trim();
-              if (text) altsList.push(text);
-            }
-            if (!resultList.isFinal) {
-              interim = resultList[0]?.transcript || "";
+            const text = resultList[0]?.transcript?.trim();
+            if (resultList.isFinal) {
+              if (text) latestFinal = text;
+            } else {
+              if (text) interim = text;
             }
           }
 
-          const display = altsList[0] || interim;
+          const display = latestFinal || interim;
           if (display && display.trim().length > 0) {
             setLiveTranscriptRef.current(display);
-          }
-
-          // Rapid matching
-          if (altsList.length > 0) {
-            processSpeechRef.current(altsList);
-          } else if (interim && interim.trim().length > 0) {
-            processSpeechRef.current([interim.trim()]);
           }
         };
 
@@ -134,7 +126,7 @@ export function useContinuousASR(isListening: boolean) {
                   recognitionRef.current.start();
                 } catch {}
               }
-            }, 200);
+            }, 250);
           }
         };
 
@@ -147,11 +139,11 @@ export function useContinuousASR(isListening: boolean) {
         rec.start();
         recognitionRef.current = rec;
       } catch (e) {
-        console.warn("[ContinuousASR] Web Speech optional background stream:", e);
+        console.warn("[ContinuousASR] Web Speech not initialized:", e);
       }
     };
 
-    // 2. Ultra-Fast High-Accuracy Whisper Stream
+    // 2. High-Accuracy Whisper ASR Engine
     async function startContinuousASR() {
       if (!activeRef.current) return;
       setRecognitionRunning(true);
@@ -236,7 +228,6 @@ export function useContinuousASR(isListening: boolean) {
             }
           });
 
-          // Instantly start next recorder cycle to never lose audio
           startNewRecorderCycle();
 
           const audioBlob = await finalizeBlobPromise;
@@ -270,12 +261,12 @@ export function useContinuousASR(isListening: boolean) {
                 const data = await res.json();
                 if (data.success && data.transcript) {
                   const transcriptText = data.transcript.trim();
-                  console.log("[ContinuousASR] Received Groq transcript:", transcriptText);
+                  console.log("[ContinuousASR] Verified Groq transcript:", transcriptText);
                   
-                  // GUARANTEED: Update LiveTranscript immediately so the mobile app displays it!
+                  // Update LiveTranscript view
                   setLiveTranscriptRef.current(transcriptText);
 
-                  // Execute word alignment and advance pointer
+                  // Process and strictly advance words sequentially
                   processSpeechRef.current([transcriptText]);
                 }
               }
