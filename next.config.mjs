@@ -1,4 +1,4 @@
-﻿import { createRequire } from 'module';
+import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 
 const withPWA = require('next-pwa')({
@@ -7,6 +7,14 @@ const withPWA = require('next-pwa')({
   skipWaiting: true,
   disable: process.env.NODE_ENV === 'development',
   runtimeCaching: [
+    {
+      // NEVER cache API requests (transcribe, version, session, etc.) so Vercel logs and live endpoints work immediately
+      urlPattern: /^https?:\/\/.*\/api\/.*/i,
+      handler: 'NetworkOnly',
+      options: {
+        cacheName: 'api-cache',
+      },
+    },
     {
       // Cache Qari audio files for offline use
       urlPattern: /^https:\/\/(cdn\.islamic\.network|audio\.qurancdn\.com)\/.*/i,
@@ -46,11 +54,12 @@ const withPWA = require('next-pwa')({
       },
     },
     {
-      // Cache pages
+      // Always fetch pages from network first with rapid fallback, ensuring live deployment updates
       urlPattern: /^https:\/\/(www\.)?tilawah\.site\/.*/i,
       handler: 'NetworkFirst',
       options: {
         cacheName: 'pages-cache',
+        networkTimeoutSeconds: 2,
         expiration: {
           maxEntries: 50,
         },
