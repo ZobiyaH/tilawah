@@ -43,16 +43,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No audio file uploaded', decision: 'no_speech' }, { status: 200 });
     }
 
-    console.log('[API] Received audio file:', {
-      name: audioFile.name,
-      size: audioFile.size,
-      type: audioFile.type,
-    });
-
-    if (audioFile.size < 2000) {
-      console.log('[API] Audio blob too small for decodable audio frames:', audioFile.size, 'bytes');
+    if (audioFile.size < 1200) {
       return NextResponse.json({
-        error: 'Audio too short or header-only blob',
+        error: 'Audio too short',
         decision: 'no_speech',
         transcript: '',
         success: false,
@@ -87,47 +80,41 @@ export async function POST(request: NextRequest) {
 
     const fileToUpload = await toFile(buffer, fileName, { type: mimeType });
 
-    console.log('[API] Sending to Groq Whisper:', { fileName, mimeType, size: buffer.length });
+    // Lightning fast Groq Whisper call with json format
     const transcription: any = await groq.audio.transcriptions.create({
       file: fileToUpload,
       model: 'whisper-large-v3',
       language: 'ar',
       prompt: genericArabicPrompt,
-      response_format: 'verbose_json',
+      response_format: 'json',
       temperature: 0.0,
     });
 
     const transcript = (transcription.text || '').trim();
-    const avgLogprob = typeof transcription.avg_logprob === 'number' ? transcription.avg_logprob : 0;
-    console.log('[API] Groq response transcript:', transcript, 'avgLogprob:', avgLogprob);
+    console.log('[API] Groq rapid transcript:', transcript);
 
     const hasArabic = /[\u0600-\u06FF]/.test(transcript);
-    if (!transcript || transcript.length < 1 || !hasArabic || (avgLogprob !== 0 && avgLogprob < -2.8)) {
+    if (!transcript || transcript.length < 1 || !hasArabic) {
       return NextResponse.json({
         decision: 'no_speech',
         transcript: '',
-        message: 'Unclear voice signal',
+        message: 'No Arabic speech detected',
         success: false,
       });
     }
 
     return NextResponse.json({
       transcript,
-      avgLogprob,
       success: true,
       decision: 'speech_detected',
     });
 
   } catch (error: any) {
     const errorMsg = error?.message || String(error);
-    if (errorMsg.includes('invalid_media_file') || errorMsg.includes('could not process file')) {
-      console.warn('[API] Transcribe media container unreadable by Groq (quiet/header-only):', errorMsg);
-    } else {
-      console.error('[API] Transcribe API error:', errorMsg);
-    }
+    console.warn('[API] Transcribe error:', errorMsg);
     return NextResponse.json(
       {
-        error: 'Media decoding issue or quiet voice',
+        error: errorMsg,
         fallback: true,
         decision: 'no_speech',
         success: false,
