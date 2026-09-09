@@ -275,12 +275,13 @@ export const useRecitationStore = create<RecitationState>((set, get) => {
               }
             }
 
-            for (let s = startSpokenIdx; s < spokenWords.length; s++) {
+            // Subsequence multi-word matcher across the entire verse
+            let s = startSpokenIdx;
+            while (s < spokenWords.length && tempExpectedIdx < allWords.length) {
               const sWord = spokenWords[s];
-              if (tempExpectedIdx >= allWords.length) break;
               const expected = allWords[tempExpectedIdx];
               const check = checkWord(sWord, expected.arabic, recitationLevel, confidentReciterMode);
-              
+
               if (check.status === "correct" || check.status === "tajweed") {
                 matchedCount++;
                 tempResults.push({
@@ -290,50 +291,66 @@ export const useRecitationStore = create<RecitationState>((set, get) => {
                   spokenWordText: sWord,
                 });
                 tempExpectedIdx++;
-              } else {
-                // 1. Check combined adjacent tokens (e.g. ASR split word)
-                if (s + 1 < spokenWords.length) {
-                  const combined = sWord + spokenWords[s + 1];
-                  const combCheck = checkWord(combined, expected.arabic, recitationLevel, confidentReciterMode);
-                  if (combCheck.status === "correct" || combCheck.status === "tajweed") {
-                    matchedCount++;
-                    tempResults.push({
-                      status: combCheck.status,
-                      similarity: combCheck.similarity,
-                      expectedWordIndex: tempExpectedIdx,
-                      spokenWordText: combined,
-                    });
-                    tempExpectedIdx++;
-                    s++;
-                    continue;
-                  }
-                }
-
-                // 2. Check if sWord matches next expected word (e.g. user skipped 1 word)
-                if (tempExpectedIdx + 1 < allWords.length) {
-                  const nextExpected = allWords[tempExpectedIdx + 1];
-                  const nextCheck = checkWord(sWord, nextExpected.arabic, recitationLevel, confidentReciterMode);
-                  if (nextCheck.status === "correct" || nextCheck.status === "tajweed") {
-                    matchedCount++;
-                    tempExpectedIdx += 2;
-                    tempResults.push({
-                      status: nextCheck.status,
-                      similarity: nextCheck.similarity,
-                      expectedWordIndex: tempExpectedIdx - 1,
-                      spokenWordText: sWord,
-                    });
-                    continue;
-                  }
-                }
-
-                // If token is a minor filler, allow 1 skip before stopping
-                tempResults.push({
-                  status: "error",
-                  similarity: check.similarity,
-                  expectedWordIndex: tempExpectedIdx,
-                  spokenWordText: sWord,
-                });
+                s++;
+                continue;
               }
+
+              // Check if 2 tokens combine to form expected word
+              if (s + 1 < spokenWords.length) {
+                const combined = sWord + spokenWords[s + 1];
+                const combCheck = checkWord(combined, expected.arabic, recitationLevel, confidentReciterMode);
+                if (combCheck.status === "correct" || combCheck.status === "tajweed") {
+                  matchedCount++;
+                  tempResults.push({
+                    status: combCheck.status,
+                    similarity: combCheck.similarity,
+                    expectedWordIndex: tempExpectedIdx,
+                    spokenWordText: combined,
+                  });
+                  tempExpectedIdx++;
+                  s += 2;
+                  continue;
+                }
+              }
+
+              // Check if expected word matches next spoken token (minor extra word spoken)
+              if (s + 1 < spokenWords.length) {
+                const nextSWord = spokenWords[s + 1];
+                const nextSCheck = checkWord(nextSWord, expected.arabic, recitationLevel, confidentReciterMode);
+                if (nextSCheck.status === "correct" || nextSCheck.status === "tajweed") {
+                  matchedCount++;
+                  tempResults.push({
+                    status: nextSCheck.status,
+                    similarity: nextSCheck.similarity,
+                    expectedWordIndex: tempExpectedIdx,
+                    spokenWordText: nextSWord,
+                  });
+                  tempExpectedIdx++;
+                  s += 2;
+                  continue;
+                }
+              }
+
+              // Check if user jumped forward to next expected word
+              if (tempExpectedIdx + 1 < allWords.length) {
+                const nextExpected = allWords[tempExpectedIdx + 1];
+                const nextExpCheck = checkWord(sWord, nextExpected.arabic, recitationLevel, confidentReciterMode);
+                if (nextExpCheck.status === "correct" || nextExpCheck.status === "tajweed") {
+                  matchedCount++;
+                  tempResults.push({
+                    status: nextExpCheck.status,
+                    similarity: nextExpCheck.similarity,
+                    expectedWordIndex: tempExpectedIdx + 1,
+                    spokenWordText: sWord,
+                  });
+                  tempExpectedIdx += 2;
+                  s++;
+                  continue;
+                }
+              }
+
+              // Advance spoken token
+              s++;
             }
 
             if (matchedCount > bestAltWordsMatched) {

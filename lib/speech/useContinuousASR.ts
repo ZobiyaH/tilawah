@@ -68,9 +68,9 @@ export function useContinuousASR(isListening: boolean) {
     
     // Silence detection & utterance timings
     const isMobile = typeof navigator !== 'undefined' && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
-    const SILENCE_THRESHOLD = isMobile ? 0.0015 : 0.0020;
+    const SILENCE_THRESHOLD = isMobile ? 0.0018 : 0.0022;
      // Highly responsive RMS energy threshold
-    const END_OF_SPEECH_MS = 1000; // Natural pause completion - user finished utterance
+    const END_OF_SPEECH_MS = 500; // Natural pause completion - user finished utterance
     const MAX_UTTERANCE_MS = 14000; // Safety cap for complete multi-verse utterances
 
     let silenceStartTime: number | null = null;
