@@ -6,6 +6,7 @@ import Footer from "@/components/Layout/Footer";
 import EmailCaptureModal from "@/components/UI/EmailCaptureModal";
 import { FeedbackButton } from "@/components/feedback/FeedbackButton";
 import { InstallPrompt } from "@/components/InstallPrompt";
+import { PWAUpdater } from "@/components/PWAUpdater";
 import { AnalyticsTracker } from '@/components/Analytics/AnalyticsTracker';
 import { GA_ID } from "@/lib/analytics/ga";
 import "./globals.css";
@@ -129,6 +130,7 @@ export default function RootLayout({
             <EmailCaptureModal />
             <FeedbackButton />
             <InstallPrompt />
+        <PWAUpdater />
           </ToastProvider>
         </ThemeProvider>
       </body>
