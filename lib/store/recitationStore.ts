@@ -239,7 +239,7 @@ export const useRecitationStore = create<RecitationState>((set, get) => {
         return;
       }
 
-      // 2. Normal listening flow - Snappy Sequential Verification
+      // 2. Continuous listening flow - Strict Sequential Verification from current wordIndex
       if (recitationState === "listening" || recitationState === "error") {
         interface MatchResult {
           status: "correct" | "tajweed" | "error";
@@ -256,10 +256,10 @@ export const useRecitationStore = create<RecitationState>((set, get) => {
           let spokenWords = spokenText.trim().split(/\s+/).filter(Boolean);
           if (spokenWords.length === 0) continue;
 
-          // Strip opening Bismillah/Ta'awwudh if user recited it before an ayah that doesn't start with it
+          // If current expected word is NOT Bismillah/Ta'awwudh and the reciter said Bismillah first, trim it
           if (allWords[wordIndex] && spokenWords.length > 1) {
-            const firstWordNorm = normalizeArabic(allWords[wordIndex].arabic);
-            if (firstWordNorm !== "بسم" && firstWordNorm !== "اعوذ") {
+            const currentExpectedNorm = normalizeArabic(allWords[wordIndex].arabic);
+            if (currentExpectedNorm !== "بسم" && currentExpectedNorm !== "اعوذ") {
               const startIdx = spokenWords.findIndex(
                 (sw) => checkWord(sw, allWords[wordIndex].arabic, recitationLevel, confidentReciterMode).status !== "error"
               );
@@ -274,15 +274,16 @@ export const useRecitationStore = create<RecitationState>((set, get) => {
           let matchedCount = 0;
           const tempResults: MatchResult[] = [];
 
-          // Find start anchor: check first 3 spoken words against current word
+          // Find start anchor: check where in spokenWords matches the CURRENT wordIndex
           let foundAnchor = false;
-          for (let i = 0; i < Math.min(spokenWords.length, 3); i++) {
+          for (let i = 0; i < spokenWords.length; i++) {
             const check = checkWord(spokenWords[i], allWords[tempExpectedIdx].arabic, recitationLevel, confidentReciterMode);
             if (check.status === "correct" || check.status === "tajweed") {
               s = i;
               foundAnchor = true;
               break;
             }
+            // Check if 2 tokens combine to match current word
             if (i + 1 < spokenWords.length) {
               const combined = spokenWords[i] + spokenWords[i + 1];
               const combCheck = checkWord(combined, allWords[tempExpectedIdx].arabic, recitationLevel, confidentReciterMode);
@@ -295,25 +296,10 @@ export const useRecitationStore = create<RecitationState>((set, get) => {
           }
 
           if (!foundAnchor) {
-            // Check if full spoken transcript as a single combined string matches current word
-            const fullSpoken = spokenWords.join("");
-            const fullCheck = checkWord(fullSpoken, allWords[tempExpectedIdx].arabic, recitationLevel, confidentReciterMode);
-            if (fullCheck.status === "correct" || fullCheck.status === "tajweed") {
-              matchedCount = 1;
-              tempResults.push({
-                status: fullCheck.status,
-                similarity: fullCheck.similarity,
-                expectedWordIndex: tempExpectedIdx,
-                spokenWordText: fullSpoken,
-              });
-              bestAltWordsMatched = 1;
-              bestMatchResults = tempResults;
-              break;
-            }
             continue;
           }
 
-          // Advance through expected words
+          // Advance strictly sequentially from anchor
           while (s < spokenWords.length && tempExpectedIdx < allWords.length) {
             const sWord = spokenWords[s];
             const expected = allWords[tempExpectedIdx];
@@ -332,7 +318,7 @@ export const useRecitationStore = create<RecitationState>((set, get) => {
               continue;
             }
 
-            // Check if 2 spoken words combine to match current word (e.g., 'ال' + 'حمد')
+            // Check if 2 spoken words combine to match current word
             if (s + 1 < spokenWords.length) {
               const combined = sWord + spokenWords[s + 1];
               const combCheck = checkWord(combined, expected.arabic, recitationLevel, confidentReciterMode);
