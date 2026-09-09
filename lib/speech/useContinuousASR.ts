@@ -70,10 +70,10 @@ export function useContinuousASR(isListening: boolean) {
     let vadAnalyser: AnalyserNode | null = null;
     let vadDataArray: Uint8Array | null = null;
 
-    const isMobile = typeof navigator !== "undefined" && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
-    const SILENCE_THRESHOLD = isMobile ? 0.0016 : 0.0020;
-    const END_OF_SPEECH_MS = 140; // Super snappy pause turnaround (140ms)
-    const MAX_CHUNK_MS = 2400; // Ultra-fast rolling chunks (2.4s) for instant word verification
+    // Resilient threshold across desktop and mobile
+    const SILENCE_THRESHOLD = 0.0012;
+    const END_OF_SPEECH_MS = 250;
+    const MAX_CHUNK_MS = 3200;
 
     let silenceStartTime: number | null = null;
     let utteranceStartTime: number = Date.now();
@@ -82,7 +82,7 @@ export function useContinuousASR(isListening: boolean) {
     let isProcessingUtterance = false;
     let mimeType = "audio/webm;codecs=opus";
 
-    // 1. Web Speech live interim text display (Instant visual feedback)
+    // 1. Web Speech live interim text display (Instant visual display)
     const win = typeof window !== "undefined" ? (window as WindowWithSpeech) : null;
     const SpeechRecognitionClass = win?.SpeechRecognition || win?.webkitSpeechRecognition;
 
@@ -143,7 +143,7 @@ export function useContinuousASR(isListening: boolean) {
       }
     };
 
-    // 2. High-Speed Low-Latency Whisper Engine
+    // 2. High-Speed Whisper ASR Engine
     async function startContinuousASR() {
       if (!activeRef.current) return;
       setRecognitionRunning(true);
@@ -173,7 +173,7 @@ export function useContinuousASR(isListening: boolean) {
 
         const source = audioContext.createMediaStreamSource(localStream);
         const gainNode = audioContext.createGain();
-        gainNode.gain.setValueAtTime(isMobile ? 3.5 : 2.0, audioContext.currentTime);
+        gainNode.gain.setValueAtTime(3.0, audioContext.currentTime);
         source.connect(gainNode);
         gainNode.connect(vadAnalyser);
 
@@ -205,7 +205,6 @@ export function useContinuousASR(isListening: boolean) {
           if (isProcessingUtterance || !localRecorder || !activeRef.current) return;
           isProcessingUtterance = true;
 
-          const hadSpeech = speechDetectedInUtterance;
           const recorderToStop = localRecorder;
 
           const finalizeBlobPromise = new Promise<Blob | null>((resolve) => {
@@ -228,12 +227,12 @@ export function useContinuousASR(isListening: boolean) {
             }
           });
 
-          // Instantly start next cycle so no words are dropped
           startNewRecorderCycle();
 
           const audioBlob = await finalizeBlobPromise;
 
-          if (!hadSpeech || !audioBlob || audioBlob.size < 1000) {
+          // Always transmit if audio blob has sound content (>= 1200 bytes)
+          if (!audioBlob || audioBlob.size < 1200) {
             isProcessingUtterance = false;
             return;
           }
@@ -300,8 +299,9 @@ export function useContinuousASR(isListening: boolean) {
                 finishUtteranceAndSend();
               }
             } else {
-              if (elapsed > 3000 && !isProcessingUtterance) {
-                startNewRecorderCycle();
+              // Even without threshold trigger, send if chunk reaches MAX_CHUNK_MS (ensures quiet mics never get dropped)
+              if (elapsed >= MAX_CHUNK_MS) {
+                finishUtteranceAndSend();
               }
             }
           } else {
