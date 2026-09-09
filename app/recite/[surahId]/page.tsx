@@ -96,8 +96,8 @@ export default function RecitationPage() {
       await recorderRef.current.start();
       setRecordingState("listening");
 
-      const SILENCE_THRESHOLD = 0.008;
-      const END_OF_SPEECH_MS = 2500;
+      const SILENCE_THRESHOLD = 0.004;
+      const END_OF_SPEECH_MS = 1000;
       let silenceStartTime: number | null = null;
       let speechDetected = false;
 

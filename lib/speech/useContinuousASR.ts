@@ -70,7 +70,7 @@ export function useContinuousASR(isListening: boolean) {
     const isMobile = typeof navigator !== 'undefined' && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
     const SILENCE_THRESHOLD = isMobile ? 0.0015 : 0.0020;
      // Highly responsive RMS energy threshold
-    const END_OF_SPEECH_MS = 2000; // Natural pause completion - user finished utterance
+    const END_OF_SPEECH_MS = 1000; // Natural pause completion - user finished utterance
     const MAX_UTTERANCE_MS = 14000; // Safety cap for complete multi-verse utterances
 
     let silenceStartTime: number | null = null;
@@ -280,8 +280,7 @@ export function useContinuousASR(isListening: boolean) {
                   const hasArabic = /[\u0600-\u06FF]/.test(transcriptText);
                   if (hasArabic) {
                     setLiveTranscriptRef.current(transcriptText);
-                    const words = transcriptText.split(/\s+/).filter(Boolean);
-                    processSpeechRef.current(words);
+                    processSpeechRef.current([transcriptText]);
                   }
                 }
               }
