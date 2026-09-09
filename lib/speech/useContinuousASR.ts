@@ -72,8 +72,8 @@ export function useContinuousASR(isListening: boolean) {
 
     const isMobile = typeof navigator !== "undefined" && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
     const SILENCE_THRESHOLD = isMobile ? 0.0016 : 0.0020;
-    const END_OF_SPEECH_MS = 250;
-    const MAX_CHUNK_MS = 4000;
+    const END_OF_SPEECH_MS = 140; // Super snappy pause turnaround (140ms)
+    const MAX_CHUNK_MS = 2400; // Ultra-fast rolling chunks (2.4s) for instant word verification
 
     let silenceStartTime: number | null = null;
     let utteranceStartTime: number = Date.now();
@@ -82,7 +82,7 @@ export function useContinuousASR(isListening: boolean) {
     let isProcessingUtterance = false;
     let mimeType = "audio/webm;codecs=opus";
 
-    // 1. Web Speech live interim text display (DISPLAY ONLY - does not advance pointer blindly)
+    // 1. Web Speech live interim text display (Instant visual feedback)
     const win = typeof window !== "undefined" ? (window as WindowWithSpeech) : null;
     const SpeechRecognitionClass = win?.SpeechRecognition || win?.webkitSpeechRecognition;
 
@@ -126,7 +126,7 @@ export function useContinuousASR(isListening: boolean) {
                   recognitionRef.current.start();
                 } catch {}
               }
-            }, 250);
+            }, 200);
           }
         };
 
@@ -143,7 +143,7 @@ export function useContinuousASR(isListening: boolean) {
       }
     };
 
-    // 2. High-Accuracy Whisper ASR Engine
+    // 2. High-Speed Low-Latency Whisper Engine
     async function startContinuousASR() {
       if (!activeRef.current) return;
       setRecognitionRunning(true);
@@ -228,11 +228,12 @@ export function useContinuousASR(isListening: boolean) {
             }
           });
 
+          // Instantly start next cycle so no words are dropped
           startNewRecorderCycle();
 
           const audioBlob = await finalizeBlobPromise;
 
-          if (!hadSpeech || !audioBlob || audioBlob.size < 1200) {
+          if (!hadSpeech || !audioBlob || audioBlob.size < 1000) {
             isProcessingUtterance = false;
             return;
           }
@@ -263,10 +264,10 @@ export function useContinuousASR(isListening: boolean) {
                   const transcriptText = data.transcript.trim();
                   console.log("[ContinuousASR] Verified Groq transcript:", transcriptText);
                   
-                  // Update LiveTranscript view
+                  // Update LiveTranscript display
                   setLiveTranscriptRef.current(transcriptText);
 
-                  // Process and strictly advance words sequentially
+                  // Process speech immediately and advance words
                   processSpeechRef.current([transcriptText]);
                 }
               }
@@ -277,7 +278,7 @@ export function useContinuousASR(isListening: boolean) {
           isProcessingUtterance = false;
         };
 
-        // Real-time voice energy loop (Runs every 50ms)
+        // Real-time voice energy loop (Runs every 40ms)
         checkInterval = setInterval(() => {
           if (!activeRef.current || !vadAnalyser || !vadDataArray || !localRecorder) return;
 
@@ -299,7 +300,7 @@ export function useContinuousASR(isListening: boolean) {
                 finishUtteranceAndSend();
               }
             } else {
-              if (elapsed > 4000 && !isProcessingUtterance) {
+              if (elapsed > 3000 && !isProcessingUtterance) {
                 startNewRecorderCycle();
               }
             }
@@ -307,7 +308,7 @@ export function useContinuousASR(isListening: boolean) {
             speechDetectedInUtterance = true;
             silenceStartTime = null;
           }
-        }, 50);
+        }, 40);
       } catch (err) {
         console.warn("[ContinuousASR] Audio init warning:", err);
         setBrowserSupport(true);

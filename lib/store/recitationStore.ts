@@ -161,7 +161,7 @@ export const useRecitationStore = create<RecitationState>((set, get) => {
       if (wordIndex >= allWords.length) return;
       if (isAudioPlaying) return;
 
-      // 1. If in retry mode (user is repeating the specific correctWord)
+      // 1. Retry mode
       if (recitationState === "retry") {
         let matched = false;
         const allSpokenWords: string[] = [];
@@ -239,7 +239,7 @@ export const useRecitationStore = create<RecitationState>((set, get) => {
         return;
       }
 
-      // 2. Normal listening flow - Strict Sequential Verification from current wordIndex
+      // 2. Normal listening flow - Snappy Sequential Verification
       if (recitationState === "listening" || recitationState === "error") {
         interface MatchResult {
           status: "correct" | "tajweed" | "error";
@@ -256,7 +256,7 @@ export const useRecitationStore = create<RecitationState>((set, get) => {
           let spokenWords = spokenText.trim().split(/\s+/).filter(Boolean);
           if (spokenWords.length === 0) continue;
 
-          // Remove opening Bismillah/Ta'awwudh if user recited it before an ayah that doesn't start with it
+          // Strip opening Bismillah/Ta'awwudh if user recited it before an ayah that doesn't start with it
           if (allWords[wordIndex] && spokenWords.length > 1) {
             const firstWordNorm = normalizeArabic(allWords[wordIndex].arabic);
             if (firstWordNorm !== "بسم" && firstWordNorm !== "اعوذ") {
@@ -274,9 +274,9 @@ export const useRecitationStore = create<RecitationState>((set, get) => {
           let matchedCount = 0;
           const tempResults: MatchResult[] = [];
 
-          // Find start anchor: strict check of first 2 spoken words against current word
+          // Find start anchor: check first 3 spoken words against current word
           let foundAnchor = false;
-          for (let i = 0; i < Math.min(spokenWords.length, 2); i++) {
+          for (let i = 0; i < Math.min(spokenWords.length, 3); i++) {
             const check = checkWord(spokenWords[i], allWords[tempExpectedIdx].arabic, recitationLevel, confidentReciterMode);
             if (check.status === "correct" || check.status === "tajweed") {
               s = i;
@@ -295,11 +295,25 @@ export const useRecitationStore = create<RecitationState>((set, get) => {
           }
 
           if (!foundAnchor) {
-            // Did not match the current required word: DO NOT skip words forward
+            // Check if full spoken transcript as a single combined string matches current word
+            const fullSpoken = spokenWords.join("");
+            const fullCheck = checkWord(fullSpoken, allWords[tempExpectedIdx].arabic, recitationLevel, confidentReciterMode);
+            if (fullCheck.status === "correct" || fullCheck.status === "tajweed") {
+              matchedCount = 1;
+              tempResults.push({
+                status: fullCheck.status,
+                similarity: fullCheck.similarity,
+                expectedWordIndex: tempExpectedIdx,
+                spokenWordText: fullSpoken,
+              });
+              bestAltWordsMatched = 1;
+              bestMatchResults = tempResults;
+              break;
+            }
             continue;
           }
 
-          // Advance strictly sequentially through words
+          // Advance through expected words
           while (s < spokenWords.length && tempExpectedIdx < allWords.length) {
             const sWord = spokenWords[s];
             const expected = allWords[tempExpectedIdx];
@@ -336,7 +350,7 @@ export const useRecitationStore = create<RecitationState>((set, get) => {
               }
             }
 
-            // Check if next spoken word matches (handles particle or filler)
+            // Check if next spoken word matches (handles particle or hesitation)
             if (s + 1 < spokenWords.length) {
               const nextSWord = spokenWords[s + 1];
               const nextSCheck = checkWord(nextSWord, expected.arabic, recitationLevel, confidentReciterMode);
@@ -354,7 +368,6 @@ export const useRecitationStore = create<RecitationState>((set, get) => {
               }
             }
 
-            // Stop here: strict sequential requirement prevents verse jumping
             break;
           }
 
