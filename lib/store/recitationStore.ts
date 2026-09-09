@@ -402,28 +402,8 @@ export const useRecitationStore = create<RecitationState>((set, get) => {
             }));
           }
         } else {
-          // No match detected — mistake made by user
-          const expected = allWords[wordIndex];
-          const spokenErrWord = spokenAlternatives[0]?.split(/\s+/)[0] || "(unclear)";
-          
-          if (spokenErrWord && spokenErrWord !== "(unclear)" && expected) {
-            set((state) => ({
-              recitationState: "error",
-              wrongWord: spokenErrWord,
-              correctWord: expected.arabic,
-              errorCount: state.errorCount + 1,
-              retryCount: 0,
-            }));
-            
-            get().addFeedback(
-              "error",
-              `❌ Mismatch - Ayah ${expected.ayahN}`,
-              `Spoken: "${spokenErrWord}" → Expected: "${expected.arabic}"`
-            );
-
-            // Play authentic Qari voice pronunciation instantly
-            speakArabicWord(expected.arabic, expected);
-          }
+          // No match on this chunk — keep listening without stopping the user flow
+          // Allow continuous speech to match on subsequent tokens or next words seamlessly
         }
       }
     },

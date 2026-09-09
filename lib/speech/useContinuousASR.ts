@@ -70,7 +70,7 @@ export function useContinuousASR(isListening: boolean) {
     const isMobile = typeof navigator !== 'undefined' && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
     const SILENCE_THRESHOLD = isMobile ? 0.0018 : 0.0022;
      // Highly responsive RMS energy threshold
-    const END_OF_SPEECH_MS = 500; // Natural pause completion - user finished utterance
+    const END_OF_SPEECH_MS = 250; // Natural pause completion - user finished utterance
     const MAX_UTTERANCE_MS = 14000; // Safety cap for complete multi-verse utterances
 
     let silenceStartTime: number | null = null;
@@ -98,29 +98,29 @@ export function useContinuousASR(isListening: boolean) {
           if (useRecitationStore.getState().isAudioPlaying || !activeRef.current) return;
 
           let interim = "";
-          let finalAlternatives: string[] = [];
+          const altsList: string[] = [];
 
           for (let i = event.resultIndex; i < event.results.length; i++) {
             const resultList = event.results[i];
-            if (resultList.isFinal) {
-              const alts: string[] = [];
-              for (let k = 0; k < Math.min(resultList.length, 5); k++) {
-                alts.push(resultList[k].transcript.trim());
-              }
-              finalAlternatives = alts;
-            } else {
+            for (let k = 0; k < Math.min(resultList.length, 5); k++) {
+              const text = resultList[k]?.transcript?.trim();
+              if (text) altsList.push(text);
+            }
+            if (!resultList.isFinal) {
               interim = resultList[0]?.transcript || "";
             }
           }
 
-          const display = finalAlternatives[0] || interim;
+          const display = altsList[0] || interim;
           if (display && display.trim().length > 0) {
             setLiveTranscriptRef.current(display);
           }
 
-          // If final alternative detected, pass to processSpeech
-          if (finalAlternatives.length > 0) {
-            processSpeechRef.current(finalAlternatives);
+          // INSTANT 0ms matching: pass live interim AND final words directly to processSpeech immediately!
+          if (altsList.length > 0) {
+            processSpeechRef.current(altsList);
+          } else if (interim && interim.trim().length > 0) {
+            processSpeechRef.current([interim.trim()]);
           }
         };
 
