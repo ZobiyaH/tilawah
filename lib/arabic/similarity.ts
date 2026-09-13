@@ -88,11 +88,11 @@ export function arabicSimilarity(spoken: string, reference: string): number {
   if (!ns || !nr) return 0;
   if (ns === nr) return 1.0;
 
-  // Substring or root match (e.g., al-rahman in rahman)
+  // Exact normalized match
+  if (ns === nr) return 1.0;
+
+  // Alif variant matching (ignoring alif difference)
   if (ns.length >= 3 && nr.length >= 3) {
-    if (ns === nr || ns.includes(nr) || nr.includes(ns)) {
-      return 0.90;
-    }
     if (ns.replace(/\u0627/g, "") === nr.replace(/\u0627/g, "")) {
       return 0.95;
     }
