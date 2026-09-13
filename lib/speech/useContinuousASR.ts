@@ -101,9 +101,14 @@ export function useContinuousASR(isListening: boolean) {
 
           let interim = "";
           let latestFinal = "";
+          const alternatives: string[] = [];
 
           for (let i = event.resultIndex; i < event.results.length; i++) {
             const resultList = event.results[i];
+            for (let a = 0; a < resultList.length; a++) {
+              const altText = resultList[a]?.transcript?.trim();
+              if (altText) alternatives.push(altText);
+            }
             const text = resultList[0]?.transcript?.trim();
             if (resultList.isFinal) {
               if (text) latestFinal = text;
@@ -115,6 +120,10 @@ export function useContinuousASR(isListening: boolean) {
           const display = latestFinal || interim;
           if (display && display.trim().length > 0) {
             setLiveTranscriptRef.current(display);
+          }
+
+          if (alternatives.length > 0) {
+            processSpeechRef.current(alternatives);
           }
         };
 

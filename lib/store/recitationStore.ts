@@ -295,6 +295,19 @@ export const useRecitationStore = create<RecitationState>((set, get) => {
             }
           }
 
+          // Fallback: If anchor not found at current index, check if the spoken words match the next word
+          if (!foundAnchor && tempExpectedIdx + 1 < allWords.length) {
+            for (let i = 0; i < spokenWords.length; i++) {
+              const checkNext = checkWord(spokenWords[i], allWords[tempExpectedIdx + 1].arabic, recitationLevel, confidentReciterMode);
+              if (checkNext.status === "correct" || checkNext.status === "tajweed") {
+                s = i;
+                foundAnchor = true;
+                tempExpectedIdx++;
+                break;
+              }
+            }
+          }
+
           if (!foundAnchor) {
             continue;
           }
@@ -332,6 +345,31 @@ export const useRecitationStore = create<RecitationState>((set, get) => {
                 });
                 tempExpectedIdx++;
                 s += 2;
+                continue;
+              }
+            }
+
+            // Check if 1 spoken word combines 2 expected words (e.g. "بسم الله" transcribed as single token "بسمالله")
+            if (tempExpectedIdx + 1 < allWords.length) {
+              const nextExpected = allWords[tempExpectedIdx + 1];
+              const combExp = normalizeArabic(expected.arabic) + normalizeArabic(nextExpected.arabic);
+              const normSpoken = normalizeArabic(sWord);
+              if (normSpoken === combExp || normSpoken.includes(combExp)) {
+                matchedCount += 2;
+                tempResults.push({
+                  status: "correct",
+                  similarity: 0.95,
+                  expectedWordIndex: tempExpectedIdx,
+                  spokenWordText: sWord,
+                });
+                tempResults.push({
+                  status: "correct",
+                  similarity: 0.95,
+                  expectedWordIndex: tempExpectedIdx + 1,
+                  spokenWordText: sWord,
+                });
+                tempExpectedIdx += 2;
+                s += 1;
                 continue;
               }
             }
