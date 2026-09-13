@@ -295,19 +295,6 @@ export const useRecitationStore = create<RecitationState>((set, get) => {
             }
           }
 
-          // Fallback: If anchor not found at current index, check if the spoken words match the next word
-          if (!foundAnchor && tempExpectedIdx + 1 < allWords.length) {
-            for (let i = 0; i < spokenWords.length; i++) {
-              const checkNext = checkWord(spokenWords[i], allWords[tempExpectedIdx + 1].arabic, recitationLevel, confidentReciterMode);
-              if (checkNext.status === "correct" || checkNext.status === "tajweed") {
-                s = i;
-                foundAnchor = true;
-                tempExpectedIdx++;
-                break;
-              }
-            }
-          }
-
           if (!foundAnchor) {
             continue;
           }
@@ -374,24 +361,7 @@ export const useRecitationStore = create<RecitationState>((set, get) => {
               }
             }
 
-            // Check if next spoken word matches (handles particle or hesitation)
-            if (s + 1 < spokenWords.length) {
-              const nextSWord = spokenWords[s + 1];
-              const nextSCheck = checkWord(nextSWord, expected.arabic, recitationLevel, confidentReciterMode);
-              if (nextSCheck.status === "correct" || nextSCheck.status === "tajweed") {
-                matchedCount++;
-                tempResults.push({
-                  status: nextSCheck.status,
-                  similarity: nextSCheck.similarity,
-                  expectedWordIndex: tempExpectedIdx,
-                  spokenWordText: nextSWord,
-                });
-                tempExpectedIdx++;
-                s += 2;
-                continue;
-              }
-            }
-
+            // Next word didn't match sequentially, stop processing this alternative
             break;
           }
 
@@ -434,6 +404,40 @@ export const useRecitationStore = create<RecitationState>((set, get) => {
               tajweedHits: state.tajweedHits + tajweedIncrement,
               recitationState: "listening",
             }));
+          }
+        } else {
+          // If the user spoke distinct non-matching words (more than 1 token or significant word)
+          // and it did NOT match the expected current word, trigger correction audio for current word
+          const nonMatchingTokens = spokenAlternatives
+            .flatMap((alt) => alt.trim().split(/\s+/))
+            .filter((tok) => tok.length >= 2);
+
+          if (nonMatchingTokens.length >= 1 && allWords[wordIndex]) {
+            const currentExpected = allWords[wordIndex];
+            const currentExpectedNorm = normalizeArabic(currentExpected.arabic);
+
+            // Don't flag Ta'awwudh or opening Bismillah as an error
+            const isTaawwudhOrBasmalah = nonMatchingTokens.some((tok) => {
+              const n = normalizeArabic(tok);
+              return n === "اعوذ" || n === "بسم" || n === "الله" || n === "الرحمن" || n === "الرحيم";
+            });
+
+            if (!isTaawwudhOrBasmalah && currentExpectedNorm !== "بسم") {
+              console.log("[RecitationStore] Word mistake detected at index", wordIndex, "Expected:", currentExpected.arabic);
+              const nextRetry = (get().retryCount || 0) + 1;
+              set({
+                recitationState: "retry",
+                correctWord: currentExpected.arabic,
+                retryCount: nextRetry,
+              });
+              get().addFeedback(
+                "error",
+                `❌ Recitation Error`,
+                `Pronounced incorrectly. Correct: "${currentExpected.arabic}". Listen and repeat.`
+              );
+              playCorrectionChime();
+              speakArabicWord(currentExpected.arabic, currentExpected);
+            }
           }
         }
       }
