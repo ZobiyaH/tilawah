@@ -121,10 +121,8 @@ export function useContinuousASR(isListening: boolean) {
           if (display && display.trim().length > 0) {
             setLiveTranscriptRef.current(display);
           }
-
-          if (alternatives.length > 0) {
-            processSpeechRef.current(alternatives);
-          }
+          // Web Speech is used purely for instant visual feedback.
+          // Exact, high-accuracy verification and word-progression is driven by the Groq Whisper audio pipeline below.
         };
 
         rec.onend = () => {

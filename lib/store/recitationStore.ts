@@ -299,7 +299,7 @@ export const useRecitationStore = create<RecitationState>((set, get) => {
             continue;
           }
 
-          // Advance strictly sequentially from anchor
+          // Advance strictly sequentially from anchor: 1 spoken word to 1 expected word
           while (s < spokenWords.length && tempExpectedIdx < allWords.length) {
             const sWord = spokenWords[s];
             const expected = allWords[tempExpectedIdx];
@@ -318,7 +318,7 @@ export const useRecitationStore = create<RecitationState>((set, get) => {
               continue;
             }
 
-            // Check if 2 spoken words combine to match current word
+            // Check if 2 spoken words combine into 1 expected word
             if (s + 1 < spokenWords.length) {
               const combined = sWord + spokenWords[s + 1];
               const combCheck = checkWord(combined, expected.arabic, recitationLevel, confidentReciterMode);
@@ -332,31 +332,6 @@ export const useRecitationStore = create<RecitationState>((set, get) => {
                 });
                 tempExpectedIdx++;
                 s += 2;
-                continue;
-              }
-            }
-
-            // Check if 1 spoken word combines 2 expected words (e.g. "بسم الله" transcribed as single token "بسمالله")
-            if (tempExpectedIdx + 1 < allWords.length) {
-              const nextExpected = allWords[tempExpectedIdx + 1];
-              const combExp = normalizeArabic(expected.arabic) + normalizeArabic(nextExpected.arabic);
-              const normSpoken = normalizeArabic(sWord);
-              if (normSpoken === combExp || normSpoken.includes(combExp)) {
-                matchedCount += 2;
-                tempResults.push({
-                  status: "correct",
-                  similarity: 0.95,
-                  expectedWordIndex: tempExpectedIdx,
-                  spokenWordText: sWord,
-                });
-                tempResults.push({
-                  status: "correct",
-                  similarity: 0.95,
-                  expectedWordIndex: tempExpectedIdx + 1,
-                  spokenWordText: sWord,
-                });
-                tempExpectedIdx += 2;
-                s += 1;
                 continue;
               }
             }
