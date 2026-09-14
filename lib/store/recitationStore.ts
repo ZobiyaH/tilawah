@@ -213,8 +213,8 @@ export const useRecitationStore = create<RecitationState>((set, get) => {
           set({ recitationState: "error", retryCount: nextRetry });
           get().addFeedback(
             "error",
-            `❌ Attempt ${nextRetry} of 3 Failed`,
-            `Expected: "${correctWord}". Retrying.`
+            `❌ Correction`,
+            `Listen to "${correctWord}" and try reciting it again.`
           );
           speakArabicWord(correctWord, allWords[wordIndex]);
           playCorrectionChime();
@@ -231,8 +231,8 @@ export const useRecitationStore = create<RecitationState>((set, get) => {
           });
           get().addFeedback(
             "hint",
-            "⚠️ Retries Exhausted",
-            `Failed to pronounce "${correctWord}" 3 times. Offering review options.`
+            "💡 Practice Tip",
+            `Pronunciation guide for "${correctWord}". You can listen again or move to the next word.`
           );
           playCorrectionChime();
         }
