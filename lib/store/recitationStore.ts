@@ -381,8 +381,8 @@ export const useRecitationStore = create<RecitationState>((set, get) => {
             }));
           }
         } else {
-          // If the user spoke distinct non-matching words (more than 1 token or significant word)
-          // and it did NOT match the expected current word, trigger correction audio for current word
+          // If the user spoke distinct non-matching words (and it did NOT match the expected current word)
+          // only trigger retry mode after multiple mispronunciations so smooth natural recitation isn't prematurely interrupted
           const nonMatchingTokens = spokenAlternatives
             .flatMap((alt) => alt.trim().split(/\s+/))
             .filter((tok) => tok.length >= 2);
@@ -398,20 +398,25 @@ export const useRecitationStore = create<RecitationState>((set, get) => {
             });
 
             if (!isTaawwudhOrBasmalah && currentExpectedNorm !== "بسم") {
-              console.log("[RecitationStore] Word mistake detected at index", wordIndex, "Expected:", currentExpected.arabic);
-              const nextRetry = (get().retryCount || 0) + 1;
-              set({
-                recitationState: "retry",
-                correctWord: currentExpected.arabic,
-                retryCount: nextRetry,
-              });
-              get().addFeedback(
-                "error",
-                `❌ Recitation Error`,
-                `Pronounced incorrectly. Correct: "${currentExpected.arabic}". Listen and repeat.`
-              );
-              playCorrectionChime();
-              speakArabicWord(currentExpected.arabic, currentExpected);
+              const prevRetry = get().retryCount || 0;
+              const nextRetry = prevRetry + 1;
+              if (nextRetry >= 2) {
+                console.log("[RecitationStore] Word mistake confirmed at index", wordIndex, "Expected:", currentExpected.arabic);
+                set({
+                  recitationState: "retry",
+                  correctWord: currentExpected.arabic,
+                  retryCount: nextRetry,
+                });
+                get().addFeedback(
+                  "error",
+                  `❌ Recitation Error`,
+                  `Pronounced incorrectly. Correct: "${currentExpected.arabic}". Listen and repeat.`
+                );
+                playCorrectionChime();
+                speakArabicWord(currentExpected.arabic, currentExpected);
+              } else {
+                set({ retryCount: nextRetry });
+              }
             }
           }
         }

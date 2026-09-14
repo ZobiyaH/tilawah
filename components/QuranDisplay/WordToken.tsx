@@ -65,7 +65,6 @@ export default function WordToken({
 }: WordTokenProps) {
   const wordIndex = useRecitationStore((state) => state.wordIndex);
   const recitationState = useRecitationStore((state) => state.recitationState);
-  const retryCount = useRecitationStore((state) => state.retryCount);
   const practiceWords = useRecitationStore((state) => state.practiceWords);
   const successFeedback = useRecitationStore((state) => state.successFeedback);
 
@@ -86,7 +85,7 @@ export default function WordToken({
   if (isCurrent) {
     if (recitationState === "retry") {
       wordClass += " word-retry scale-105";
-      tooltipText = `Say again ↑ (Attempt ${retryCount + 1} of 3)`;
+      tooltipText = "Say again";
       tooltipClass += " bg-amber-600";
     } else if (recitationState === "success") {
       wordClass += " word-success scale-105";
