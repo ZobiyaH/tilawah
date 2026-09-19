@@ -507,6 +507,12 @@ export default function LetterLessonPage() {
       if (recorderRef.current && recorderRef.current.isRecording()) {
         setSpokenWord("Processing...");
         const audioBlob = await recorderRef.current.stop();
+        
+        // Save user's voice for this letter in userAudioVault
+        const { userAudioVault } = await import("@/lib/speech/recorder");
+        userAudioVault.saveRecording(`letter_${letterId}`, audioBlob);
+        userAudioVault.saveRecording("last_user_voice", audioBlob);
+
         const result = await transcribeAudio(audioBlob, 'letter');
 
         if (!result.success || !result.transcript) {
@@ -693,6 +699,21 @@ export default function LetterLessonPage() {
                     <span>{isRecording ? "🎙️" : "🎤"}</span>
                     <span>{isRecording ? "Listening..." : "Check Recitation"}</span>
                   </button>
+
+                  {/* Hear User's Own Recording Button */}
+                  {asrResult !== "none" && (
+                    <button
+                      onClick={async () => {
+                        const { userAudioVault } = await import("@/lib/speech/recorder");
+                        userAudioVault.playRecording(`letter_${letterId}`);
+                      }}
+                      className="px-3.5 py-2.5 rounded-xl font-bold text-xs tracking-wider uppercase flex items-center justify-center gap-1.5 text-center border border-sky-600/30 bg-sky-50 dark:bg-sky-950/40 text-sky-800 dark:text-sky-300 transition-all shadow-xs active:scale-95 cursor-pointer"
+                      title="Listen to your own voice recording"
+                    >
+                      <span>🎧</span>
+                      <span>Hear what you said</span>
+                    </button>
+                  )}
                 </div>
 
                 {/* Real-Time Pronunciation Feedback Result */}

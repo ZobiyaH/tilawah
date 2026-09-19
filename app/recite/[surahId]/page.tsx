@@ -10,7 +10,7 @@ import { QariAudioManager } from "../../../lib/qariAudio";
 import { trackEvent } from "../../../lib/analytics/ga";
 import { checkWord, normalizeArabic } from "../../../lib/arabic/similarity";
 import { transcribeAudio } from "../../../lib/speech/transcribe";
-import { AudioRecorder } from "../../../lib/speech/recorder";
+import { AudioRecorder, userAudioVault } from "../../../lib/speech/recorder";
 import { useContinuousASR } from "../../../lib/speech/useContinuousASR";
 
 import Header from "../../../components/Layout/Header";
@@ -142,6 +142,10 @@ export default function RecitationPage() {
 
       const result = await transcribeAudio(audioBlob, "ayah", promptText);
       
+      // Save recorded user voice for this ayah & as last recording
+      userAudioVault.saveRecording(`ayah_${currentWordToken.ayahN}`, audioBlob, result.transcript || "");
+      userAudioVault.saveRecording("last_user_voice", audioBlob, result.transcript || "");
+
       // FIX 2 & FIX 3: Silence or noise handling — NEVER advance
       if (!result.success || !result.transcript || result.transcript.trim().length === 0) {
         setRecordingState("idle");
@@ -446,7 +450,16 @@ export default function RecitationPage() {
                     })}
                   </div>
 
-                  <div className="flex gap-3 mt-2">
+                  <div className="flex flex-wrap gap-3 mt-2 justify-center items-center">
+                    <button
+                      onClick={() => {
+                        userAudioVault.playRecording(`ayah_${currentWordToken.ayahN}`);
+                      }}
+                      className="px-4 py-2 rounded-xl border border-sky-600/30 bg-sky-50 dark:bg-sky-950/40 text-sky-800 dark:text-sky-300 font-bold text-xs uppercase tracking-wider active:scale-95 transition-all shadow-xs flex items-center gap-1.5"
+                      title="Listen to what you recited for this verse"
+                    >
+                      <span>🎧</span> Hear What You Said
+                    </button>
                     <button
                       onClick={() => {
                         setRecordingState("idle");
@@ -485,7 +498,22 @@ export default function RecitationPage() {
           </div>
 
           <WaveformBar />
-          <LiveTranscript />
+          <div className="flex flex-col gap-1.5">
+            <LiveTranscript />
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => {
+                  userAudioVault.playRecording("last_user_voice");
+                }}
+                className="px-3 py-1.5 rounded-lg border border-sky-600/30 bg-sky-50 hover:bg-sky-100 dark:bg-sky-950/40 dark:hover:bg-sky-900/60 text-sky-800 dark:text-sky-300 font-bold text-[11px] uppercase tracking-wider flex items-center gap-1.5 shadow-2xs active:scale-95 transition-all select-none"
+                title="Listen to your latest recited voice recording"
+              >
+                <span>🎧</span>
+                <span>Hear what you said</span>
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* RIGHT COLUMN: Performance and Session Stats (4 cols - Desktop) */}

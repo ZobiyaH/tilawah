@@ -379,6 +379,12 @@ export default function TajweedLessonPage() {
       if (recorderRef.current && recorderRef.current.isRecording()) {
         setSpokenPhrase("Processing...");
         const audioBlob = await recorderRef.current.stop();
+
+        // Save phrase recording in vault
+        const { userAudioVault } = await import("@/lib/speech/recorder");
+        userAudioVault.saveRecording(`tajweed_rule_${ruleId}`, audioBlob);
+        userAudioVault.saveRecording("last_user_voice", audioBlob);
+
         const result = await transcribeAudio(audioBlob);
         
         if (!result.success || !result.transcript) {
@@ -691,6 +697,19 @@ export default function TajweedLessonPage() {
                 <span className="text-xs text-[#6b7280] font-semibold">
                   You said: &quot;{spokenPhrase}&quot;
                 </span>
+              )}
+
+              {spokenPhrase && spokenPhrase !== "Listening..." && spokenPhrase !== "Processing..." && (
+                <button
+                  onClick={async () => {
+                    const { userAudioVault } = await import("@/lib/speech/recorder");
+                    userAudioVault.playRecording(`tajweed_rule_${ruleId}`);
+                  }}
+                  className="px-4 py-2 rounded-xl border border-sky-600/30 bg-sky-50 dark:bg-sky-950/40 text-sky-800 dark:text-sky-300 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-xs active:scale-95 transition-all mt-1"
+                  title="Listen to your own voice recording"
+                >
+                  <span>🎧</span> Hear what you said
+                </button>
               )}
             </div>
           )}

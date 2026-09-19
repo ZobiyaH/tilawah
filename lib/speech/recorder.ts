@@ -210,3 +210,152 @@ export class AudioRecorder {
     return this.mediaRecorder?.state === 'recording';
   }
 }
+
+/**
+ * UserAudioVault: Stores and plays back the user's own recorded voice
+ * for letters, words, phrases, and verse recitations.
+ */
+export interface AudioRecordEntry {
+  id: string;
+  blob: Blob;
+  url: string;
+  transcript?: string;
+  timestamp: number;
+}
+
+class UserAudioVaultManager {
+  private static instance: UserAudioVaultManager;
+  private cache: Map<string, AudioRecordEntry> = new Map();
+  private latestGlobalEntry: AudioRecordEntry | null = null;
+  private currentAudioElement: HTMLAudioElement | null = null;
+  private listeners: Set<() => void> = new Set();
+
+  public static getInstance(): UserAudioVaultManager {
+    if (!UserAudioVaultManager.instance) {
+      UserAudioVaultManager.instance = new UserAudioVaultManager();
+    }
+    return UserAudioVaultManager.instance;
+  }
+
+  /**
+   * Save a user voice recording
+   */
+  public saveRecording(id: string, blob: Blob, transcript?: string): string {
+    const existing = this.cache.get(id);
+    if (existing && existing.url) {
+      try { URL.revokeObjectURL(existing.url); } catch {}
+    }
+
+    const objectUrl = URL.createObjectURL(blob);
+    const entry: AudioRecordEntry = {
+      id,
+      blob,
+      url: objectUrl,
+      transcript,
+      timestamp: Date.now(),
+    };
+
+    this.cache.set(id, entry);
+    this.latestGlobalEntry = entry;
+    this.notify();
+    return objectUrl;
+  }
+
+  /**
+   * Get recording for a specific item (e.g. 'letter_ba', 'ayah_1_2', 'word_3', or 'last_user_voice')
+   */
+  public getRecording(id: string): AudioRecordEntry | undefined {
+    return this.cache.get(id);
+  }
+
+  /**
+   * Get the most recently recorded user audio
+   */
+  public getLatestRecording(): AudioRecordEntry | null {
+    return this.latestGlobalEntry;
+  }
+
+  /**
+   * Play back the user's recorded audio
+   */
+  public async playRecording(idOrEntry?: string | AudioRecordEntry): Promise<void> {
+    let entry: AudioRecordEntry | undefined | null = null;
+
+    if (!idOrEntry) {
+      entry = this.latestGlobalEntry;
+    } else if (typeof idOrEntry === "string") {
+      entry = this.cache.get(idOrEntry) || this.latestGlobalEntry;
+    } else {
+      entry = idOrEntry;
+    }
+
+    if (!entry || !entry.url) {
+      console.warn("[UserAudioVault] No user recording found to play.");
+      return;
+    }
+
+    this.stop();
+
+    return new Promise((resolve, reject) => {
+      try {
+        const audio = new Audio(entry.url);
+        this.currentAudioElement = audio;
+
+        audio.onended = () => {
+          this.currentAudioElement = null;
+          this.notify();
+          resolve();
+        };
+
+        audio.onerror = (e) => {
+          this.currentAudioElement = null;
+          this.notify();
+          reject(e);
+        };
+
+        this.notify();
+        audio.play().catch((err) => {
+          this.currentAudioElement = null;
+          this.notify();
+          reject(err);
+        });
+      } catch (err) {
+        this.currentAudioElement = null;
+        this.notify();
+        reject(err);
+      }
+    });
+  }
+
+  public isPlaying(): boolean {
+    return !!(this.currentAudioElement && !this.currentAudioElement.paused);
+  }
+
+  public stop(): void {
+    if (this.currentAudioElement) {
+      try {
+        this.currentAudioElement.pause();
+        this.currentAudioElement.currentTime = 0;
+      } catch {}
+      this.currentAudioElement = null;
+      this.notify();
+    }
+  }
+
+  public subscribe(listener: () => void): () => void {
+    this.listeners.add(listener);
+    return () => {
+      this.listeners.delete(listener);
+    };
+  }
+
+  private notify() {
+    this.listeners.forEach((fn) => {
+      try {
+        fn();
+      } catch {}
+    });
+  }
+}
+
+export const userAudioVault = UserAudioVaultManager.getInstance();

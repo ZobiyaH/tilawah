@@ -3,7 +3,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRecitationStore } from "../store/recitationStore";
-import { getSupportedMimeType } from "./recorder";
+import { getSupportedMimeType, userAudioVault } from "./recorder";
 
 interface WindowWithSpeech extends Window {
   SpeechRecognition?: any;
@@ -270,6 +270,10 @@ export function useContinuousASR(isListening: boolean) {
                   const transcriptText = data.transcript.trim();
                   console.log("[ContinuousASR] Verified Groq transcript:", transcriptText);
                   
+                  // Save user's voice for this word / phrase in vault
+                  userAudioVault.saveRecording(`word_${currentWordIndex}`, audioBlob, transcriptText);
+                  userAudioVault.saveRecording("last_user_voice", audioBlob, transcriptText);
+
                   // Update LiveTranscript display
                   setLiveTranscriptRef.current(transcriptText);
 
