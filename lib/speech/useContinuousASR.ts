@@ -13,6 +13,8 @@ interface WindowWithSpeech extends Window {
 // Global state trackers across re-renders
 let globalStream: MediaStream | null = null;
 let globalRecorder: MediaRecorder | null = null;
+let globalAudioContext: AudioContext | null = null;
+let globalVadAnalyser: AnalyserNode | null = null;
 let isRecognitionRunning = false;
 let pauseTimeout: NodeJS.Timeout | null = null;
 
@@ -22,6 +24,14 @@ export function getRecognitionRunning() {
 
 export function setRecognitionRunning(val: boolean) {
   isRecognitionRunning = val;
+}
+
+export function getGlobalStream(): MediaStream | null {
+  return globalStream;
+}
+
+export function getGlobalAnalyser(): AnalyserNode | null {
+  return globalVadAnalyser;
 }
 
 export function pauseASRForAudio(durationMs?: number) {
@@ -43,6 +53,18 @@ export function resumeASRFromAudio() {
     pauseTimeout = null;
   }
   useRecitationStore.getState().setAudioPlaying(false);
+}
+
+// Global user gesture unlock for Mobile AudioContext
+if (typeof window !== "undefined") {
+  const unlockMobileAudio = () => {
+    if (globalAudioContext && globalAudioContext.state === "suspended") {
+      globalAudioContext.resume().catch(() => {});
+    }
+  };
+  window.addEventListener("touchstart", unlockMobileAudio, { passive: true });
+  window.addEventListener("touchend", unlockMobileAudio, { passive: true });
+  window.addEventListener("click", unlockMobileAudio, { passive: true });
 }
 
 export function useContinuousASR(isListening: boolean) {
@@ -71,9 +93,9 @@ export function useContinuousASR(isListening: boolean) {
     let vadDataArray: Uint8Array | null = null;
 
     // Resilient threshold across desktop and mobile
-    const SILENCE_THRESHOLD = 0.0012;
+    const SILENCE_THRESHOLD = 0.001;
     const END_OF_SPEECH_MS = 250;
-    const MAX_CHUNK_MS = 3200;
+    const MAX_CHUNK_MS = 2500;
 
     let silenceStartTime: number | null = null;
     let utteranceStartTime: number = Date.now();
@@ -82,7 +104,7 @@ export function useContinuousASR(isListening: boolean) {
     let isProcessingUtterance = false;
     let mimeType = "audio/webm;codecs=opus";
 
-    // 1. Web Speech live interim text display (Instant visual display)
+    // 1. Web Speech live interim text display (Instant visual display + fast verification on desktop)
     const win = typeof window !== "undefined" ? (window as WindowWithSpeech) : null;
     const SpeechRecognitionClass = win?.SpeechRecognition || win?.webkitSpeechRecognition;
 
@@ -107,7 +129,7 @@ export function useContinuousASR(isListening: boolean) {
             const resultList = event.results[i];
             for (let a = 0; a < resultList.length; a++) {
               const altText = resultList[a]?.transcript?.trim();
-              if (altText) alternatives.push(altText);
+              if (altText && !alternatives.includes(altText)) alternatives.push(altText);
             }
             const text = resultList[0]?.transcript?.trim();
             if (resultList.isFinal) {
@@ -120,9 +142,10 @@ export function useContinuousASR(isListening: boolean) {
           const display = latestFinal || interim;
           if (display && display.trim().length > 0) {
             setLiveTranscriptRef.current(display);
+            // Process speech immediately for fast responsive verification on desktop
+            const allAlts = [display, ...alternatives].filter(Boolean);
+            processSpeechRef.current(allAlts);
           }
-          // Web Speech is used purely for instant visual feedback.
-          // Exact, high-accuracy verification and word-progression is driven by the Groq Whisper audio pipeline below.
         };
 
         rec.onend = () => {
@@ -150,7 +173,7 @@ export function useContinuousASR(isListening: boolean) {
       }
     };
 
-    // 2. High-Speed Whisper ASR Engine
+    // 2. High-Speed Whisper ASR Engine (Works seamlessly on Mobile & Desktop)
     async function startContinuousASR() {
       if (!activeRef.current) return;
       setRecognitionRunning(true);
@@ -170,12 +193,14 @@ export function useContinuousASR(isListening: boolean) {
 
         const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
         audioContext = new AudioContextClass();
+        globalAudioContext = audioContext;
         if (audioContext.state === "suspended") {
-          await audioContext.resume();
+          await audioContext.resume().catch(() => {});
         }
 
         vadAnalyser = audioContext.createAnalyser();
         vadAnalyser.fftSize = 256;
+        globalVadAnalyser = vadAnalyser;
         vadDataArray = new Uint8Array(vadAnalyser.frequencyBinCount);
 
         const source = audioContext.createMediaStreamSource(localStream);
@@ -194,13 +219,23 @@ export function useContinuousASR(isListening: boolean) {
           silenceStartTime = null;
           speechDetectedInUtterance = false;
 
-          const rec = new MediaRecorder(localStream, mimeType ? { mimeType } : {});
+          let rec: MediaRecorder;
+          try {
+            rec = new MediaRecorder(localStream, mimeType ? { mimeType } : {});
+          } catch {
+            rec = new MediaRecorder(localStream);
+          }
+
           rec.ondataavailable = (e) => {
             if (e.data && e.data.size > 0) {
               currentChunks.push(e.data);
             }
           };
-          rec.start();
+          try {
+            rec.start();
+          } catch (e) {
+            console.warn("[ContinuousASR] Recorder start error:", e);
+          }
           localRecorder = rec;
           globalRecorder = rec;
           return rec;
@@ -238,8 +273,8 @@ export function useContinuousASR(isListening: boolean) {
 
           const audioBlob = await finalizeBlobPromise;
 
-          // Always transmit if audio blob has sound content (>= 1200 bytes)
-          if (!audioBlob || audioBlob.size < 1200) {
+          // Always transmit if audio blob has sound content (>= 1000 bytes)
+          if (!audioBlob || audioBlob.size < 1000) {
             isProcessingUtterance = false;
             return;
           }
@@ -274,7 +309,7 @@ export function useContinuousASR(isListening: boolean) {
                   userAudioVault.saveRecording(`word_${currentWordIndex}`, audioBlob, transcriptText);
                   userAudioVault.saveRecording("last_user_voice", audioBlob, transcriptText);
 
-                  // Update LiveTranscript display
+                  // Update LiveTranscript display (Crucial for Mobile where Web Speech is absent)
                   setLiveTranscriptRef.current(transcriptText);
 
                   // Process speech immediately and advance words
@@ -310,7 +345,7 @@ export function useContinuousASR(isListening: boolean) {
                 finishUtteranceAndSend();
               }
             } else {
-              // Even without threshold trigger, send if chunk reaches MAX_CHUNK_MS (ensures quiet mics never get dropped)
+              // Send chunk after MAX_CHUNK_MS to guarantee mobile mics never drop continuous speech
               if (elapsed >= MAX_CHUNK_MS) {
                 finishUtteranceAndSend();
               }
@@ -359,6 +394,8 @@ export function useContinuousASR(isListening: boolean) {
       if (audioContext && audioContext.state !== "closed") {
         audioContext.close().catch(() => {});
       }
+      globalAudioContext = null;
+      globalVadAnalyser = null;
     };
   }, [isListening]);
 

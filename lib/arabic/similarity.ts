@@ -88,11 +88,15 @@ export function arabicSimilarity(spoken: string, reference: string): number {
   if (!ns || !nr) return 0;
   if (ns === nr) return 1.0;
 
-  // Exact normalized match
-  if (ns === nr) return 1.0;
+  // Substring containment for compound tokens / multi-word phrases (e.g. بسم الله contains بسم)
+  if (ns.length >= nr.length && nr.length >= 2) {
+    if (ns.startsWith(nr) || ns.endsWith(nr) || ns.includes(nr)) {
+      return 0.95;
+    }
+  }
 
-  // Alif variant matching (ignoring alif difference)
-  if (ns.length >= 3 && nr.length >= 3) {
+  // Alif variant matching (ignoring alif differences)
+  if (ns.length >= 2 && nr.length >= 2) {
     if (ns.replace(/\u0627/g, "") === nr.replace(/\u0627/g, "")) {
       return 0.95;
     }
@@ -104,13 +108,13 @@ export function arabicSimilarity(spoken: string, reference: string): number {
     if (ns.startsWith(p) && !nr.startsWith(p)) {
       const sub = ns.slice(p.length);
       if (sub === nr || (sub.length >= 2 && nr.length >= 2 && sub.replace(/\u0627/g, "") === nr.replace(/\u0627/g, ""))) {
-        return 0.90;
+        return 0.92;
       }
     }
     if (nr.startsWith(p) && !ns.startsWith(p)) {
       const sub = nr.slice(p.length);
       if (sub === ns || (sub.length >= 2 && ns.length >= 2 && sub.replace(/\u0627/g, "") === ns.replace(/\u0627/g, ""))) {
-        return 0.90;
+        return 0.92;
       }
     }
   }

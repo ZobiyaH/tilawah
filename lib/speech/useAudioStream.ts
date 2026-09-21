@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { registerAudioContext, unregisterAudioContext } from './audioRegistry';
 import { useRecitationStore } from '../store/recitationStore';
+import { getGlobalAnalyser, getGlobalStream } from './useContinuousASR';
 
 /**
  * Custom hook to manage the media microphone stream and Web Audio analyser node with mobile resilience.
@@ -42,6 +43,15 @@ export function useAudioStream(isListening: boolean) {
 
     async function initStream() {
       try {
+        const existingAnalyser = getGlobalAnalyser();
+        const existingStream = getGlobalStream();
+
+        if (existingAnalyser && existingStream) {
+          setStream(existingStream);
+          analyserRef.current = existingAnalyser;
+          return;
+        }
+
         // Mobile-resilient audio constraints without rigid sampleRate that crashes mobile iOS/Android
         const audioStream = await navigator.mediaDevices.getUserMedia({
           audio: {
@@ -61,7 +71,7 @@ export function useAudioStream(isListening: boolean) {
 
         const ctx = new AudioContextClass();
         if (ctx.state === 'suspended') {
-          await ctx.resume();
+          await ctx.resume().catch(() => {});
         }
         const analyserNode = ctx.createAnalyser();
         analyserNode.fftSize = 256;
