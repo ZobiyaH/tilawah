@@ -80,7 +80,7 @@ export interface CheckResult {
 
 /**
  * Calculates similarity score between 0.0 and 1.0 for two Arabic words.
- * Handles Uthmani variations, prefixes (al-, wal-, bil-), and sub-word matches.
+ * Strict token-to-token comparison handling Uthmani variations, prefixes (al-, wal-, bil-), and phonetic edits.
  */
 export function arabicSimilarity(spoken: string, reference: string): number {
   const ns = normalizeArabic(spoken);
@@ -88,17 +88,10 @@ export function arabicSimilarity(spoken: string, reference: string): number {
   if (!ns || !nr) return 0;
   if (ns === nr) return 1.0;
 
-  // Substring containment for compound tokens / multi-word phrases (e.g. بسم الله contains بسم)
-  if (ns.length >= nr.length && nr.length >= 2) {
-    if (ns.startsWith(nr) || ns.endsWith(nr) || ns.includes(nr)) {
-      return 0.95;
-    }
-  }
-
   // Alif variant matching (ignoring alif differences)
   if (ns.length >= 2 && nr.length >= 2) {
-    if (ns.replace(/\u0627/g, "") === nr.replace(/\u0627/g, "")) {
-      return 0.95;
+    if (ns.replace(/ا/g, "") === nr.replace(/ا/g, "")) {
+      return 0.98;
     }
   }
 
@@ -107,14 +100,20 @@ export function arabicSimilarity(spoken: string, reference: string): number {
   for (const p of prefixes) {
     if (ns.startsWith(p) && !nr.startsWith(p)) {
       const sub = ns.slice(p.length);
-      if (sub === nr || (sub.length >= 2 && nr.length >= 2 && sub.replace(/\u0627/g, "") === nr.replace(/\u0627/g, ""))) {
+      if (sub === nr || (sub.length >= 2 && nr.length >= 2 && sub.replace(/ا/g, "") === nr.replace(/ا/g, ""))) {
         return 0.92;
+      }
+      if (sub.length >= 3 && nr.length >= 3 && arabicLevenshtein(sub, nr) <= 1) {
+        return 0.88;
       }
     }
     if (nr.startsWith(p) && !ns.startsWith(p)) {
       const sub = nr.slice(p.length);
-      if (sub === ns || (sub.length >= 2 && ns.length >= 2 && sub.replace(/\u0627/g, "") === ns.replace(/\u0627/g, ""))) {
+      if (sub === ns || (sub.length >= 2 && ns.length >= 2 && sub.replace(/ا/g, "") === ns.replace(/ا/g, ""))) {
         return 0.92;
+      }
+      if (sub.length >= 3 && ns.length >= 3 && arabicLevenshtein(sub, ns) <= 1) {
+        return 0.88;
       }
     }
   }
@@ -137,15 +136,15 @@ export function checkWord(
 ): CheckResult {
   const alternatives = Array.isArray(spokenAlternatives) ? spokenAlternatives : [spokenAlternatives];
   
-  let correctThreshold = 0.55;
-  let tajweedThreshold = 0.40;
+  let correctThreshold = 0.72;
+  let tajweedThreshold = 0.58;
 
   if (recitationLevel === 'beginner' || confidentReciterMode) {
-    correctThreshold = 0.48;
-    tajweedThreshold = 0.35;
+    correctThreshold = 0.65;
+    tajweedThreshold = 0.52;
   } else if (recitationLevel === 'advanced') {
-    correctThreshold = 0.70;
-    tajweedThreshold = 0.55;
+    correctThreshold = 0.85;
+    tajweedThreshold = 0.70;
   }
 
   let bestResult: CheckResult = { status: 'error', similarity: 0, tajweedIssue: null };
