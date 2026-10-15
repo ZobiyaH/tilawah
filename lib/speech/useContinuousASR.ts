@@ -92,10 +92,20 @@ export function useContinuousASR(isListening: boolean) {
     let vadAnalyser: AnalyserNode | null = null;
     let vadDataArray: Uint8Array | null = null;
 
-    // Resilient threshold across desktop and mobile
-    const SILENCE_THRESHOLD = 0.001;
-    const END_OF_SPEECH_MS = 250;
-    const MAX_CHUNK_MS = 2500;
+    // Detect if we're on a mobile device
+    const isMobile =
+      typeof navigator !== "undefined" &&
+      /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+
+    // Higher threshold on mobile to avoid ambient mic noise keeping chunks open forever.
+    // Desktop can use a tighter threshold since mic quality is better.
+    const SILENCE_THRESHOLD = isMobile ? 0.015 : 0.005;
+    const END_OF_SPEECH_MS = isMobile ? 400 : 250;
+    // Hard cap: flush chunk even if speech is still detected (prevents indefinitely open
+    // chunks on mobile where RMS never truly dips below threshold).
+    const MAX_CHUNK_MS = isMobile ? 3500 : 4000;
+    // Hard absolute cap regardless of speech — forces a flush so mobile never hangs
+    const HARD_CAP_MS = isMobile ? 6000 : 8000;
 
     let silenceStartTime: number | null = null;
     let utteranceStartTime: number = Date.now();
@@ -104,9 +114,18 @@ export function useContinuousASR(isListening: boolean) {
     let isProcessingUtterance = false;
     let mimeType = "audio/webm;codecs=opus";
 
+    // Ref to the wordIndex at the time of the last confirmed advance.
+    // Used to prevent double-advancing on the same index from stale interim events.
+    let lastAdvancedWordIndex = -1;
+
     // 1. Web Speech live interim text display (Instant visual display + fast verification on desktop)
     const win = typeof window !== "undefined" ? (window as WindowWithSpeech) : null;
     const SpeechRecognitionClass = win?.SpeechRecognition || win?.webkitSpeechRecognition;
+
+    // Show a listening indicator immediately so Mobile never shows a blank transcript
+    if (!SpeechRecognitionClass) {
+      setLiveTranscriptRef.current("🎙️ Listening…");
+    }
 
     const startWebSpeechLive = () => {
       if (!SpeechRecognitionClass || !activeRef.current) return;
@@ -123,32 +142,47 @@ export function useContinuousASR(isListening: boolean) {
 
           let interim = "";
           let latestFinal = "";
-          const alternatives: string[] = [];
+          const finalAlternatives: string[] = [];
 
           for (let i = event.resultIndex; i < event.results.length; i++) {
             const resultList = event.results[i];
-            for (let a = 0; a < resultList.length; a++) {
-              const altText = resultList[a]?.transcript?.trim();
-              if (altText && !alternatives.includes(altText)) alternatives.push(altText);
-            }
             const text = resultList[0]?.transcript?.trim();
             if (resultList.isFinal) {
+              // Collect all alternatives only from FINAL results
+              for (let a = 0; a < resultList.length; a++) {
+                const altText = resultList[a]?.transcript?.trim();
+                if (altText && !finalAlternatives.includes(altText)) {
+                  finalAlternatives.push(altText);
+                }
+              }
               if (text) latestFinal = text;
             } else {
+              // Interim: update display only, do NOT advance word index
               if (text) interim = text;
             }
           }
 
+          // Always update the live transcript for visual feedback
           const display = latestFinal || interim;
           if (display && display.trim().length > 0) {
             setLiveTranscriptRef.current(display);
-            // Process speech immediately for fast responsive verification on desktop
-            const allAlts = [display, ...alternatives].filter(Boolean);
-            processSpeechRef.current(allAlts);
+          }
+
+          // Only call processSpeech on FINAL results to prevent cascade false-positive
+          // advances caused by repeated interim emissions of the same partial transcript.
+          if (latestFinal && finalAlternatives.length > 0) {
+            const currentIdx = useRecitationStore.getState().wordIndex;
+            // Guard: skip if we already advanced past this index in this utterance
+            if (currentIdx > lastAdvancedWordIndex) {
+              lastAdvancedWordIndex = currentIdx;
+              processSpeechRef.current(finalAlternatives);
+            }
           }
         };
 
         rec.onend = () => {
+          // Reset the per-utterance anchor when Web Speech session ends
+          lastAdvancedWordIndex = -1;
           if (activeRef.current && isRecognitionRunning) {
             setTimeout(() => {
               if (activeRef.current && isRecognitionRunning && recognitionRef.current) {
@@ -276,7 +310,16 @@ export function useContinuousASR(isListening: boolean) {
           // Always transmit if audio blob has sound content (>= 1000 bytes)
           if (!audioBlob || audioBlob.size < 1000) {
             isProcessingUtterance = false;
+            // Reset listening indicator on mobile after a skipped (silent) chunk
+            if (!SpeechRecognitionClass) {
+              setLiveTranscriptRef.current("🎙️ Listening…");
+            }
             return;
+          }
+
+          // Show a processing indicator on mobile so the user knows their speech was captured
+          if (!SpeechRecognitionClass) {
+            setLiveTranscriptRef.current("⏳ Verifying…");
           }
 
           const isPlaying = useRecitationStore.getState().isAudioPlaying;
@@ -312,8 +355,14 @@ export function useContinuousASR(isListening: boolean) {
                   // Update LiveTranscript display (Crucial for Mobile where Web Speech is absent)
                   setLiveTranscriptRef.current(transcriptText);
 
-                  // Process speech immediately and advance words
+                  // Whisper path: also use the high-confidence Groq transcript to advance words.
+                  // On mobile this is the PRIMARY path since Web Speech API is unreliable.
                   processSpeechRef.current([transcriptText]);
+                } else if (!data.success) {
+                  // Restore "Listening" indicator on mobile so the screen is never blank after a failed chunk
+                  if (!SpeechRecognitionClass) {
+                    setLiveTranscriptRef.current("🎙️ Listening…");
+                  }
                 }
               }
             } catch (err) {
@@ -336,6 +385,12 @@ export function useContinuousASR(isListening: boolean) {
           const rms = Math.sqrt(sum / vadDataArray.length);
           const elapsed = Date.now() - utteranceStartTime;
 
+          // Hard absolute cap — flush no matter what to prevent mobile hang
+          if (elapsed >= HARD_CAP_MS) {
+            finishUtteranceAndSend();
+            return;
+          }
+
           if (rms < SILENCE_THRESHOLD) {
             if (speechDetectedInUtterance) {
               silenceStartTime = silenceStartTime || Date.now();
@@ -345,14 +400,20 @@ export function useContinuousASR(isListening: boolean) {
                 finishUtteranceAndSend();
               }
             } else {
-              // Send chunk after MAX_CHUNK_MS to guarantee mobile mics never drop continuous speech
+              // No speech detected yet: flush after MAX_CHUNK_MS to keep cycle moving
               if (elapsed >= MAX_CHUNK_MS) {
                 finishUtteranceAndSend();
               }
             }
           } else {
+            // RMS is above threshold → active speech
             speechDetectedInUtterance = true;
             silenceStartTime = null;
+            // On mobile, also flush at MAX_CHUNK_MS even during continuous speech,
+            // so long utterances are broken into processable segments
+            if (isMobile && elapsed >= MAX_CHUNK_MS) {
+              finishUtteranceAndSend();
+            }
           }
         }, 40);
       } catch (err) {

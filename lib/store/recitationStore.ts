@@ -5,6 +5,12 @@ import { stripDiacritics } from "../arabic/normalize";
 import { speakArabicWord, playCorrectionChime, playSuccessChime } from "../speech/tts";
 import { preloadAudio, getWordAudio } from "../audio/qariCDN";
 
+// Tracks the last time processSpeech successfully advanced from each wordIndex.
+// Prevents double-advancing from near-simultaneous Web Speech interim + final events.
+const lastAdvanceTimeByIndex = new Map<number, number>();
+// Minimum milliseconds between consecutive advances on the same wordIndex
+const ADVANCE_COOLDOWN_MS = 400;
+
 interface RecitationState {
   currentSurahId: string;
   surahName: string;
@@ -160,6 +166,14 @@ export const useRecitationStore = create<RecitationState>((set, get) => {
       const { allWords, wordIndex, recitationState, correctWord, retryCount, isAudioPlaying, recitationLevel, confidentReciterMode } = get();
       if (wordIndex >= allWords.length) return;
       if (isAudioPlaying) return;
+
+      // Cooldown guard: ignore processSpeech calls that arrive within ADVANCE_COOLDOWN_MS
+      // of the last successful advance on this same wordIndex. This prevents cascade
+      // false-positives caused by Web Speech API emitting both interim and final events
+      // for the same utterance in rapid succession.
+      const now = Date.now();
+      const lastTime = lastAdvanceTimeByIndex.get(wordIndex) ?? 0;
+      if (now - lastTime < ADVANCE_COOLDOWN_MS) return;
 
       // 1. Retry mode
       if (recitationState === "retry") {
@@ -373,6 +387,11 @@ export const useRecitationStore = create<RecitationState>((set, get) => {
           }
 
           if (wordIdxIncrement > 0) {
+            // Record the advance time for each index we're about to advance past,
+            // so the cooldown guard blocks any duplicate calls in the next 400ms.
+            for (let i = 0; i < wordIdxIncrement; i++) {
+              lastAdvanceTimeByIndex.set(wordIndex + i, Date.now());
+            }
             set((state) => ({
               correctCount: state.correctCount + correctIncrement,
               wordIndex: state.wordIndex + wordIdxIncrement,
