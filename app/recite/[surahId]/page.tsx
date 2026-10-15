@@ -35,7 +35,9 @@ export default function RecitationPage() {
 
   const loadSurah = useRecitationStore((state) => state.loadSurah);
   const resetSession = useRecitationStore((state) => state.resetSession);
-  const saveSessionScore = useRecitationStore((state) => state.saveSessionScore);
+  const saveSessionScore = useRecitationStore(
+    (state) => state.saveSessionScore,
+  );
 
   const correctCount = useRecitationStore((state) => state.correctCount);
   const errorCount = useRecitationStore((state) => state.errorCount);
@@ -50,17 +52,32 @@ export default function RecitationPage() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [micCheckOpen, setMicCheckOpen] = useState(true);
   const [statsOpen, setStatsOpen] = useState(false);
-  const [recitationMode, setRecitationMode] = useState<"continuous" | "verse">("continuous");
+  const [recitationMode, setRecitationMode] = useState<"continuous" | "verse">(
+    "continuous",
+  );
 
   // Local verse recording & verification states
-  const [recordingState, setRecordingState] = useState<"idle" | "listening" | "processing" | "summary">("idle");
-  const [alignedResults, setAlignedResults] = useState<{ word: string; status: "correct" | "tajweed" | "error"; similarity: number; wordIdxInAyah: number }[]>([]);
+  const [recordingState, setRecordingState] = useState<
+    "idle" | "listening" | "processing" | "summary"
+  >("idle");
+  const [alignedResults, setAlignedResults] = useState<
+    {
+      word: string;
+      status: "correct" | "tajweed" | "error";
+      similarity: number;
+      wordIdxInAyah: number;
+    }[]
+  >([]);
   const recorderRef = useRef<AudioRecorder | null>(null);
   const [showMuteToast, setShowMuteToast] = useState(false);
 
   const recitationLevel = useRecitationStore((state) => state.recitationLevel);
-  const confidentReciterMode = useRecitationStore((state) => state.confidentReciterMode);
-  const setLiveTranscript = useRecitationStore((state) => state.setLiveTranscript);
+  const confidentReciterMode = useRecitationStore(
+    (state) => state.confidentReciterMode,
+  );
+  const setLiveTranscript = useRecitationStore(
+    (state) => state.setLiveTranscript,
+  );
 
   // Hook for Continuous Live ASR mode
   useContinuousASR(recitationMode === "continuous" && isListening);
@@ -70,7 +87,9 @@ export default function RecitationPage() {
   // Advance to next verse (for Verse-by-Verse mode)
   const advanceAyah = () => {
     if (!currentWordToken) return;
-    const nextIdx = allWords.findIndex((w) => w.ayahN === currentWordToken.ayahN + 1);
+    const nextIdx = allWords.findIndex(
+      (w) => w.ayahN === currentWordToken.ayahN + 1,
+    );
     if (nextIdx !== -1) {
       useRecitationStore.setState({ wordIndex: nextIdx });
     } else {
@@ -123,7 +142,8 @@ export default function RecitationPage() {
         }
       }, 60);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to start microphone.";
+      const msg =
+        err instanceof Error ? err.message : "Failed to start microphone.";
       showToast(msg);
     }
   };
@@ -136,21 +156,41 @@ export default function RecitationPage() {
     try {
       const audioBlob = await recorderRef.current.stop();
       if (!currentWordToken) return;
-      
+
       // Full expected Ayah text as Whisper prompt
-      const promptText = currentWordToken.ayahData.words.join(" ") || currentWordToken.ayahData.arabic;
+      const promptText =
+        currentWordToken.ayahData.words.join(" ") ||
+        currentWordToken.ayahData.arabic;
 
       const result = await transcribeAudio(audioBlob, "ayah", promptText);
-      
+
       // Save recorded user voice for this ayah & as last recording
-      userAudioVault.saveRecording(`ayah_${currentWordToken.ayahN}`, audioBlob, result.transcript || "");
-      userAudioVault.saveRecording("last_user_voice", audioBlob, result.transcript || "");
+      userAudioVault.saveRecording(
+        `ayah_${currentWordToken.ayahN}`,
+        audioBlob,
+        result.transcript || "",
+      );
+      userAudioVault.saveRecording(
+        "last_user_voice",
+        audioBlob,
+        result.transcript || "",
+      );
 
       // FIX 2 & FIX 3: Silence or noise handling — NEVER advance
-      if (!result.success || !result.transcript || result.transcript.trim().length === 0) {
+      if (
+        !result.success ||
+        !result.transcript ||
+        result.transcript.trim().length === 0
+      ) {
         setRecordingState("idle");
-        const isMob = typeof navigator !== 'undefined' && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
-        showToast(isMob ? "⚠️ Voice signal was quiet or unclear. Speak closer to your microphone and try again." : "⚠️ We couldn't hear you clearly. Check your mic and recite again.");
+        const isMob =
+          typeof navigator !== "undefined" &&
+          /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+        showToast(
+          isMob
+            ? "⚠️ Voice signal was quiet or unclear. Speak closer to your microphone and try again."
+            : "⚠️ We couldn't hear you clearly. Check your mic and recite again.",
+        );
         return;
       }
 
@@ -161,10 +201,21 @@ export default function RecitationPage() {
       const expectedWords = currentWordToken.ayahData.words;
 
       // Trim opening Bismillah/Ta'awwudh if spoken before an Ayah that doesn't start with it
-      if (spokenWords.length > expectedWords.length && expectedWords.length > 0) {
+      if (
+        spokenWords.length > expectedWords.length &&
+        expectedWords.length > 0
+      ) {
         const normExp0 = normalizeArabic(expectedWords[0]);
         if (normExp0 !== "بسم" && normExp0 !== "اعوذ") {
-          const matchStart = spokenWords.findIndex((sw) => checkWord(sw, expectedWords[0], recitationLevel, confidentReciterMode).status !== "error");
+          const matchStart = spokenWords.findIndex(
+            (sw) =>
+              checkWord(
+                sw,
+                expectedWords[0],
+                recitationLevel,
+                confidentReciterMode,
+              ).status !== "error",
+          );
           if (matchStart > 0) {
             spokenWords = spokenWords.slice(matchStart);
           }
@@ -174,7 +225,11 @@ export default function RecitationPage() {
       // Robust monotonic alignment
       let lastSpokenIdx = 0;
       const aligned = expectedWords.map((expectedWord, idx) => {
-        let bestMatch: { similarity: number; status: "correct" | "tajweed" | "error"; spokenIdx: number } = {
+        let bestMatch: {
+          similarity: number;
+          status: "correct" | "tajweed" | "error";
+          spokenIdx: number;
+        } = {
           similarity: 0,
           status: "error",
           spokenIdx: -1,
@@ -182,7 +237,12 @@ export default function RecitationPage() {
 
         const maxSearch = Math.min(spokenWords.length, lastSpokenIdx + 5);
         for (let sIdx = lastSpokenIdx; sIdx < maxSearch; sIdx++) {
-          const check = checkWord(spokenWords[sIdx], expectedWord, recitationLevel, confidentReciterMode);
+          const check = checkWord(
+            spokenWords[sIdx],
+            expectedWord,
+            recitationLevel,
+            confidentReciterMode,
+          );
           if (check.similarity > bestMatch.similarity) {
             bestMatch = { ...check, spokenIdx: sIdx };
           }
@@ -190,8 +250,16 @@ export default function RecitationPage() {
 
         if (bestMatch.status === "error" && spokenWords.length > 0) {
           for (let sIdx = 0; sIdx < spokenWords.length; sIdx++) {
-            const check = checkWord(spokenWords[sIdx], expectedWord, recitationLevel, confidentReciterMode);
-            if (check.status !== "error" && check.similarity > bestMatch.similarity) {
+            const check = checkWord(
+              spokenWords[sIdx],
+              expectedWord,
+              recitationLevel,
+              confidentReciterMode,
+            );
+            if (
+              check.status !== "error" &&
+              check.similarity > bestMatch.similarity
+            ) {
               bestMatch = { ...check, spokenIdx: sIdx };
             }
           }
@@ -212,7 +280,9 @@ export default function RecitationPage() {
       setAlignedResults(aligned);
       setRecordingState("summary");
 
-      const correctWords = aligned.filter((w) => w.status === "correct" || w.status === "tajweed").length;
+      const correctWords = aligned.filter(
+        (w) => w.status === "correct" || w.status === "tajweed",
+      ).length;
       const errorWords = aligned.length - correctWords;
       const firstError = aligned.find((w) => w.status === "error");
 
@@ -254,12 +324,12 @@ export default function RecitationPage() {
       const wordText = currentWordToken.ayahData.words[wordIdx] || "";
       const surahIdNum = Number(currentWordToken.ayahData.surahId) || 1;
       const ayahNum = Number(currentWordToken.ayahN) || 1;
-      
+
       const cdnUrl = getWordAudio(surahIdNum, ayahNum, wordIdx + 1);
-      
+
       // Try playing authentic Qari CDN audio with fallback
       try {
-        await audioMgr.play(cdnUrl);
+        await audioMgr.play(cdnUrl, true); // Mark as feedback audio
       } catch {
         if (wordText) {
           await audioMgr.playWord(wordText, surahIdNum);
@@ -284,7 +354,11 @@ export default function RecitationPage() {
   useEffect(() => {
     if (allWords && allWords.length > 0) {
       allWords.slice(0, 4).forEach((w) => {
-        const url = getWordAudio(w.ayahData.surahId, w.ayahN, w.wordIdxInAyah + 1);
+        const url = getWordAudio(
+          w.ayahData.surahId,
+          w.ayahN,
+          w.wordIdxInAyah + 1,
+        );
         preloadAudio(url);
       });
     }
@@ -293,7 +367,11 @@ export default function RecitationPage() {
   useEffect(() => {
     const nextWord = allWords[wordIndex + 1];
     if (nextWord) {
-      const url = getWordAudio(nextWord.ayahData.surahId, nextWord.ayahN, nextWord.wordIdxInAyah + 1);
+      const url = getWordAudio(
+        nextWord.ayahData.surahId,
+        nextWord.ayahN,
+        nextWord.wordIdxInAyah + 1,
+      );
       preloadAudio(url);
     }
   }, [wordIndex, allWords]);
@@ -304,32 +382,49 @@ export default function RecitationPage() {
 
   // Calculate Accuracy
   const totalChecked = correctCount + errorCount;
-  const liveAccuracy = totalChecked > 0 ? Math.round((correctCount / totalChecked) * 100) : null;
+  const liveAccuracy =
+    totalChecked > 0 ? Math.round((correctCount / totalChecked) * 100) : null;
 
   const handleSave = async () => {
     trackEvent("surah_complete", "engagement", `surah_${surahId}`);
     await saveSessionScore();
 
     if (typeof window !== "undefined") {
-      const currentCompleted = Number(localStorage.getItem("tilawa_completed_count") || "0");
-      localStorage.setItem("tilawa_completed_count", String(currentCompleted + 1));
+      const currentCompleted = Number(
+        localStorage.getItem("tilawa_completed_count") || "0",
+      );
+      localStorage.setItem(
+        "tilawa_completed_count",
+        String(currentCompleted + 1),
+      );
 
-      const emailCaptured = localStorage.getItem("tilawah_email_captured") === "true";
-      const dismissed = sessionStorage.getItem("email_popup_dismissed") === "true";
+      const emailCaptured =
+        localStorage.getItem("tilawah_email_captured") === "true";
+      const dismissed =
+        sessionStorage.getItem("email_popup_dismissed") === "true";
 
       if (!emailCaptured && !dismissed) {
         window.dispatchEvent(
           new CustomEvent("open-email-capture", {
-            detail: { moment: "MomentC", surahName: surahData.name.split("-")[0] },
-          })
+            detail: {
+              moment: "MomentC",
+              surahName: surahData.name.split("-")[0],
+            },
+          }),
         );
         const handleCloseEvent = () => {
           router.push("/recite");
           window.removeEventListener("tilawa-user-updated", handleCloseEvent);
-          window.removeEventListener("email-popup-dismissed-event", handleCloseEvent);
+          window.removeEventListener(
+            "email-popup-dismissed-event",
+            handleCloseEvent,
+          );
         };
         window.addEventListener("tilawa-user-updated", handleCloseEvent);
-        window.addEventListener("email-popup-dismissed-event", handleCloseEvent);
+        window.addEventListener(
+          "email-popup-dismissed-event",
+          handleCloseEvent,
+        );
       } else {
         showToast("💾 Recitation Score Synced Successfully!");
         router.push("/recite");
@@ -348,7 +443,10 @@ export default function RecitationPage() {
       <Header />
 
       {/* Settings Panel Drawer */}
-      <SettingsDrawer isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <SettingsDrawer
+        isOpen={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+      />
 
       {/* Correction Overlay popup */}
       <CorrectionOverlay />
@@ -364,16 +462,18 @@ export default function RecitationPage() {
 
       {/* Recitation Main UI */}
       <main className="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-6 mt-4 sm:mt-6 grid grid-cols-1 lg:grid-cols-12 gap-6 relative z-10">
-        
         {/* LEFT COLUMN: Quran Mushaf Reading View & Active Verification (8 cols) */}
         <div className="lg:col-span-8 flex flex-col gap-4 sm:gap-6">
-          
           {/* Top Bar: Surah Info + Mode Switcher */}
           <div className="bg-white/90 border border-[#c8993c]/20 px-4 py-3 rounded-2xl text-xs font-bold text-[#6b7280] shadow-xs flex flex-wrap items-center justify-between gap-3 select-none">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-black text-[#1e5e4a]">{surahData.name}</span>
+              <span className="text-sm font-black text-[#1e5e4a]">
+                {surahData.name}
+              </span>
               {surahMeta?.englishName && (
-                <span className="text-[10px] text-zinc-400">({surahMeta.englishName})</span>
+                <span className="text-[10px] text-zinc-400">
+                  ({surahMeta.englishName})
+                </span>
               )}
             </div>
 
@@ -412,26 +512,40 @@ export default function RecitationPage() {
           {recitationMode === "verse" && currentWordToken && (
             <div className="card border-2 border-[#c8993c]/30 shadow-md rounded-2xl flex flex-col justify-center items-center py-6 px-6 bg-white relative overflow-hidden animate-[slide-down_0.2s_ease-out]">
               <span className="text-[10px] text-[#6b7280] font-extrabold uppercase tracking-widest absolute top-3">
-                {recordingState === "summary" ? "Ayah Verification Breakdown" : `Active Verse — Ayah ${currentWordToken.ayahN}`}
+                {recordingState === "summary"
+                  ? "Ayah Verification Breakdown"
+                  : `Active Verse — Ayah ${currentWordToken.ayahN}`}
               </span>
 
               {recordingState === "summary" ? (
                 <div className="flex flex-col items-center gap-4 my-4 w-full">
-                  <div className="flex flex-wrap gap-x-3 gap-y-4 justify-center items-center select-text max-w-xl text-center" style={{ direction: "rtl" }}>
+                  <div
+                    className="flex flex-wrap gap-x-3 gap-y-4 justify-center items-center select-text max-w-xl text-center"
+                    style={{ direction: "rtl" }}
+                  >
                     {alignedResults.map((w, idx) => {
                       const isCorrect = w.status === "correct";
                       const isTajweed = w.status === "tajweed";
                       const isError = w.status === "error";
 
                       return (
-                        <div key={idx} className="flex flex-col items-center gap-1">
+                        <div
+                          key={idx}
+                          className="flex flex-col items-center gap-1"
+                        >
                           <span
                             className={`font-amiri text-3xl md:text-4xl leading-relaxed px-2 py-1 rounded-lg transition-all ${
-                              isCorrect ? "text-[#1e5e4a] bg-emerald-pale/50 font-bold border border-emerald/20" : ""
+                              isCorrect
+                                ? "text-[#1e5e4a] bg-emerald-pale/50 font-bold border border-emerald/20"
+                                : ""
                             } ${
-                              isTajweed ? "text-amber-800 bg-amber-50 font-bold border border-amber-300" : ""
+                              isTajweed
+                                ? "text-amber-800 bg-amber-50 font-bold border border-amber-300"
+                                : ""
                             } ${
-                              isError ? "text-[#8b1a1a] bg-red-50 font-bold border border-red-200" : ""
+                              isError
+                                ? "text-[#8b1a1a] bg-red-50 font-bold border border-red-200"
+                                : ""
                             }`}
                           >
                             {w.word}
@@ -453,7 +567,9 @@ export default function RecitationPage() {
                   <div className="flex flex-wrap gap-3 mt-2 justify-center items-center">
                     <button
                       onClick={() => {
-                        userAudioVault.playRecording(`ayah_${currentWordToken.ayahN}`);
+                        userAudioVault.playRecording(
+                          `ayah_${currentWordToken.ayahN}`,
+                        );
                       }}
                       className="px-4 py-2 rounded-xl border border-sky-600/30 bg-sky-50 dark:bg-sky-950/40 text-sky-800 dark:text-sky-300 font-bold text-xs uppercase tracking-wider active:scale-95 transition-all shadow-xs flex items-center gap-1.5"
                       title="Listen to what you recited for this verse"
@@ -479,13 +595,19 @@ export default function RecitationPage() {
                 </div>
               ) : (
                 <div className="flex flex-col items-center my-4 text-center">
-                  <div className="font-amiri text-3xl md:text-4xl text-[#1e5e4a] leading-loose max-w-xl" style={{ direction: "rtl" }}>
+                  <div
+                    className="font-amiri text-3xl md:text-4xl text-[#1e5e4a] leading-loose max-w-xl"
+                    style={{ direction: "rtl" }}
+                  >
                     {currentWordToken.ayahData.words.join(" ")}
                   </div>
                   <span className="text-xs text-[#6b7280] font-semibold mt-2">
-                    {recordingState === "idle" && "Tap the microphone below, recite the verse, then tap stop."}
-                    {recordingState === "listening" && "🎙️ Voice active... reciting verse now."}
-                    {recordingState === "processing" && "Analyzing recitation accuracy..."}
+                    {recordingState === "idle" &&
+                      "Tap the microphone below, recite the verse, then tap stop."}
+                    {recordingState === "listening" &&
+                      "🎙️ Voice active... reciting verse now."}
+                    {recordingState === "processing" &&
+                      "Analyzing recitation accuracy..."}
                   </span>
                 </div>
               )}
@@ -527,16 +649,28 @@ export default function RecitationPage() {
 
             <div className="grid grid-cols-3 gap-2 text-center border-t border-[#c8993c]/10 pt-4 mt-2">
               <div>
-                <span className="text-[#6b7280] font-bold uppercase block text-[10px]">Correct</span>
-                <span className="text-lg font-bold text-[#1e5e4a]">{correctCount}</span>
+                <span className="text-[#6b7280] font-bold uppercase block text-[10px]">
+                  Correct
+                </span>
+                <span className="text-lg font-bold text-[#1e5e4a]">
+                  {correctCount}
+                </span>
               </div>
               <div>
-                <span className="text-[#6b7280] font-bold uppercase block text-[10px]">Errors</span>
-                <span className="text-lg font-bold text-[#8b1a1a]">{errorCount}</span>
+                <span className="text-[#6b7280] font-bold uppercase block text-[10px]">
+                  Errors
+                </span>
+                <span className="text-lg font-bold text-[#8b1a1a]">
+                  {errorCount}
+                </span>
               </div>
               <div>
-                <span className="text-[#6b7280] font-bold uppercase block text-[10px]">Practice</span>
-                <span className="text-lg font-bold text-amber-600">{practiceWords.length}</span>
+                <span className="text-[#6b7280] font-bold uppercase block text-[10px]">
+                  Practice
+                </span>
+                <span className="text-lg font-bold text-amber-600">
+                  {practiceWords.length}
+                </span>
               </div>
             </div>
           </div>
@@ -557,7 +691,13 @@ export default function RecitationPage() {
                     key={item.id}
                     className="p-3 border rounded-xl flex flex-col gap-1 transition-all bg-white/40 text-left border-l-4"
                     style={{
-                      borderLeftColor: isCorrect ? "#1e5e4a" : isError ? "#8b1a1a" : isTajweed ? "#1a3a5c" : "#c8993c",
+                      borderLeftColor: isCorrect
+                        ? "#1e5e4a"
+                        : isError
+                          ? "#8b1a1a"
+                          : isTajweed
+                            ? "#1a3a5c"
+                            : "#c8993c",
                       direction: "ltr",
                     }}
                   >
@@ -575,10 +715,16 @@ export default function RecitationPage() {
 
           {/* Action Buttons */}
           <div className="flex flex-col gap-3">
-            <button onClick={resetSession} className="btn-secondary w-full text-center">
+            <button
+              onClick={resetSession}
+              className="btn-secondary w-full text-center"
+            >
               🔄 Restart Session
             </button>
-            <button onClick={handleSave} className="btn-primary w-full text-center">
+            <button
+              onClick={handleSave}
+              className="btn-primary w-full text-center"
+            >
               💾 Save Recitation
             </button>
           </div>
@@ -602,10 +748,10 @@ export default function RecitationPage() {
                 ? "bg-[#8b1a1a] shadow-[0_0_20px_rgba(139,26,26,0.6)] animate-pulse"
                 : "bg-[#1e5e4a] shadow-[0_4px_16px_rgba(30,94,74,0.35)]"
               : recordingState === "listening"
-              ? "bg-[#8b1a1a] shadow-[0_0_20px_rgba(139,26,26,0.6)] animate-pulse"
-              : recordingState === "processing"
-              ? "bg-[#c8993c] cursor-wait"
-              : "bg-[#1e5e4a] shadow-[0_4px_16px_rgba(30,94,74,0.35)]"
+                ? "bg-[#8b1a1a] shadow-[0_0_20px_rgba(139,26,26,0.6)] animate-pulse"
+                : recordingState === "processing"
+                  ? "bg-[#c8993c] cursor-wait"
+                  : "bg-[#1e5e4a] shadow-[0_4px_16px_rgba(30,94,74,0.35)]"
           }`}
           aria-label="Toggle Recitation Microphone"
         >
@@ -632,12 +778,12 @@ export default function RecitationPage() {
               ? "Listening live... tap to pause"
               : "Tap to recite live"
             : recordingState === "listening"
-            ? "Recording verse... tap to finish"
-            : recordingState === "processing"
-            ? "Verifying..."
-            : recordingState === "summary"
-            ? "Verse Checked"
-            : "Tap to record verse"}
+              ? "Recording verse... tap to finish"
+              : recordingState === "processing"
+                ? "Verifying..."
+                : recordingState === "summary"
+                  ? "Verse Checked"
+                  : "Tap to record verse"}
         </span>
       </div>
 
@@ -664,7 +810,9 @@ export default function RecitationPage() {
               className="w-full bg-white rounded-t-3xl max-h-[85vh] overflow-y-auto px-6 py-8 flex flex-col gap-6 border-t border-gold/30 shadow-2xl"
             >
               <div className="flex justify-between items-center">
-                <h3 className="font-bold text-lg text-[#1e5e4a]">Session Stats</h3>
+                <h3 className="font-bold text-lg text-[#1e5e4a]">
+                  Session Stats
+                </h3>
                 <button
                   onClick={() => setStatsOpen(false)}
                   className="w-8 h-8 rounded-full bg-[#faf6ee] border border-gold/15 flex items-center justify-center font-bold text-sm"
@@ -679,37 +827,58 @@ export default function RecitationPage() {
 
                 <div className="grid grid-cols-3 gap-6 text-center w-full max-w-xs border-t border-[#c8993c]/10 pt-4 mt-2">
                   <div>
-                    <span className="text-[#6b7280] font-bold uppercase block text-[10px]">Correct</span>
-                    <span className="text-base font-bold text-[#1e5e4a]">{correctCount}</span>
+                    <span className="text-[#6b7280] font-bold uppercase block text-[10px]">
+                      Correct
+                    </span>
+                    <span className="text-base font-bold text-[#1e5e4a]">
+                      {correctCount}
+                    </span>
                   </div>
                   <div>
-                    <span className="text-[#6b7280] font-bold uppercase block text-[10px]">Errors</span>
-                    <span className="text-base font-bold text-[#8b1a1a]">{errorCount}</span>
+                    <span className="text-[#6b7280] font-bold uppercase block text-[10px]">
+                      Errors
+                    </span>
+                    <span className="text-base font-bold text-[#8b1a1a]">
+                      {errorCount}
+                    </span>
                   </div>
                   <div>
-                    <span className="text-[#6b7280] font-bold uppercase block text-[10px]">Practice</span>
-                    <span className="text-base font-bold text-amber-600">{practiceWords.length}</span>
+                    <span className="text-[#6b7280] font-bold uppercase block text-[10px]">
+                      Practice
+                    </span>
+                    <span className="text-base font-bold text-amber-600">
+                      {practiceWords.length}
+                    </span>
                   </div>
                 </div>
               </div>
 
               {/* Timeline Logs */}
               <div className="flex flex-col gap-3">
-                <h4 className="text-xs font-bold text-[#6b7280] uppercase tracking-wider">Recitation Logs</h4>
+                <h4 className="text-xs font-bold text-[#6b7280] uppercase tracking-wider">
+                  Recitation Logs
+                </h4>
                 <div className="max-h-[180px] overflow-y-auto flex flex-col gap-2.5">
                   {feedbackList.map((item) => (
                     <div
                       key={item.id}
                       className="p-3 border rounded-xl flex flex-col gap-1 bg-white/40 text-left border-l-4"
                       style={{
-                        borderLeftColor: item.type === "correct" ? "#1e5e4a" : item.type === "error" ? "#8b1a1a" : "#c8993c",
+                        borderLeftColor:
+                          item.type === "correct"
+                            ? "#1e5e4a"
+                            : item.type === "error"
+                              ? "#8b1a1a"
+                              : "#c8993c",
                         direction: "ltr",
                       }}
                     >
                       <span className="text-[9px] font-extrabold uppercase tracking-wider text-zinc-500">
                         {item.title}
                       </span>
-                      <p className="text-xs font-semibold text-zinc-700 mt-0.5">{item.message}</p>
+                      <p className="text-xs font-semibold text-zinc-700 mt-0.5">
+                        {item.message}
+                      </p>
                     </div>
                   ))}
                 </div>

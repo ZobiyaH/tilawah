@@ -18,6 +18,10 @@ let globalVadAnalyser: AnalyserNode | null = null;
 let isRecognitionRunning = false;
 let pauseTimeout: NodeJS.Timeout | null = null;
 
+// Audio feedback management
+let lastFeedbackTime = 0;
+const FEEDBACK_COOLDOWN = 1000; // 1 second cooldown
+
 export function getRecognitionRunning() {
   return isRecognitionRunning;
 }
@@ -457,6 +461,7 @@ export function useContinuousASR(isListening: boolean) {
       }
       globalAudioContext = null;
       globalVadAnalyser = null;
+      lastFeedbackTime = 0; // Reset feedback timer on cleanup
     };
   }, [isListening]);
 
