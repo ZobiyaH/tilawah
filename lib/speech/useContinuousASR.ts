@@ -18,10 +18,6 @@ let globalVadAnalyser: AnalyserNode | null = null;
 let isRecognitionRunning = false;
 let pauseTimeout: NodeJS.Timeout | null = null;
 
-// Audio feedback management
-let lastFeedbackTime = 0;
-const FEEDBACK_COOLDOWN = 1000; // 1 second cooldown
-
 export function getRecognitionRunning() {
   return isRecognitionRunning;
 }
@@ -73,7 +69,9 @@ if (typeof window !== "undefined") {
 
 export function useContinuousASR(isListening: boolean) {
   const processSpeech = useRecitationStore((state) => state.processSpeech);
-  const setLiveTranscript = useRecitationStore((state) => state.setLiveTranscript);
+  const setLiveTranscript = useRecitationStore(
+    (state) => state.setLiveTranscript,
+  );
 
   const [browserSupport, setBrowserSupport] = useState<boolean>(true);
 
@@ -123,8 +121,10 @@ export function useContinuousASR(isListening: boolean) {
     let lastAdvancedWordIndex = -1;
 
     // 1. Web Speech live interim text display (Instant visual display + fast verification on desktop)
-    const win = typeof window !== "undefined" ? (window as WindowWithSpeech) : null;
-    const SpeechRecognitionClass = win?.SpeechRecognition || win?.webkitSpeechRecognition;
+    const win =
+      typeof window !== "undefined" ? (window as WindowWithSpeech) : null;
+    const SpeechRecognitionClass =
+      win?.SpeechRecognition || win?.webkitSpeechRecognition;
 
     // Show a listening indicator immediately so Mobile never shows a blank transcript
     if (!SpeechRecognitionClass) {
@@ -142,7 +142,11 @@ export function useContinuousASR(isListening: boolean) {
         rec.maxAlternatives = 3;
 
         rec.onresult = (event: any) => {
-          if (useRecitationStore.getState().isAudioPlaying || !activeRef.current) return;
+          if (
+            useRecitationStore.getState().isAudioPlaying ||
+            !activeRef.current
+          )
+            return;
 
           let interim = "";
           let latestFinal = "";
@@ -189,7 +193,11 @@ export function useContinuousASR(isListening: boolean) {
           lastAdvancedWordIndex = -1;
           if (activeRef.current && isRecognitionRunning) {
             setTimeout(() => {
-              if (activeRef.current && isRecognitionRunning && recognitionRef.current) {
+              if (
+                activeRef.current &&
+                isRecognitionRunning &&
+                recognitionRef.current
+              ) {
                 try {
                   recognitionRef.current.start();
                 } catch {}
@@ -229,7 +237,8 @@ export function useContinuousASR(isListening: boolean) {
         });
         globalStream = localStream;
 
-        const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+        const AudioContextClass =
+          window.AudioContext || (window as any).webkitAudioContext;
         audioContext = new AudioContextClass();
         globalAudioContext = audioContext;
         if (audioContext.state === "suspended") {
@@ -282,7 +291,8 @@ export function useContinuousASR(isListening: boolean) {
         startNewRecorderCycle();
 
         const finishUtteranceAndSend = async () => {
-          if (isProcessingUtterance || !localRecorder || !activeRef.current) return;
+          if (isProcessingUtterance || !localRecorder || !activeRef.current)
+            return;
           isProcessingUtterance = true;
 
           const recorderToStop = localRecorder;
@@ -290,7 +300,9 @@ export function useContinuousASR(isListening: boolean) {
           const finalizeBlobPromise = new Promise<Blob | null>((resolve) => {
             recorderToStop.onstop = () => {
               if (currentChunks.length > 0) {
-                const completeBlob = new Blob(currentChunks, { type: mimeType || "audio/webm" });
+                const completeBlob = new Blob(currentChunks, {
+                  type: mimeType || "audio/webm",
+                });
                 resolve(completeBlob);
               } else {
                 resolve(null);
@@ -346,15 +358,30 @@ export function useContinuousASR(isListening: boolean) {
                 body: formData,
               });
 
-              if (res.ok && activeRef.current && !useRecitationStore.getState().isAudioPlaying) {
+              if (
+                res.ok &&
+                activeRef.current &&
+                !useRecitationStore.getState().isAudioPlaying
+              ) {
                 const data = await res.json();
                 if (data.success && data.transcript) {
                   const transcriptText = data.transcript.trim();
-                  console.log("[ContinuousASR] Verified Groq transcript:", transcriptText);
-                  
+                  console.log(
+                    "[ContinuousASR] Verified Groq transcript:",
+                    transcriptText,
+                  );
+
                   // Save user's voice for this word / phrase in vault
-                  userAudioVault.saveRecording(`word_${currentWordIndex}`, audioBlob, transcriptText);
-                  userAudioVault.saveRecording("last_user_voice", audioBlob, transcriptText);
+                  userAudioVault.saveRecording(
+                    `word_${currentWordIndex}`,
+                    audioBlob,
+                    transcriptText,
+                  );
+                  userAudioVault.saveRecording(
+                    "last_user_voice",
+                    audioBlob,
+                    transcriptText,
+                  );
 
                   // Update LiveTranscript display (Crucial for Mobile where Web Speech is absent)
                   setLiveTranscriptRef.current(transcriptText);
@@ -378,9 +405,17 @@ export function useContinuousASR(isListening: boolean) {
 
         // Real-time voice energy loop (Runs every 40ms)
         checkInterval = setInterval(() => {
-          if (!activeRef.current || !vadAnalyser || !vadDataArray || !localRecorder) return;
+          if (
+            !activeRef.current ||
+            !vadAnalyser ||
+            !vadDataArray ||
+            !localRecorder
+          )
+            return;
 
-          vadAnalyser.getByteTimeDomainData(vadDataArray as unknown as Uint8Array<ArrayBuffer>);
+          vadAnalyser.getByteTimeDomainData(
+            vadDataArray as unknown as Uint8Array<ArrayBuffer>,
+          );
           let sum = 0;
           for (let i = 0; i < vadDataArray.length; i++) {
             const val = (vadDataArray[i] - 128) / 128;
@@ -400,7 +435,10 @@ export function useContinuousASR(isListening: boolean) {
               silenceStartTime = silenceStartTime || Date.now();
               const silenceDuration = Date.now() - silenceStartTime;
 
-              if (silenceDuration >= END_OF_SPEECH_MS || elapsed >= MAX_CHUNK_MS) {
+              if (
+                silenceDuration >= END_OF_SPEECH_MS ||
+                elapsed >= MAX_CHUNK_MS
+              ) {
                 finishUtteranceAndSend();
               }
             } else {
@@ -432,7 +470,9 @@ export function useContinuousASR(isListening: boolean) {
       setRecognitionRunning(false);
       if (checkInterval) clearInterval(checkInterval);
       if (recognitionRef.current) {
-        try { recognitionRef.current.stop(); } catch {}
+        try {
+          recognitionRef.current.stop();
+        } catch {}
         recognitionRef.current = null;
       }
     }
@@ -440,20 +480,30 @@ export function useContinuousASR(isListening: boolean) {
     return () => {
       setRecognitionRunning(false);
       if (checkInterval) clearInterval(checkInterval);
-      if (localStream) (localStream as MediaStream).getTracks().forEach((t) => t.stop());
+      if (localStream)
+        (localStream as MediaStream).getTracks().forEach((t) => t.stop());
       if (globalStream) {
         globalStream.getTracks().forEach((t) => t.stop());
         globalStream = null;
       }
-      if (localRecorder && (localRecorder as MediaRecorder).state === "recording") {
-        try { (localRecorder as MediaRecorder).stop(); } catch {}
+      if (
+        localRecorder &&
+        (localRecorder as MediaRecorder).state === "recording"
+      ) {
+        try {
+          (localRecorder as MediaRecorder).stop();
+        } catch {}
       }
       if (globalRecorder && globalRecorder.state === "recording") {
-        try { globalRecorder.stop(); } catch {}
+        try {
+          globalRecorder.stop();
+        } catch {}
         globalRecorder = null;
       }
       if (recognitionRef.current) {
-        try { recognitionRef.current.stop(); } catch {}
+        try {
+          recognitionRef.current.stop();
+        } catch {}
         recognitionRef.current = null;
       }
       if (audioContext && audioContext.state !== "closed") {
@@ -461,7 +511,6 @@ export function useContinuousASR(isListening: boolean) {
       }
       globalAudioContext = null;
       globalVadAnalyser = null;
-      lastFeedbackTime = 0; // Reset feedback timer on cleanup
     };
   }, [isListening]);
 
