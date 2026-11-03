@@ -345,7 +345,7 @@ export function useContinuousASR(isListening: boolean) {
           if (!isPlaying && activeRef.current) {
             try {
               const currentWordIndex = useRecitationStore.getState().wordIndex;
-              const _wordsList = useRecitationStore.getState().allWords;
+              //const _wordsList = useRecitationStore.getState().allWords;
 
               // Neutral Quranic prompt to avoid Whisper hallucinating the expected text
               const promptText = "تلاوة القرآن الكريم قراءة واضحة باللغة العربية الفصحى";
