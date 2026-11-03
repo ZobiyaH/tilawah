@@ -84,6 +84,14 @@ export default function RecitationPage() {
 
   const currentWordToken = allWords[wordIndex];
 
+  // Sync position to local/supabase
+  useEffect(() => {
+    if (surahId && wordIndex >= 0 && recitationMode === "continuous") {
+      const { saveLastPosition } = require("../../../lib/progress");
+      saveLastPosition("surahs", surahId, wordIndex);
+    }
+  }, [surahId, wordIndex, recitationMode]);
+
   // Advance to next verse (for Verse-by-Verse mode)
   const advanceAyah = () => {
     if (!currentWordToken) return;
@@ -345,6 +353,13 @@ export default function RecitationPage() {
     if (surahData) {
       loadSurah(surahId, surahData.name, surahData.ayat);
       trackEvent("recitation_start", "engagement", `surah_${surahId}`);
+
+      // Restore last position if it matches this surah
+      const { getLastPosition } = require("../../../lib/progress");
+      const lastPos = getLastPosition();
+      if (lastPos && lastPos.track === "surahs" && lastPos.lessonId === surahId) {
+        useRecitationStore.setState({ wordIndex: lastPos.wordIndex });
+      }
     } else {
       router.push("/recite");
     }

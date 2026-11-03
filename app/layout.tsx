@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Amiri_Quran, Lato } from "next/font/google";
+
 import { ToastProvider } from "@/components/UI/Toast";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import Footer from "@/components/Layout/Footer";
@@ -7,8 +8,11 @@ import EmailCaptureModal from "@/components/UI/EmailCaptureModal";
 import { FeedbackButton } from "@/components/feedback/FeedbackButton";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import { PWAUpdater } from "@/components/PWAUpdater";
-import { AnalyticsTracker } from '@/components/Analytics/AnalyticsTracker';
+import { AnalyticsTracker } from "@/components/Analytics/AnalyticsTracker";
+import { AuthSyncProvider } from "@/components/providers/AuthSyncProvider";
+
 import { GA_ID } from "@/lib/analytics/ga";
+
 import "./globals.css";
 
 const amiriQuran = Amiri_Quran({
@@ -33,44 +37,68 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   manifest: "/manifest.json",
+
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
     title: "Tilawah",
   },
+
   title: "Tilawah - Free Quran Recitation Checker & Tajweed Teacher",
-  description: "Learn to recite the Quran correctly with real-time Tajweed correction. Listen to verified Qari pronunciation, fix mistakes instantly, and learn from absolute basics - completely free.",
+
+  description:
+    "Learn to recite the Quran correctly with real-time Tajweed correction. Listen to verified Qari pronunciation, fix mistakes instantly, and learn from absolute basics - completely free.",
+
   keywords: [
-    "quran recitation checker", "tajweed learning app", "learn quran online free",
-    "quran pronunciation corrector", "tajweed rules for beginners", "quran recitation practice",
-    "learn arabic quran", "quran for beginners", "islamic learning app", "quran memorization help",
-    "online quran teacher", "free quran app", "quran recitation with tajweed",
-    "learn surah al fatiha", "quran learning website"
+    "quran recitation checker",
+    "tajweed learning app",
+    "learn quran online free",
+    "quran pronunciation corrector",
+    "tajweed rules for beginners",
+    "quran recitation practice",
+    "learn arabic quran",
+    "quran for beginners",
+    "islamic learning app",
+    "quran memorization help",
+    "online quran teacher",
+    "free quran app",
+    "quran recitation with tajweed",
+    "learn surah al fatiha",
+    "quran learning website",
   ],
+
   authors: [{ name: "Tilawah" }],
+
   robots: "index, follow",
+
   alternates: {
     canonical: "https://tilawah.vercel.app",
   },
+
   openGraph: {
     title: "Tilawah - Real-Time Quran Recitation Checker",
-    description: "Recite the Quran. Get corrected instantly. Learn Tajweed from scratch. Free forever.",
+    description:
+      "Recite the Quran. Get corrected instantly. Learn Tajweed from scratch. Free forever.",
     type: "website",
     locale: "en_US",
   },
+
   twitter: {
     card: "summary_large_image",
     title: "Tilawah - Free Quran Recitation Checker",
-    description: "Real-time Tajweed correction. Verified Qari audio. Learn from basics. Free.",
+    description:
+      "Real-time Tajweed correction. Verified Qari audio. Learn from basics. Free.",
   },
+
   icons: {
     icon: "/favicon.png",
     shortcut: "/favicon.ico",
     apple: "/favicon.png",
   },
+
   verification: {
     google: "nE31zfopQ4RKaFt2p-kyhvABVCOhPz25aJ_3GwwS0hM",
-  }
+  },
 };
 
 export default function RootLayout({
@@ -82,14 +110,23 @@ export default function RootLayout({
     <html lang="en" dir="ltr" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
+
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+
         <meta name="mobile-web-app-capable" content="yes" />
+
         <meta name="apple-mobile-web-app-capable" content="yes" />
+
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        {/* Google Analytics Tag */}
+
+        {/* Google Analytics */}
         {GA_ID && (
           <>
-            <script async src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}></script>
+            <script
+              async
+              src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
+            />
+
             <script
               dangerouslySetInnerHTML={{
                 __html: `
@@ -97,41 +134,67 @@ export default function RootLayout({
                   function gtag(){dataLayer.push(arguments);}
                   gtag('js', new Date());
                   gtag('config', '${GA_ID}');
-                `
+                `,
               }}
             />
           </>
         )}
+
+        {/* Structured Data */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "WebApplication",
-              "name": "Tilawah",
-              "url": "https://tilawah.vercel.app",
-              "description": "Free Quran recitation checker with real-time Tajweed correction",
-              "applicationCategory": "EducationApplication",
-              "operatingSystem": "Web Browser",
-              "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
-              "audience": { "@type": "Audience", "audienceType": "Muslims learning Quran recitation" }
+              name: "Tilawah",
+              url: "https://www.tilawah.site/",
+              description:
+                "Free Quran recitation checker with real-time Tajweed correction",
+              applicationCategory: "EducationApplication",
+              operatingSystem: "Web Browser",
+              offers: {
+                "@type": "Offer",
+                price: "0",
+                priceCurrency: "USD",
+              },
+              audience: {
+                "@type": "Audience",
+                audienceType: "Muslims learning Quran recitation",
+              },
             }),
           }}
         />
       </head>
-      <body className={`${amiriQuran.variable} ${lato.variable} font-lato antialiased text-ink bg-parchment transition-colors duration-200`}>
-        <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
-          <ToastProvider>
-            <AnalyticsTracker />
-            <div className="flex flex-col min-h-screen w-full">
-              <div className="flex-grow w-full">{children}</div>
-              <Footer />
-            </div>
-            <EmailCaptureModal />
-            <FeedbackButton />
-            <InstallPrompt />
-        <PWAUpdater />
-          </ToastProvider>
+
+      <body
+        className={`${amiriQuran.variable} ${lato.variable} font-lato antialiased text-ink bg-parchment transition-colors duration-200`}
+      >
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="light"
+          enableSystem={false}
+        >
+          {/* Global authentication and progress synchronization */}
+          <AuthSyncProvider>
+            <ToastProvider>
+              <AnalyticsTracker />
+
+              <div className="flex flex-col min-h-screen w-full">
+                <div className="flex-grow w-full">{children}</div>
+
+                <Footer />
+              </div>
+
+              <EmailCaptureModal />
+
+              <FeedbackButton />
+
+              <InstallPrompt />
+
+              <PWAUpdater />
+            </ToastProvider>
+          </AuthSyncProvider>
         </ThemeProvider>
       </body>
     </html>
