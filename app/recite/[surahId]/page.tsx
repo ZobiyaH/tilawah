@@ -24,6 +24,8 @@ import { useToast } from "../../../components/UI/Toast";
 import BottomNav from "../../../components/Layout/BottomNav";
 import MicCheckModal from "../../../components/Listening/MicCheckModal";
 
+import { saveLastPosition, getLastPosition } from "../../../lib/progress";
+
 export default function RecitationPage() {
   const params = useParams();
   const router = useRouter();
@@ -87,7 +89,6 @@ export default function RecitationPage() {
   // Sync position to local/supabase
   useEffect(() => {
     if (surahId && wordIndex >= 0 && recitationMode === "continuous") {
-      const { saveLastPosition } = require("../../../lib/progress");
       saveLastPosition("surahs", surahId, wordIndex);
     }
   }, [surahId, wordIndex, recitationMode]);
@@ -355,7 +356,7 @@ export default function RecitationPage() {
       trackEvent("recitation_start", "engagement", `surah_${surahId}`);
 
       // Restore last position if it matches this surah
-      const { getLastPosition } = require("../../../lib/progress");
+      
       const lastPos = getLastPosition();
       if (lastPos && lastPos.track === "surahs" && lastPos.lessonId === surahId) {
         useRecitationStore.setState({ wordIndex: lastPos.wordIndex });
