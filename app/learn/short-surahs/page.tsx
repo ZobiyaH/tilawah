@@ -20,9 +20,11 @@ import { arabicSimilarity } from "@/lib/arabic/similarity";
 import { normalizeArabic } from "@/lib/arabic/normalize";
 import { transcribeAudio } from "@/lib/speech/transcribe";
 import { preloadAudio, getWordAudio } from "@/lib/audio/qariCDN";
+import HearWhatYouSaidButton from "@/components/audio/HearWhatYouSaidButton";
 
 const SHORT_SURAHS = [
   { id: "1", name: "Al-Fatiha", arName: "الفاتحة", totalAyat: 7, isAvailable: true },
+  { id: "98", name: "Al-Bayyinah", arName: "البينة", totalAyat: 8, isAvailable: true },
   { id: "112", name: "Al-Ikhlas", arName: "الإخلاص", totalAyat: 4, isAvailable: true },
   { id: "113", name: "Al-Falaq", arName: "الفلق", totalAyat: 5, isAvailable: true },
   { id: "114", name: "An-Nas", arName: "الناس", totalAyat: 6, isAvailable: true },
@@ -517,17 +519,7 @@ export default function ShortSurahsPage() {
                       </span>
                     )}
 
-                    {asrResult !== "none" && (
-                      <button
-                        onClick={async () => {
-                          const { userAudioVault } = await import("@/lib/speech/recorder");
-                          userAudioVault.playRecording(`surah_word_${activeWordIdx}`);
-                        }}
-                        className="mt-1 px-3.5 py-1.5 rounded-lg border border-sky-600/30 bg-sky-50 dark:bg-sky-950/40 text-sky-800 dark:text-sky-300 font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-xs active:scale-95"
-                      >
-                        <span>🎧</span> Hear what you said
-                      </button>
-                    )}
+                    <HearWhatYouSaidButton recordingKey={`surah_word_${activeWordIdx}`} variant="pill" />
                   </div>
                 </div>
               )}
@@ -568,17 +560,7 @@ export default function ShortSurahsPage() {
                       <span className="text-ruby font-bold text-xs">❌ Try Again</span>
                     )}
 
-                    {asrResult !== "none" && (
-                      <button
-                        onClick={async () => {
-                          const { userAudioVault } = await import("@/lib/speech/recorder");
-                          userAudioVault.playRecording(`surah_ayah_${activeAyahIdx}`);
-                        }}
-                        className="mt-1 px-3.5 py-1.5 rounded-lg border border-sky-600/30 bg-sky-50 dark:bg-sky-950/40 text-sky-800 dark:text-sky-300 font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-xs active:scale-95"
-                      >
-                        <span>🎧</span> Hear what you said
-                      </button>
-                    )}
+                    <HearWhatYouSaidButton recordingKey={`surah_ayah_${activeAyahIdx}`} variant="pill" />
                   </div>
                 </div>
               )}

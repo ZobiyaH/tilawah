@@ -58,4 +58,5 @@ export interface SurahMetadata {
   englishName: string;
   totalAyat: number;
   isImplemented: boolean;
+  addedAt?: string; // ISO date string, e.g. "2026-11-04"
 }

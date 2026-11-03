@@ -179,11 +179,14 @@ export function useContinuousASR(isListening: boolean) {
           // Only call processSpeech on FINAL results to prevent cascade false-positive
           // advances caused by repeated interim emissions of the same partial transcript.
           if (latestFinal && finalAlternatives.length > 0) {
-            const currentIdx = useRecitationStore.getState().wordIndex;
-            // Guard: skip if we already advanced past this index in this utterance
-            if (currentIdx > lastAdvancedWordIndex) {
-              lastAdvancedWordIndex = currentIdx;
+            const beforeIdx = useRecitationStore.getState().wordIndex;
+            // Guard: prevent processing only if we already advanced past this index in this exact session
+            if (beforeIdx > lastAdvancedWordIndex) {
               processSpeechRef.current(finalAlternatives);
+              const afterIdx = useRecitationStore.getState().wordIndex;
+              if (afterIdx > beforeIdx) {
+                lastAdvancedWordIndex = afterIdx - 1;
+              }
             }
           }
         };
@@ -344,10 +347,8 @@ export function useContinuousASR(isListening: boolean) {
               const currentWordIndex = useRecitationStore.getState().wordIndex;
               const wordsList = useRecitationStore.getState().allWords;
 
-              const promptText =
-                wordsList[currentWordIndex]?.ayahData?.words?.join(" ") ||
-                wordsList[currentWordIndex]?.ayahData?.arabic ||
-                "بسم الله الرحمن الرحيم";
+              // Neutral Quranic prompt to avoid Whisper hallucinating the expected text
+              const promptText = "تلاوة القرآن الكريم قراءة واضحة باللغة العربية الفصحى";
 
               const formData = new FormData();
               formData.append("audio", audioBlob);

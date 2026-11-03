@@ -23,6 +23,7 @@ import ScoreRing from "../../../components/UI/ScoreRing";
 import { useToast } from "../../../components/UI/Toast";
 import BottomNav from "../../../components/Layout/BottomNav";
 import MicCheckModal from "../../../components/Listening/MicCheckModal";
+import HearWhatYouSaidButton from "../../../components/audio/HearWhatYouSaidButton";
 
 import { saveLastPosition, getLastPosition } from "../../../lib/progress";
 
@@ -581,17 +582,11 @@ export default function RecitationPage() {
                   </div>
 
                   <div className="flex flex-wrap gap-3 mt-2 justify-center items-center">
-                    <button
-                      onClick={() => {
-                        userAudioVault.playRecording(
-                          `ayah_${currentWordToken.ayahN}`,
-                        );
-                      }}
-                      className="px-4 py-2 rounded-xl border border-sky-600/30 bg-sky-50 dark:bg-sky-950/40 text-sky-800 dark:text-sky-300 font-bold text-xs uppercase tracking-wider active:scale-95 transition-all shadow-xs flex items-center gap-1.5"
-                      title="Listen to what you recited for this verse"
-                    >
-                      <span>🎧</span> Hear What You Said
-                    </button>
+                    <HearWhatYouSaidButton
+                      recordingKey={`ayah_${currentWordToken.ayahN}`}
+                      variant="pill"
+                      label="Hear What You Said"
+                    />
                     <button
                       onClick={() => {
                         setRecordingState("idle");
@@ -636,21 +631,9 @@ export default function RecitationPage() {
           </div>
 
           <WaveformBar />
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-2">
             <LiveTranscript />
-            <div className="flex justify-end">
-              <button
-                type="button"
-                onClick={() => {
-                  userAudioVault.playRecording("last_user_voice");
-                }}
-                className="px-3 py-1.5 rounded-lg border border-sky-600/30 bg-sky-50 hover:bg-sky-100 dark:bg-sky-950/40 dark:hover:bg-sky-900/60 text-sky-800 dark:text-sky-300 font-bold text-[11px] uppercase tracking-wider flex items-center gap-1.5 shadow-2xs active:scale-95 transition-all select-none"
-                title="Listen to your latest recited voice recording"
-              >
-                <span>🎧</span>
-                <span>Hear what you said</span>
-              </button>
-            </div>
+            <HearWhatYouSaidButton variant="bar" showTranscript={true} />
           </div>
         </div>
 

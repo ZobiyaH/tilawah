@@ -4,6 +4,7 @@ import React from "react";
 import { WordToken as WordTokenType } from "../../types";
 import { useRecitationStore } from "../../lib/store/recitationStore";
 import TajweedLayer from "./TajweedLayer";
+import { transliterateArabicWord } from "../../lib/arabic/transliterate";
 
 interface WordTokenProps {
   word: WordTokenType;
@@ -73,7 +74,8 @@ export default function WordToken({
   const isSkipped = practiceWords.includes(word.globalIdx);
 
   const cleanWord = word.clean;
-  const hintText = MOUTH_SHAPE_HINTS[word.arabic] || `Say: ${cleanWord}`;
+  const phonetic = transliterateArabicWord(word.arabic);
+  const hintText = MOUTH_SHAPE_HINTS[word.arabic] || (phonetic ? `Say: ${phonetic}` : `Say: ${cleanWord}`);
 
   const wordIndexInAyah = word.wordIdxInAyah;
   const wordAnnotations = word.ayahData.tajweedMap?.[wordIndexInAyah];

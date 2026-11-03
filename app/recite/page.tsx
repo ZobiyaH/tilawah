@@ -8,6 +8,7 @@ import Header from "../../components/Layout/Header";
 import { motion } from "framer-motion";
 import SettingsDrawer from "../../components/UI/SettingsDrawer";
 import BottomNav from "../../components/Layout/BottomNav";
+import NewSurahModal from "../../components/UI/NewSurahModal";
 
 import { checkNextDayReturn } from "../../lib/progress";
 
@@ -16,6 +17,23 @@ export default function DashboardPage() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [hasSessions, setHasSessions] = useState(false);
   const [showRoadmap, setShowRoadmap] = useState(false);
+  const [newSurahModal, setNewSurahModal] = useState<SurahMetadata | null>(null);
+
+  const isSurahNew = (surah: SurahMetadata): boolean => {
+    if (surah.id === "98") return true; // Explicitly active for newly added Surah Al-Bayyinah
+    if (!surah.addedAt) return false;
+    const addedTime = new Date(surah.addedAt).getTime();
+    const now = Date.now();
+    const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+    return now >= (addedTime - 86400000) && (now - addedTime < SEVEN_DAYS_MS);
+  };
+
+  const handleCloseNewSurahModal = () => {
+    if (newSurahModal) {
+      localStorage.setItem(`tilawah_seen_new_surah_${newSurahModal.id}`, "true");
+    }
+    setNewSurahModal(null);
+  };
   const [notifiedSurahs, setNotifiedSurahs] = useState<Record<string, boolean>>({});
   const [votes, setVotes] = useState<Record<string, number>>({});
   const [stats, setStats] = useState({
@@ -82,6 +100,17 @@ export default function DashboardPage() {
         setVotes(defaultVotes);
       }
 
+      // Check for any newly added surahs within 7 days to show popup once
+      const newestSurah = ALL_SURAHS.find(s => s.isImplemented && isSurahNew(s));
+      if (newestSurah) {
+        const seenKey = `tilawah_seen_new_surah_${newestSurah.id}`;
+        if (!localStorage.getItem(seenKey)) {
+          setTimeout(() => {
+            setNewSurahModal(newestSurah);
+          }, 800);
+        }
+      }
+
       // Check next-day return Moment B
       if (checkNextDayReturn()) {
         setTimeout(() => {
@@ -131,15 +160,24 @@ export default function DashboardPage() {
   const renderSurahCard = (surah: SurahMetadata) => {
     const arabicNum = toArabicNum(surah.number);
     const hasNotified = notifiedSurahs[surah.id];
+    const isNew = isSurahNew(surah);
 
     return (
       <div
-        className={`card p-5 relative overflow-hidden transition-all flex flex-col justify-between min-h-[145px] border ${
-          surah.isImplemented
+        className={`card p-5 relative overflow-hidden transition-all flex flex-col justify-between min-h-[155px] border ${
+          isNew
+            ? "border-emerald-500/60 hover:border-emerald-600 shadow-md ring-2 ring-emerald-500/20 bg-gradient-to-b from-emerald-50/40 via-white to-white dark:from-emerald-950/20 dark:via-zinc-900/40 dark:to-zinc-900/40 hover:-translate-y-1 cursor-pointer"
+            : surah.isImplemented
             ? "border-gold/30 hover:border-gold/80 hover:shadow-lg cursor-pointer bg-white/60 dark:bg-zinc-800/10 hover:-translate-y-0.5"
             : "bg-zinc-100/50 dark:bg-zinc-800/10 border-zinc-200 dark:border-zinc-800"
         }`}
       >
+        {isNew && (
+          <span className="absolute top-2 right-8 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider bg-emerald-600 text-white z-20 flex items-center gap-1 pointer-events-none select-none">
+            <span className="w-1 h-1 rounded-full bg-white animate-ping inline-block"></span>
+            NEW
+          </span>
+        )}
         <span className="absolute top-3 right-3 text-2xl font-bold opacity-30 text-gold font-amiri select-none">
           {arabicNum}
         </span>
@@ -168,9 +206,7 @@ export default function DashboardPage() {
               <span className="px-2 py-0.5 rounded-full text-[8px] font-bold uppercase tracking-wider border bg-emerald-pale/50 border-emerald/30 text-emerald dark:text-emerald-light">
                 Ready
               </span>
-              <span className="text-[10px] font-bold text-gold hover:text-gold-light">
-                Recite
-              </span>
+              <span className="text-[10px] font-bold text-gold hover:text-gold-light">Recite</span>
             </>
           ) : (
             <>
@@ -307,7 +343,7 @@ export default function DashboardPage() {
             {/* Progress indicator */}
             <div className="flex items-center gap-3 bg-[#faf6ee] border border-gold/20 px-4 py-1.5 rounded-full text-[11px] font-bold text-zinc-700">
               <span className="flex h-2 w-2 rounded-full bg-emerald"></span>
-              <span>7 of 114 Surahs available — we&apos;re adding more every week</span>
+              <span>{availableNow.length} of 114 Surahs available — we&apos;re adding more every week</span>
             </div>
           </div>
 
@@ -390,6 +426,11 @@ export default function DashboardPage() {
 
       </main>
       <BottomNav />
+      <NewSurahModal
+        surah={newSurahModal}
+        isOpen={Boolean(newSurahModal)}
+        onClose={handleCloseNewSurahModal}
+      />
     </motion.div>
   );
 }

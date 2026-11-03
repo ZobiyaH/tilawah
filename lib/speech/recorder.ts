@@ -262,6 +262,14 @@ class UserAudioVaultManager {
   }
 
   /**
+   * Check if a recording exists
+   */
+  public hasRecording(id?: string): boolean {
+    if (!id) return !!this.latestGlobalEntry;
+    return this.cache.has(id) || !!this.latestGlobalEntry;
+  }
+
+  /**
    * Get recording for a specific item (e.g. 'letter_ba', 'ayah_1_2', 'word_3', or 'last_user_voice')
    */
   public getRecording(id: string): AudioRecordEntry | undefined {

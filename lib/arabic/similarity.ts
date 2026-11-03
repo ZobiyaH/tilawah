@@ -69,7 +69,12 @@ const PHONETIC_DICT: Record<string, string[]> = {
   "الذي": ["alladhee", "allathee", "allazi"],
   "يوسوس": ["yuwaswisu", "yuwaswis"],
   "صدور": ["sudoor", "sudur"],
-  "الجنة": ["al-jinnah", "jinnati", "aljinnah"]
+  "الجنة": ["al-jinnah", "jinnati", "aljinnah"],
+  // Al-Bayyinah
+  "البيّنة": ["al-bayyinah", "bayyinah", "al-bayyina", "bayyina", "al-bayyinatu"],
+  "البينة": ["al-bayyinah", "bayyinah", "al-bayyina", "bayyina", "al-bayyinatu"],
+  "منفكين": ["munfakkeena", "munfakkeen", "munfakkin"],
+  "البرية": ["al-bariyyah", "bariyyah", "al-bariyya", "bariyya"]
 };
 
 export interface CheckResult {
@@ -88,8 +93,25 @@ export function arabicSimilarity(spoken: string, reference: string): number {
   if (!ns || !nr) return 0;
   if (ns === nr) return 1.0;
 
-  // Alif variant matching (ignoring alif differences)
-  if (ns.length >= 2 && nr.length >= 2) {
+  // Short words (length <= 2, e.g. من, ما, لم, في, هو, قل):
+  // Must match strictly to prevent false positives between completely different short words.
+  if (ns.length <= 2 || nr.length <= 2) {
+    return ns === nr ? 1.0 : 0.0;
+  }
+
+  // 3-letter words: allow 1 edit only if it's an Alif/Waw/Ya elongation difference
+  if (ns.length === 3 && nr.length === 3) {
+    const dist = arabicLevenshtein(ns, nr);
+    if (dist === 0) return 1.0;
+    if (dist === 1) {
+      const hasWeakLetter = /[اوي]/.test(ns) || /[اوي]/.test(nr);
+      return hasWeakLetter ? 0.82 : 0.0;
+    }
+    return 0.0;
+  }
+
+  // Alif variant matching (ignoring alif differences in words >= 3 letters)
+  if (ns.length >= 3 && nr.length >= 3) {
     if (ns.replace(/ا/g, "") === nr.replace(/ا/g, "")) {
       return 0.98;
     }
@@ -98,22 +120,27 @@ export function arabicSimilarity(spoken: string, reference: string): number {
   // Prefix handling (al-, wal-, bil-, fal-, kal-, lil-, etc.)
   const prefixes = ["وال", "بال", "فال", "كال", "لل", "ال", "و", "ف", "ب", "ل", "ك"];
   for (const p of prefixes) {
+    // Never strip 1-letter prefixes from words shorter than 4 letters (avoids corrupting roots like لم, له, كفر)
+    if (p.length === 1 && (ns.length < 4 || nr.length < 4)) {
+      continue;
+    }
+
     if (ns.startsWith(p) && !nr.startsWith(p)) {
       const sub = ns.slice(p.length);
-      if (sub === nr || (sub.length >= 2 && nr.length >= 2 && sub.replace(/ا/g, "") === nr.replace(/ا/g, ""))) {
+      if (sub === nr || (sub.length >= 3 && nr.length >= 3 && sub.replace(/ا/g, "") === nr.replace(/ا/g, ""))) {
         return 0.92;
       }
       if (sub.length >= 3 && nr.length >= 3 && arabicLevenshtein(sub, nr) <= 1) {
-        return 0.88;
+        return 0.86;
       }
     }
     if (nr.startsWith(p) && !ns.startsWith(p)) {
       const sub = nr.slice(p.length);
-      if (sub === ns || (sub.length >= 2 && ns.length >= 2 && sub.replace(/ا/g, "") === ns.replace(/ا/g, ""))) {
+      if (sub === ns || (sub.length >= 3 && nr.length >= 3 && sub.replace(/ا/g, "") === ns.replace(/ا/g, ""))) {
         return 0.92;
       }
       if (sub.length >= 3 && ns.length >= 3 && arabicLevenshtein(sub, ns) <= 1) {
-        return 0.88;
+        return 0.86;
       }
     }
   }
@@ -136,15 +163,16 @@ export function checkWord(
 ): CheckResult {
   const alternatives = Array.isArray(spokenAlternatives) ? spokenAlternatives : [spokenAlternatives];
   
-  let correctThreshold = 0.72;
-  let tajweedThreshold = 0.58;
+  // Stricter, accurate thresholds to eliminate false positives
+  let correctThreshold = 0.78;
+  let tajweedThreshold = 0.68;
 
   if (recitationLevel === 'beginner' || confidentReciterMode) {
-    correctThreshold = 0.65;
-    tajweedThreshold = 0.52;
+    correctThreshold = 0.72;
+    tajweedThreshold = 0.62;
   } else if (recitationLevel === 'advanced') {
-    correctThreshold = 0.85;
-    tajweedThreshold = 0.70;
+    correctThreshold = 0.86;
+    tajweedThreshold = 0.78;
   }
 
   let bestResult: CheckResult = { status: 'error', similarity: 0, tajweedIssue: null };
@@ -182,6 +210,6 @@ export function checkWord(
       bestResult = { status, similarity, tajweedIssue };
     }
   }
-  
+
   return bestResult;
 }

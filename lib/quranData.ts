@@ -98,7 +98,7 @@ export const ALL_SURAHS: SurahMetadata[] = [
   { id: "95", number: 95, name: "التين", englishName: "At-Tin", totalAyat: 8, isImplemented: false },
   { id: "96", number: 96, name: "العلق", englishName: "Al-'Alaq", totalAyat: 19, isImplemented: false },
   { id: "97", number: 97, name: "القدر", englishName: "Al-Qadr", totalAyat: 5, isImplemented: false },
-  { id: "98", number: 98, name: "البينة", englishName: "Al-Bayyinah", totalAyat: 8, isImplemented: false },
+  { id: "98", number: 98, name: "البينة", englishName: "Al-Bayyinah", totalAyat: 8, isImplemented: true, addedAt: "2026-11-04" },
   { id: "99", number: 99, name: "الزلزلة", englishName: "Az-Zalzalah", totalAyat: 8, isImplemented: false },
   { id: "100", number: 100, name: "العاديات", englishName: "Al-'Adiyat", totalAyat: 11, isImplemented: false },
   { id: "101", number: 101, name: "القارعة", englishName: "Al-Qari'ah", totalAyat: 11, isImplemented: false },

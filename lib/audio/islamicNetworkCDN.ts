@@ -17,6 +17,7 @@ export const SURAH_STARTS: Record<number, number> = {
   55: 4905, // Ar-Rahman
   67: 5245, // Al-Mulk
   96: 6106, // Al-Alaq
+  98: 6131, // Al-Bayyinah
   112: 6222,
   113: 6227,
   114: 6232,
